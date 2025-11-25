@@ -1,44 +1,28 @@
-"use client";
-
 import Image from "next/image";
+import logo from "../img/Asset 3.png";
+import man from "../img/man.png";
 import { Bell } from "lucide-react";
-
-export default function Navbar() {
+const Navbar = () => {
   return (
-    <nav className="w-full bg-white border-b-[1px] border-[#D5D5D5] shadow-sm">
-      <div className="w-[90%] mx-auto  h-[10vh] flex items-center justify-between">
-        {/* Left - Logo */}
-        <div>
-          <Image
-            src="/Asset 3.png"
-            alt="Logo"
-            width={147}
-            height={70}
-            className="object-contain"
-          />
-        </div>
+    <div className="bg-white h-[9vh] py-2 px-20 flex justify-between border-b border-gray-400 shadow-md   ">
+      <Image className="w-45 h-16 pt-2" src={logo} alt="bwtools" />
+      <div className="flex items-center gap-4">
+        {/* Notification Icon */}
+        <button className="relative">
+          <Bell className="w-6 h-6" />
+          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
 
-        {/* Right - Notification + Avatar + Name */}
-        <div className="flex items-center space-x-6">
-          {/* Notification Icon */}
-          <button className="relative">
-            <Bell className="w-6 h-6 text-gray-700" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-          {/* Avatar + Name */}
-          <p className="font-medium text-gray-800">ALA ALA</p>
+        {/* Avatar */}
 
-          <div>
-            <Image
-              src="/man.png"
-              alt="User Avatar"
-              width={46}
-              height={46}
-              className="rounded-full"
-            />
-          </div>
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-300">
+          <Image src={man} alt="bwtools" width={150} />
+          <p className="text-sm font-medium">John Doe</p>
+          <span>ala ala</span>
         </div>
       </div>
-    </nav>
+    </div>
   );
-}
+};
+
+export default Navbar;

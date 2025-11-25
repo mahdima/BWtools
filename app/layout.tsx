@@ -29,11 +29,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navbar />
-        <div className="flex">
-          <div className="h-[89vh] ">
-            <Sidebar />
-          </div>
-          <div className="p-5 w-full ">{children}</div>
+        <div className="flex h-[91vh]">
+          <Sidebar />
+          <div className="flex w-full bg-accent p-4">{children}</div>
         </div>
       </body>
     </html>
