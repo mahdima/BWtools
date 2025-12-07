@@ -12,35 +12,30 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export type Customer = {
+export type Category = {
     id: string
-    name: string
-    email: string
-    phone: string
+    category: string
+    brand: string
 }
 
-export const columns: ColumnDef<Customer>[] = [
+export const columns: ColumnDef<Category>[] = [
     {
         accessorKey: "id",
         header: "ID",
     },
     {
-        accessorKey: "name",
-        header: "Name",
+        accessorKey: "category",
+        header: "Category",
     },
     {
-        accessorKey: "email",
-        header: "Email",
-    },
-    {
-        accessorKey: "phone",
-        header: "Phone",
+        accessorKey: "brand",
+        header: "Brand",
     },
     {
         id: "actions",
         header: "Action",
         cell: ({ row }) => {
-            const customer = row.original
+            const category = row.original
 
             return (
                 <DropdownMenu>
@@ -53,13 +48,13 @@ export const columns: ColumnDef<Customer>[] = [
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(customer.id)}
+                            onClick={() => navigator.clipboard.writeText(category.id)}
                         >
-                            Copy customer ID
+                            Copy category ID
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit customer</DropdownMenuItem>
+                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )

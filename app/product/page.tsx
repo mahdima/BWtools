@@ -3,6 +3,7 @@ import { DataTable } from "@/components/data-table";
 import { columns, Product } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 
 async function getData(): Promise<Product[]> {
   return [
@@ -29,9 +30,11 @@ const ProductPage = async () => {
           <h1 className="text-2xl font-bold mb-2 text-[#0B1DFF]">Products</h1>
           <p>Here is a list of all PRODUCTS</p>
         </div>
-        <Button className="bg-[#0B1DFF] w-[180px] h-[40px]">
-          <Plus className="mr-2 h-4 w-4" /> Add Product
-        </Button>
+        <Link href="/addproduct ">
+          <Button className="bg-[#0B1DFF] w-[180px] h-[40px]">
+            <Plus className="mr-2 h-4 w-4" /> Add Product
+          </Button>
+        </Link>
       </div>
       <DataTable columns={columns} data={data} />
     </div>

@@ -1,9 +1,12 @@
-import Image from "next/image";
+import { StatsCards } from "@/components/stats-cards";
+import { DashboardTables } from "@/components/dashboard-tables";
 
 export default function Home() {
   return (
-    <>
-      <h1 className="text-3xl black">Home</h1>
-    </>
+    <div className="">
+
+      <StatsCards />
+      <DashboardTables />
+    </div>
   );
 }
