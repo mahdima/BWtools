@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
-import material from "../../img/material.jpg"
+import material from "../../../img/material.jpg"
 const AddProduct = () => {
     return (
         <div className="p-10 w-[94%] mx-auto">
