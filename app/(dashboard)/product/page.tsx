@@ -5,19 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
+import { supabase } from "@/lib/supabaseClient";
+
 async function getData(): Promise<Product[]> {
-  return [
-    { id: "PROD-001", product: "Wireless Mouse", category: "Electronics", price: 29.99, brand: "Logitech" },
-    { id: "PROD-002", product: "Mechanical Keyboard", category: "Electronics", price: 129.99, brand: "Keychron" },
-    { id: "PROD-003", product: "Monitor 24 inch", category: "Electronics", price: 199.99, brand: "Dell" },
-    { id: "PROD-004", product: "USB-C Hub", category: "Accessories", price: 49.99, brand: "Anker" },
-    { id: "PROD-005", product: "Laptop Stand", category: "Accessories", price: 39.99, brand: "Rain Design" },
-    { id: "PROD-006", product: "Webcam 1080p", category: "Electronics", price: 79.99, brand: "Logitech" },
-    { id: "PROD-007", product: "Noise Cancelling Headphones", category: "Audio", price: 299.99, brand: "Sony" },
-    { id: "PROD-008", product: "Bluetooth Speaker", category: "Audio", price: 59.99, brand: "JBL" },
-    { id: "PROD-009", product: "External SSD 1TB", category: "Storage", price: 149.99, brand: "Samsung" },
-    { id: "PROD-010", product: "Gaming Chair", category: "Furniture", price: 249.99, brand: "Secretlab" },
-  ];
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, categories(categorie_name), brands(brand_name)')
+    .order('product_id');
+
+  if (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+
+  // Map the database columns to the Product interface
+  // Assuming the DB has a 'name' column for the product name to match the 'product' field in the table
+  return (data || []).map((item: any) => ({
+    id: item.product_id,
+    product: item.product_name,
+    category: item.categories?.categorie_name || 'Null',
+    price: item.unite_price,
+    brand: item.brands?.brand_name || 'Null',
+  }));
 }
 
 const ProductPage = async () => {

@@ -15,6 +15,7 @@ import {
 export type Order = {
     id: string
     product: string
+    user: string
     qty: number
     date: string
     price: number
@@ -29,6 +30,10 @@ export const columns: ColumnDef<Order>[] = [
     {
         accessorKey: "product",
         header: "Product",
+    },
+    {
+        accessorKey: "user",
+        header: "User",
     },
     {
         accessorKey: "qty",

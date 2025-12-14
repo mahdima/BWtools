@@ -15,7 +15,6 @@ import {
 export type Category = {
     id: string
     category: string
-    brand: string
 }
 
 export const columns: ColumnDef<Category>[] = [
@@ -26,10 +25,6 @@ export const columns: ColumnDef<Category>[] = [
     {
         accessorKey: "category",
         header: "Category",
-    },
-    {
-        accessorKey: "brand",
-        header: "Brand",
     },
     {
         id: "actions",

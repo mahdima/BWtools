@@ -5,8 +5,10 @@ import { useAuth } from '@/components/AuthProvider';
 import material from "../../img/material.jpg"
 import logo from "../../img/Asset 3.png"
 import Image from 'next/image';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
+    console.log(supabase)
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');

@@ -4,15 +4,24 @@ import { columns, Category } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-
+import { supabase } from "@/lib/supabaseClient";
 async function getData(): Promise<Category[]> {
-    return [
-        { id: "CAT-001", category: "Electronics", brand: "Generic" },
-        { id: "CAT-002", category: "Clothing", brand: "FashionBrand" },
-        { id: "CAT-003", category: "Home & Garden", brand: "HomeStyle" },
-        { id: "CAT-004", category: "Sports", brand: "Sporty" },
-        { id: "CAT-005", category: "Toys", brand: "FunTime" },
-    ];
+    const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('categorie_id');
+
+    if (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+    }
+
+    // Map the database columns to the Category interface
+
+    return (data || []).map((item: any) => ({
+        id: item.categorie_id,
+        category: item.categorie_name,
+    }));
 }
 
 const CategoriesPage = async () => {
