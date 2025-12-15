@@ -6,22 +6,23 @@ import { supabase } from "@/lib/supabaseClient";
 async function getData(): Promise<Order[]> {
   const { data, error } = await supabase
     .from('orders')
-    .select('*, profiles(username), products(id),order_items(quantity),order_items(created_at)')
-    .order('id');
+    .select('*')
+
+
 
   if (error) {
-    console.error('Error fetching products:', error);
+    console.error('Error fetching orders:', error);
     return [];
   }
 
-  // Map the database columns to the Product interface
-  // Assuming the DB has a 'name' column for the product name to match the 'product' field in the table
+
   return (data || []).map((item: any) => ({
     id: item.id,
+    created_at: item.created_at,
+    total: item.total,
     status: item.status,
-    category: item.categories?.categorie_name || 'Null',
-    price: item.unite_price,
-    brand: item.brands?.brand_name || 'Null',
+
+
   }));
 }
 

@@ -4,20 +4,27 @@ import { columns, Customer } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
 
 async function getData(): Promise<Customer[]> {
-    return [
-        { id: "CUST-001", name: "Alice Smith", email: "alice@example.com", phone: "+1 555-0101" },
-        { id: "CUST-002", name: "Bob Johnson", email: "bob@example.com", phone: "+1 555-0102" },
-        { id: "CUST-003", name: "Charlie Brown", email: "charlie@example.com", phone: "+1 555-0103" },
-        { id: "CUST-004", name: "Diana Prince", email: "diana@example.com", phone: "+1 555-0104" },
-        { id: "CUST-005", name: "Evan Wright", email: "evan@example.com", phone: "+1 555-0105" },
-        { id: "CUST-006", name: "Fiona Gallagher", email: "fiona@example.com", phone: "+1 555-0106" },
-        { id: "CUST-007", name: "George Martin", email: "george@example.com", phone: "+1 555-0107" },
-        { id: "CUST-008", name: "Hannah Abbott", email: "hannah@example.com", phone: "+1 555-0108" },
-        { id: "CUST-009", name: "Ian Malcolm", email: "ian@example.com", phone: "+1 555-0109" },
-        { id: "CUST-010", name: "Julia Stiles", email: "julia@example.com", phone: "+1 555-0110" },
-    ];
+    const { data, error } = await supabase
+        .from('profiles_with_email')
+        .select('*')
+
+
+    if (error) {
+        console.error('Error fetching CUSTOMERS:', error);
+        return [];
+    }
+
+    // Map the database columns to the Product interface
+    // Assuming the DB has a 'name' column for the product name to match the 'product' field in the table
+    return (data || []).map((item: any) => ({
+        id: item.id,
+        username: item.username || 'Null',
+        email: item.email || 'Null',
+        phone: item.phone || 'Null',
+    }));
 }
 
 const CustomersPage = async () => {

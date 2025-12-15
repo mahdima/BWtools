@@ -2,7 +2,24 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
 import material from "../../../img/material.jpg"
-const AddProduct = () => {
+import { supabase } from "@/lib/supabaseClient";
+
+async function getCategories() {
+    const { data, error } = await supabase
+        .from('categories')
+        .select('categorie_id, categorie_name')
+        .order('categorie_name');
+
+    if (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+    }
+    return data || [];
+}
+
+const AddProduct = async () => {
+    const categories = await getCategories();
+
     return (
         <div className="p-10 w-[94%] mx-auto">
             <h1 className="text-2xl font-bold mb-2 text-[#0B1DFF]">Add new Products </h1>
@@ -27,13 +44,19 @@ const AddProduct = () => {
                             <label htmlFor="category" className="block text-sm font-medium text-black-700 mb-2">
                                 Category
                             </label>
-                            <input
-                                type="text"
+                            <select
                                 id="category"
                                 name="category"
-                                className="p-3 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-[50px] text-gray-700 outline-none transition-colors"
-                                placeholder="Category"
-                            />
+                                className="p-3 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-[50px] text-gray-700 outline-none transition-colors bg-white"
+                                defaultValue=""
+                            >
+                                <option value="" disabled>Select a Category</option>
+                                {categories.map((cat: any) => (
+                                    <option key={cat.categorie_id} value={cat.categorie_id}>
+                                        {cat.categorie_name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div>
                             <label htmlFor="price" className="block text-sm font-medium text-black-700 mb-2">

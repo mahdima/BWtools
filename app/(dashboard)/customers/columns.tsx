@@ -14,9 +14,10 @@ import {
 
 export type Customer = {
     id: string
-    name: string
+    username: string
     email: string
-    phone: string
+    phone: number
+
 }
 
 export const columns: ColumnDef<Customer>[] = [
@@ -25,8 +26,8 @@ export const columns: ColumnDef<Customer>[] = [
         header: "ID",
     },
     {
-        accessorKey: "name",
-        header: "Name",
+        accessorKey: "username",
+        header: "Username",
     },
     {
         accessorKey: "email",
@@ -36,6 +37,7 @@ export const columns: ColumnDef<Customer>[] = [
         accessorKey: "phone",
         header: "Phone",
     },
+
     {
         id: "actions",
         header: "Action",

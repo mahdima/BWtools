@@ -14,12 +14,9 @@ import {
 
 export type Order = {
     id: string
-    product: string
-    user: string
-    qty: number
-    date: string
-    price: number
-    status: "Pending" | "Processing" | "Completed" | "Cancelled"
+    total: number
+    created_at: string
+    status: string
 }
 
 export const columns: ColumnDef<Order>[] = [
@@ -28,48 +25,19 @@ export const columns: ColumnDef<Order>[] = [
         header: "ID",
     },
     {
-        accessorKey: "product",
-        header: "Product",
+        accessorKey: "total",
+        header: "Total",
     },
     {
-        accessorKey: "user",
-        header: "User",
-    },
-    {
-        accessorKey: "qty",
-        header: "Qty",
-    },
-    {
-        accessorKey: "date",
-        header: "Date",
-    },
-    {
-        accessorKey: "price",
-        header: "Price",
+        accessorKey: "created_at",
+        header: "Created At",
         cell: ({ row }) => {
-            const amount = parseFloat(row.getValue("price"))
-            const formatted = new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-            }).format(amount)
-
-            return <div className="font-medium">{formatted}</div>
+            const date = new Date(row.getValue("created_at"))
+            return <div>{date.toLocaleDateString()}</div>
         },
     },
-    {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-            const status = row.getValue("status") as string
-            let colorClass = "text-gray-500"
-            if (status === "Completed") colorClass = "text-green-500"
-            else if (status === "Processing") colorClass = "text-blue-500"
-            else if (status === "Cancelled") colorClass = "text-red-500"
-            else if (status === "Pending") colorClass = "text-yellow-500"
 
-            return <div className={`font-medium ${colorClass}`}>{status}</div>
-        },
-    },
+
     {
         id: "actions",
         header: "Action",
