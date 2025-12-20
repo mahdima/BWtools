@@ -16,7 +16,9 @@ async function getData(): Promise<Category[]> {
         return [];
     }
 
-    // Map the database columns to the Category interface
+    if (data && data.length > 0) {
+        console.log("Raw category data from DB (first item):", data[0]);
+    }
 
     return (data || []).map((item: any) => ({
         id: item.categorie_id,

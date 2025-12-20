@@ -11,6 +11,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { deleteProduct } from "@/app/(dashboard)/addproduct/actions"
+import Link from "next/link"
 
 export type Product = {
     id: string
@@ -66,14 +68,16 @@ export const columns: ColumnDef<Product>[] = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(product.id)}
-                        >
-                            Copy product ID
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>View customer</DropdownMenuItem>
-                        <DropdownMenuItem>View payment details</DropdownMenuItem>
+                        <Link href={`/editproduct/${product.id}`}>
+                            <DropdownMenuItem className="cursor-pointer">Edit product</DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuItem
+                            onClick={() => deleteProduct(product.id)}
+                            className="text-red-600 focus:text-red-600 cursor-pointer"
+                        >
+                            Delete product
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )

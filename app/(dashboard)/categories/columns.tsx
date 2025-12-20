@@ -11,6 +11,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { deleteCategory } from "@/app/(dashboard)/addcategory/actions"
+import Link from "next/link"
 
 export type Category = {
     id: string
@@ -48,8 +50,17 @@ export const columns: ColumnDef<Category>[] = [
                             Copy category ID
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                        <Link href={`/editcategory/${category.id}`}>
+                            <DropdownMenuItem className="cursor-pointer">
+                                Edit
+                            </DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuItem
+                            onClick={() => deleteCategory(category.id)}
+                            className="text-red-600 focus:text-red-600 cursor-pointer"
+                        >
+                            Delete
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )
