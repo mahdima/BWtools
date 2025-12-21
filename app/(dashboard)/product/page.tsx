@@ -4,48 +4,110 @@ import { columns, Product } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-
 import { supabase } from "@/lib/supabaseClient";
+import { Modal } from "@/components/Modal";
+import { ProductForm } from "@/components/ProductForm";
+import { addProduct, updateProduct } from "../addproduct/actions";
 
 async function getData(): Promise<Product[]> {
   const { data, error } = await supabase
-    .from('products')
-    .select('*, categories(categorie_name), brands(brand_name)')
-    .order('product_id');
+    .from("products")
+    .select("*, categories(categorie_name), brands(brand_name)")
+    .order("product_id");
 
   if (error) {
-    console.error('Error fetching products:', error);
+    console.error("Error fetching products:", error);
     return [];
   }
 
-  // Map the database columns to the Product interface
-  // Assuming the DB has a 'name' column for the product name to match the 'product' field in the table
   return (data || []).map((item: any) => ({
     id: item.product_id,
     product: item.product_name,
-    category: item.categories?.categorie_name || 'Null',
+    category: item.categories?.categorie_name || "",
     price: item.unite_price,
-    brand: item.brands?.brand_name || 'Null',
+    brand: item.brands?.brand_name || "",
+    in_stock_vailable: item.in_stock_vailable,
   }));
 }
 
-const ProductPage = async () => {
+async function getProduct(id: string) {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("product_id", parseInt(id))
+    .single();
+
+  if (error || !data) return null;
+  return data;
+}
+
+async function getCategories() {
+  const { data, error } = await supabase
+    .from("categories")
+    .select("categorie_id, categorie_name")
+    .order("categorie_name");
+  if (error) return [];
+  return data || [];
+}
+
+async function getBrands() {
+  const { data, error } = await supabase
+    .from("brands")
+    .select("brand_id, brand_name")
+    .order("brand_name");
+  if (error) return [];
+  return data || [];
+}
+
+interface ProductPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+const ProductPage = async ({ searchParams }: ProductPageProps) => {
   const data = await getData();
+  const params = await searchParams;
+  const showAddModal = params.add === "true";
+  const editId = params.edit as string;
+
+  let productToEdit = null;
+  let categories: any[] = [];
+  let brands: any[] = [];
+
+  if (showAddModal || editId) {
+    categories = await getCategories();
+    brands = await getBrands();
+  }
+
+  if (editId) {
+    productToEdit = await getProduct(editId);
+  }
 
   return (
-    <div className="p-10 w-[94%] mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 w-[98%] mx-auto">
+      <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-2xl font-bold mb-2 text-[#0B1DFF]">Products</h1>
-          <p>Here is a list of all PRODUCTS</p>
+          <h1 className="text-2xl font-bold mb-2">Products</h1>
         </div>
-        <Link href="/addproduct ">
-          <Button className="bg-[#0B1DFF] w-[180px] h-[40px]">
+        <Link href="/product?add=true">
+          <Button className="bg-white text-[#0B1DFF] border border-[#0B1DFF] hover:bg-blue-50 w-[180px] h-[40px]">
             <Plus className="mr-2 h-4 w-4" /> Add Product
           </Button>
         </Link>
       </div>
-      <DataTable columns={columns} data={data} />
+      <DataTable columns={columns} data={data} searchKey="product" />
+
+      {(showAddModal || (editId && productToEdit)) && (
+        <Modal>
+          <ProductForm
+            key={editId || "add-product"}
+            categories={categories}
+            brands={brands}
+            product={productToEdit}
+            action={editId ? updateProduct.bind(null, editId) : addProduct}
+            title={editId ? "Edit Product" : "Add New Product"}
+          />
+        </Modal>
+      )}
     </div>
   );
 };

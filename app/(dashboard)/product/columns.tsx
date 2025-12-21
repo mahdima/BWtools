@@ -1,86 +1,177 @@
-"use client"
+"use client";
 
-import { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ColumnDef } from "@tanstack/react-table";
+import { MoreHorizontal, ArrowUpDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { deleteProduct } from "@/app/(dashboard)/addproduct/actions"
-import Link from "next/link"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { deleteProduct } from "@/app/(dashboard)/addproduct/actions";
+import Link from "next/link";
 
 export type Product = {
-    id: string
-    product: string
-    category: string
-    price: number
-    brand: string
-}
+  id: string;
+  product: string;
+  category: string;
+  price: number;
+  brand: string;
+  in_stock_vailable: boolean;
+};
 
 export const columns: ColumnDef<Product>[] = [
-    {
-        accessorKey: "id",
-        header: "ID",
+  {
+    id: "serial",
+    header: () => <div className="w-10">N°</div>,
+    cell: ({ row }) => <div className="w-10 text-center">{row.index + 1}</div>,
+  },
+  {
+    accessorKey: "id",
+    header: () => <div className="w-16">Product ID</div>,
+    cell: ({ row }) => (
+      <div className="w-16 text-center">{row.getValue("id")}</div>
+    ),
+  },
+  {
+    accessorKey: "product",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="w-64 justify-start pl-0 hover:bg-transparent"
+        >
+          Product
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
     },
-    {
-        accessorKey: "product",
-        header: "Product",
+    cell: ({ row }) => (
+      <div className="w-64 truncate" title={row.getValue("product")}>
+        {row.getValue("product")}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "category",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="w-40 justify-start pl-0 hover:bg-transparent"
+        >
+          Category
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
     },
-    {
-        accessorKey: "category",
-        header: "Category",
+    cell: ({ row }) => (
+      <div className="w-40 truncate" title={row.getValue("category")}>
+        {row.getValue("category")}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "brand",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="w-32 justify-start pl-0 hover:bg-transparent"
+        >
+          Brand
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
     },
-    {
-        accessorKey: "price",
-        header: "Price",
-        cell: ({ row }) => {
-            const amount = parseFloat(row.getValue("price"))
-            const formatted = new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-            }).format(amount)
+    cell: ({ row }) => (
+      <div className="w-32 truncate" title={row.getValue("brand")}>
+        {row.getValue("brand")}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "price",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="w-32 justify-start pl-0 hover:bg-transparent"
+        >
+          Price
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const amount = parseFloat(row.getValue("price"));
+      const formatted = new Intl.NumberFormat("fr-DZ", {
+        style: "currency",
+        currency: "DZD",
+      }).format(amount);
 
-            return <div className="font-medium">{formatted}</div>
-        },
+      return (
+        <div className="w-32 font-medium" suppressHydrationWarning>
+          {formatted}
+        </div>
+      );
     },
-    {
-        accessorKey: "brand",
-        header: "Brand",
+  },
+  {
+    accessorKey: "in_stock_vailable",
+    header: () => <div className="w-32">Stock</div>,
+    cell: ({ row }) => {
+      const isAvailable = row.getValue("in_stock_vailable");
+      return (
+        <div
+          className={`w-32 font-medium ${
+            isAvailable ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {isAvailable ? "Available" : "Out of Stock"}
+        </div>
+      );
     },
-    {
-        id: "actions",
-        header: "Action",
-        cell: ({ row }) => {
-            const product = row.original
+  },
 
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <Link href={`/editproduct/${product.id}`}>
-                            <DropdownMenuItem className="cursor-pointer">Edit product</DropdownMenuItem>
-                        </Link>
-                        <DropdownMenuItem
-                            onClick={() => deleteProduct(product.id)}
-                            className="text-red-600 focus:text-red-600 cursor-pointer"
-                        >
-                            Delete product
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
-        },
+  {
+    id: "actions",
+    header: () => <div className="w-12">Action</div>,
+    cell: ({ row }) => {
+      const product = row.original;
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <Link href={`/product?edit=${product.id}`}>
+              <DropdownMenuItem className="cursor-pointer">
+                Edit product
+              </DropdownMenuItem>
+            </Link>
+            <DropdownMenuItem
+              onClick={() => deleteProduct(product.id)}
+              className="text-red-600 focus:text-red-600 cursor-pointer"
+            >
+              Delete product
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
     },
-]
+  },
+];
