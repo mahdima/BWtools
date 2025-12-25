@@ -1,21 +1,20 @@
 import Sidebar from "@/components/Sidebar";
-import { createClient } from "@/utils/supabase/server";
+import { getAdminProfile } from "./profile/actions";
 
 export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const userName = user?.email || "Guest";
+  const profile = await getAdminProfile();
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar userEmail={userName} />
+        <Sidebar
+          userEmail={profile?.email || "Guest"}
+          userName={profile?.full_name}
+        />
         <main className="w-full bg-accent overflow-y-auto">{children}</main>
       </div>
     </div>

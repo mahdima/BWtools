@@ -84,8 +84,9 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
 
   return (
     <div className="p-4 w-[98%] mx-auto">
-      <div className="mb-1 mt-5">
-        <h1 className="text-3xl font-bold mb-2 text-[#0b1dff]">Products</h1>
+      <div className="mb-4 mt-5">
+        <h1 className="text-2xl font-bold mb-1 text-gray-900">Products</h1>
+        <p className="text-sm text-gray-500">Manage your product catalog</p>
       </div>
       <DataTable
         columns={columns}

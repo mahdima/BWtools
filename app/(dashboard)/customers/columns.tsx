@@ -1,63 +1,83 @@
-"use client"
+"use client";
 
-import { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
-import Link from "next/link";
-import { Button } from "@/components/ui/button"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { ColumnDef } from "@tanstack/react-table";
+import { Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CustomerForm } from "@/components/CustomerForm";
 
 export type Customer = {
-    id: string
-    username: string
-    email: string
-    phone: number
-
-}
+  id: string;
+  username: string;
+  email: string;
+  phone: string;
+};
 
 export const columns: ColumnDef<Customer>[] = [
+  {
+    accessorKey: "username",
+    header: "Username",
+    cell: ({ row }) => {
+      const val = row.getValue("username") as string;
+      return val && val !== "Null" ? (
+        <span className="font-medium text-gray-900">{val}</span>
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    },
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+    cell: ({ row }) => {
+      const val = row.getValue("email") as string;
+      return val && val !== "Null" ? (
+        val
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    },
+  },
+  {
+    accessorKey: "phone",
+    header: "Phone",
+    cell: ({ row }) => {
+      const val = row.getValue("phone") as string;
+      // Ensure it's not the string "Null" if that's what comes from DB view still
+      return val && val !== "Null" ? (
+        val
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    },
+  },
 
-    {
-        accessorKey: "username",
-        header: "Username",
-    },
-    {
-        accessorKey: "email",
-        header: "Email",
-    },
-    {
-        accessorKey: "phone",
-        header: "Phone",
-    },
+  {
+    id: "actions",
+    header: () => <div className="text-center">Action</div>,
+    cell: ({ row }) => {
+      const customer = row.original;
 
-    {
-        id: "actions",
-        header: () => <div className="text-center">Action</div>,
-        cell: ({ row }) => {
-            const customer = row.original
-
-            return (
-                <div className="flex justify-center gap-2">
-                    <Link href={`/addcustomer?edit=${customer.id}`}>
-                        <Button
-                            className="bg-green-500 hover:bg-green-400 text-white h-8 w-19"
-                        >
-                            <Pencil className="h-4 w-4 mr-0" /> Edit
-                        </Button>
-                    </Link>
-                    <Button
-                        className="bg-red-500 hover:bg-red-700 text-white h-8 w-20"
-                    >
-                        <Trash2 className="h-4 w-4 mr-0" /> Delete
-                    </Button>
-                </div>
-            )
-        },
+      return (
+        <div className="flex justify-center gap-2">
+          <CustomerForm
+            customer={{
+              id: customer.id,
+              username: customer.username || "",
+              email: customer.email || "",
+              phone: customer.phone ? customer.phone.toString() : "",
+            }}
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            }
+          />
+        </div>
+      );
     },
-]
+  },
+];

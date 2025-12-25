@@ -10,8 +10,9 @@ export async function addProduct(formData: FormData) {
     const unite_price = formData.get("price")?.toString();
     const brand_id = formData.get("brand")?.toString();
     const description = formData.get("description")?.toString();
+    const quantity = formData.get("quantity")?.toString();
 
-    if (!product_name || !Category_id || !unite_price || !brand_id) {
+    if (!product_name || !Category_id || !unite_price || !brand_id || !quantity) {
         throw new Error("Missing required fields");
     }
 
@@ -53,7 +54,8 @@ export async function addProduct(formData: FormData) {
                 unite_price: parseFloat(unite_price),
                 brand_id: parseInt(brand_id),
                 description,
-                product_link
+                product_link,
+                in_stock_vailable: parseInt(quantity)
             }
         ])
         .select();
@@ -92,8 +94,9 @@ export async function updateProduct(productId: string, formData: FormData) {
     const unite_price = formData.get("price")?.toString();
     const brand_id = formData.get("brand")?.toString();
     const description = formData.get("description")?.toString();
+    const quantity = formData.get("quantity")?.toString();
 
-    if (!productId || !product_name || !Category_id || !unite_price || !brand_id) {
+    if (!productId || !product_name || !Category_id || !unite_price || !brand_id || !quantity) {
         throw new Error("Missing required fields");
     }
 
@@ -134,7 +137,8 @@ export async function updateProduct(productId: string, formData: FormData) {
             unite_price: parseFloat(unite_price),
             brand_id: parseInt(brand_id),
             description,
-            product_link
+            product_link,
+            in_stock_vailable: parseInt(quantity)
         })
         .eq('product_id', parseInt(productId));
 

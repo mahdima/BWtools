@@ -48,6 +48,7 @@ interface DataTableProps<TData, TValue> {
     column: string;
     tabs: { label: string; value: any }[];
   }[];
+  rowLinkPath?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -56,6 +57,7 @@ export function DataTable<TData, TValue>({
   searchKey,
   headerActions,
   filterTabs,
+  rowLinkPath,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -74,7 +76,7 @@ export function DataTable<TData, TValue>({
     initialState: {
       pagination: {
         pageIndex: 0,
-        pageSize: 13,
+        pageSize: 50,
       },
     },
     state: {
@@ -93,20 +95,29 @@ export function DataTable<TData, TValue>({
             <div key={filterGroup.column} className="flex gap-2">
               {filterGroup.tabs.map((tab) => {
                 const column = table.getColumn(filterGroup.column);
-                const isSelected = column?.getFilterValue() === tab.value;
+                const isSelected =
+                  tab.value === "All"
+                    ? column?.getFilterValue() === undefined
+                    : column?.getFilterValue() === tab.value;
+
                 return (
                   <Button
                     key={tab.value}
                     variant={isSelected ? "default" : "outline"}
-                    className={`h-8 border-dashed ${isSelected
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "text-muted-foreground"
-                      }`}
+                    className={`h-8 border-dashed ${
+                      isSelected
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "text-muted-foreground"
+                    }`}
                     onClick={() => {
-                      if (isSelected) {
-                        column?.setFilterValue(undefined); // Toggle off
+                      if (tab.value === "All") {
+                        column?.setFilterValue(undefined); // Clear filter
                       } else {
-                        column?.setFilterValue(tab.value); // Toggle on
+                        if (isSelected) {
+                          column?.setFilterValue(undefined); // Toggle off
+                        } else {
+                          column?.setFilterValue(tab.value); // Toggle on
+                        }
                       }
                     }}
                   >
@@ -137,7 +148,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-auto rounded-md border h-[calc(100vh-220px)]">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -148,9 +159,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   );
                 })}
@@ -163,7 +174,16 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="h-8"
+                  className={`h-[35px] ${
+                    rowLinkPath ? "cursor-pointer hover:bg-gray-50" : ""
+                  }`}
+                  onClick={() => {
+                    if (rowLinkPath) {
+                      window.location.href = `${rowLinkPath}/${
+                        (row.original as any).id
+                      }`;
+                    }
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-1">
