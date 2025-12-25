@@ -31,19 +31,22 @@ const CustomersPage = async () => {
     const data = await getData();
 
     return (
-        <div className="p-10 w-[94%] mx-auto">
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold mb-2 text-[#0B1DFF]">Customers</h1>
-                    <p>Here is a list of all CUSTOMERS</p>
-                </div>
-                <Link href="/addcustomer">
-                    <Button className="bg-[#0B1DFF] w-[180px] h-[40px]">
-                        <Plus className="mr-2 h-4 w-4" /> Add Customer
-                    </Button>
-                </Link>
+        <div className="p-4 w-[98%] mx-auto">
+            <div className="mb-1 mt-5">
+                <h1 className="text-3xl font-bold mb-2 text-[#0B1DFF]">Customers</h1>
             </div>
-            <DataTable columns={columns} data={data} />
+            <DataTable
+                columns={columns}
+                data={data}
+                searchKey="username"
+                headerActions={
+                    <Link href="/addcustomer">
+                        <Button className="bg-[#0B1DFF] text-white hover:bg-blue-700 w-[180px] h-[40px]">
+                            <Plus className="mr-2 h-4 w-4" /> Add Customer
+                        </Button>
+                    </Link>
+                }
+            />
         </div>
     );
 };

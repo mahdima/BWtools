@@ -21,12 +21,12 @@ export function ProductForm({
 }: ProductFormProps) {
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">{title}</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center text-[#0B1DFF]">{title}</h1>
 
       <form action={action} className="bg-white rounded-lg">
-        <div className="flex gap-10 w-full mx-auto">
-          {/* Left Side - Form Fields */}
-          <div className="w-[60%] space-y-6">
+        <div className="space-y-6">
+          {/* Row 1: Product Name & Category */}
+          <div className="grid grid-cols-2 gap-6">
             <div>
               <label
                 htmlFor="product"
@@ -39,7 +39,7 @@ export function ProductForm({
                 id="product"
                 name="product"
                 defaultValue={product?.product_name || ""}
-                className="px-3 py-2 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-10 text-sm text-gray-700 outline-none transition-colors"
+                className="px-3 py-6 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-10 text-sm text-gray-700 outline-none transition-colors"
                 placeholder="Product Name"
                 required
               />
@@ -55,7 +55,7 @@ export function ProductForm({
                 id="category"
                 name="category"
                 defaultValue={product?.Category_id || ""}
-                className="px-3 py-2 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-10 text-sm text-gray-700 outline-none transition-colors bg-white"
+                className="px-3 py-6 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-10 text-sm text-gray-700 outline-none transition-colors bg-white"
                 required
               >
                 <option value="" disabled>
@@ -68,7 +68,10 @@ export function ProductForm({
                 ))}
               </select>
             </div>
+          </div>
 
+          {/* Row 2: Price & Brand */}
+          <div className="grid grid-cols-2 gap-6">
             <div>
               <label
                 htmlFor="price"
@@ -81,7 +84,7 @@ export function ProductForm({
                 id="price"
                 name="price"
                 defaultValue={product?.unite_price || ""}
-                className="px-3 py-2 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-10 text-sm text-gray-700 outline-none transition-colors"
+                className="px-3 py-6 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-10 text-sm text-gray-700 outline-none transition-colors"
                 placeholder="Price"
                 step="0.01"
                 required
@@ -98,7 +101,7 @@ export function ProductForm({
                 id="brand"
                 name="brand"
                 defaultValue={product?.brand_id || ""}
-                className="px-3 py-2 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-10 text-sm text-gray-700 outline-none transition-colors bg-white"
+                className="px-3 py-6 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-10 text-sm text-gray-700 outline-none transition-colors bg-white"
                 required
               >
                 <option value="" disabled>
@@ -111,38 +114,41 @@ export function ProductForm({
                 ))}
               </select>
             </div>
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-black-700 mb-2"
-              >
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                rows={3}
-                defaultValue={product?.description || ""}
-                className="px-3 py-2 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] text-sm text-gray-700 outline-none transition-colors resize-none"
-                placeholder="Product Description"
-              />
-            </div>
           </div>
 
-          {/* Right Side - Image Upload */}
-          <div className="w-[40%] flex flex-col items-center">
+          {/* Row 3: Description */}
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-black-700 mb-2"
+            >
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              rows={3}
+              defaultValue={product?.description || ""}
+              className="px-3 py-6 h-[100px] block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] text-sm text-gray-700 outline-none transition-colors resize-none"
+              placeholder="Product Description"
+            />
+          </div>
+
+          {/* Row 4: Image Upload */}
+          <div className="flex flex-col items-center w-[70%] mx-auto">
+            <label className="block text-sm font-medium text-black-700 mb-2 self-start">
+              Product Image
+            </label>
             <ProductImageUpload
               key={product?.product_link}
               defaultValue={product?.product_link}
               name="productImage"
             />
-            {/* Debug: Check if URL exists */}
-            {/* <p className="text-xs text-gray-400 mt-2 break-all">{product?.product_link || "No image URL found"}</p> */}
           </div>
         </div>
 
         {/* Bottom Buttons */}
-        <div className="flex gap-4 mt-8 pt-4 justify-center">
+        <div className="flex gap-4 mt-1 pt-1 justify-center">
           <Link href="/product">
             <Button
               type="button"

@@ -1,7 +1,8 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import Link from "next/link";
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -21,10 +22,7 @@ export type Customer = {
 }
 
 export const columns: ColumnDef<Customer>[] = [
-    {
-        accessorKey: "id",
-        header: "ID",
-    },
+
     {
         accessorKey: "username",
         header: "Username",
@@ -40,30 +38,25 @@ export const columns: ColumnDef<Customer>[] = [
 
     {
         id: "actions",
-        header: "Action",
+        header: () => <div className="text-center">Action</div>,
         cell: ({ row }) => {
             const customer = row.original
 
             return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(customer.id)}
+                <div className="flex justify-center gap-2">
+                    <Link href={`/addcustomer?edit=${customer.id}`}>
+                        <Button
+                            className="bg-green-500 hover:bg-green-400 text-white h-8 w-19"
                         >
-                            Copy customer ID
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit customer</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            <Pencil className="h-4 w-4 mr-0" /> Edit
+                        </Button>
+                    </Link>
+                    <Button
+                        className="bg-red-500 hover:bg-red-700 text-white h-8 w-20"
+                    >
+                        <Trash2 className="h-4 w-4 mr-0" /> Delete
+                    </Button>
+                </div>
             )
         },
     },

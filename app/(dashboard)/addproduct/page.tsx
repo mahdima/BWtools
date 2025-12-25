@@ -1,7 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Trash2, Plus } from "lucide-react";
-import material from "../../../img/material.jpg"
+
 import { supabase } from "@/lib/supabaseClient";
 import { addProduct } from "./actions";
 import { ProductImageUpload } from "@/components/ProductImageUpload";

@@ -1,16 +1,9 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ColumnDef } from "@tanstack/react-table";
+
 import { deleteProduct } from "@/app/(dashboard)/addproduct/actions";
 import Link from "next/link";
 
@@ -131,9 +124,8 @@ export const columns: ColumnDef<Product>[] = [
       const isAvailable = row.getValue("in_stock_vailable");
       return (
         <div
-          className={`w-32 font-medium ${
-            isAvailable ? "text-green-600" : "text-red-600"
-          }`}
+          className={`w-32 font-medium ${isAvailable ? "text-green-600" : "text-red-600"
+            }`}
         >
           {isAvailable ? "Available" : "Out of Stock"}
         </div>
@@ -143,34 +135,26 @@ export const columns: ColumnDef<Product>[] = [
 
   {
     id: "actions",
-    header: () => <div className="w-12">Action</div>,
+    header: () => <div className="text-center">Action</div>,
     cell: ({ row }) => {
       const product = row.original;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <Link href={`/product?edit=${product.id}`}>
-              <DropdownMenuItem className="cursor-pointer">
-                Edit product
-              </DropdownMenuItem>
-            </Link>
-            <DropdownMenuItem
-              onClick={() => deleteProduct(product.id)}
-              className="text-red-600 focus:text-red-600 cursor-pointer"
+        <div className="flex justify-center gap-2">
+          <Link href={`/product?edit=${product.id}`}>
+            <Button
+              className="bg-green-500 hover:bg-green-400 text-white h-8 w-19"
             >
-              Delete product
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <Pencil className="h-4 w-4 mr-0" /> Edit
+            </Button>
+          </Link>
+          <Button
+            onClick={() => deleteProduct(product.id)}
+            className="bg-red-500 hover:bg-red-700 text-white h-8 w-20"
+          >
+            <Trash2 className="h-4 w-4 mr-0" /> Delete
+          </Button>
+        </div>
       );
     },
   },

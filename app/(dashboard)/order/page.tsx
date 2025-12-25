@@ -1,10 +1,10 @@
 import React from "react";
 import { DataTable } from "@/components/data-table";
 import { columns, Order } from "./columns";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 async function getData(): Promise<Order[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('orders')
     .select('*')
 
@@ -33,7 +33,21 @@ const OrderPage = async () => {
     <div className="p-5 w-[94%] mx-auto">
       <h1 className="text-2xl font-bold mb-2 text-[#0B1DFF]">Orders</h1>
       <p className="mb-6">Here is a list of all ORDERS</p>
-      <DataTable columns={columns} data={data} />
+      <DataTable
+        columns={columns}
+        data={data}
+        searchKey="status"
+        filterTabs={[
+          {
+            column: "status",
+            tabs: [
+              { label: "New", value: "New" },
+              { label: "Cancelled", value: "Cancelled" },
+              { label: "Delivered", value: "Delivered" },
+            ],
+          },
+        ]}
+      />
     </div>
   );
 };

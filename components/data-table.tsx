@@ -43,12 +43,19 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   searchKey?: string;
+  headerActions?: React.ReactNode;
+  filterTabs?: {
+    column: string;
+    tabs: { label: string; value: any }[];
+  }[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
+  headerActions,
+  filterTabs,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -64,11 +71,13 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    state: {
+    initialState: {
       pagination: {
         pageIndex: 0,
         pageSize: 13,
       },
+    },
+    state: {
       columnFilters,
       sorting,
     },
@@ -76,23 +85,58 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
-      {/* Filters */}
-      {searchKey && (
-        <div className="flex items-center py-2">
-          <Input
-            placeholder="Filter..."
-            value={
-              (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
-            }
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              table.getColumn(searchKey)?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
+      {/* Filters & Actions */}
+      <div className="flex items-center justify-between py-4">
+        {/* Filter Tabs (Left Side) */}
+        <div className="flex items-center gap-2">
+          {filterTabs?.map((filterGroup) => (
+            <div key={filterGroup.column} className="flex gap-2">
+              {filterGroup.tabs.map((tab) => {
+                const column = table.getColumn(filterGroup.column);
+                const isSelected = column?.getFilterValue() === tab.value;
+                return (
+                  <Button
+                    key={tab.value}
+                    variant={isSelected ? "default" : "outline"}
+                    className={`h-8 border-dashed ${isSelected
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "text-muted-foreground"
+                      }`}
+                    onClick={() => {
+                      if (isSelected) {
+                        column?.setFilterValue(undefined); // Toggle off
+                      } else {
+                        column?.setFilterValue(tab.value); // Toggle on
+                      }
+                    }}
+                  >
+                    {tab.label}
+                  </Button>
+                );
+              })}
+            </div>
+          ))}
         </div>
-      )}
 
-      {/*Table */}
+        {/* Search & Actions (Right Side) */}
+        <div className="flex items-center gap-2">
+          {searchKey && (
+            <Input
+              placeholder="Filter..."
+              value={
+                (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                table.getColumn(searchKey)?.setFilterValue(event.target.value)
+              }
+              className="max-w-sm"
+            />
+          )}
+          {headerActions}
+        </div>
+      </div>
+
+      {/* Table */}
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
@@ -104,9 +148,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}

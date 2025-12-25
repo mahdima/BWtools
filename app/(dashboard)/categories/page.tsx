@@ -30,7 +30,7 @@ const CategoriesPage = async () => {
     const data = await getData();
 
     return (
-        <div className="p-10 w-[94%] mx-auto">
+        <div className="p-4 w-[98%] mx-auto mt-5" >
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold mb-2 text-[#0B1DFF]">Categories</h1>

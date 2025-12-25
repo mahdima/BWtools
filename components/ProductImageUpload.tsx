@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
 
 interface ProductImageUploadProps {
@@ -62,7 +61,7 @@ export const ProductImageUpload = ({
             className="text-gray-400 flex flex-col items-center cursor-pointer"
             onClick={handleTriggerClick}
           >
-            <Plus className="h-10 w-10 mb-2" />
+            <Plus className="h-10 w-10 " />
             <span>Selectionner une image produit</span>
           </div>
         )}
@@ -74,7 +73,6 @@ export const ProductImageUpload = ({
           value={existingUrl || ""}
         />
       </div>
-
       <input
         type="file"
         name={name}
@@ -85,26 +83,10 @@ export const ProductImageUpload = ({
       />
 
       <div className="flex gap-6">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={handleRemove}
-          className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-          disabled={!preview}
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={handleTriggerClick}
-          className="border-[#0B1DFF] text-[#0B1DFF] hover:bg-blue-50 hover:text-[#0B1DFF]"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
+
+
+
       </div>
-    </div>
+    </div >
   );
 };

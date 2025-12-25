@@ -84,17 +84,21 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
 
   return (
     <div className="p-4 w-[98%] mx-auto">
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h1 className="text-2xl font-bold mb-2">Products</h1>
-        </div>
-        <Link href="/product?add=true">
-          <Button className="bg-white text-[#0B1DFF] border border-[#0B1DFF] hover:bg-blue-50 w-[180px] h-[40px]">
-            <Plus className="mr-2 h-4 w-4" /> Add Product
-          </Button>
-        </Link>
+      <div className="mb-1 mt-5">
+        <h1 className="text-3xl font-bold mb-2 text-[#0b1dff]">Products</h1>
       </div>
-      <DataTable columns={columns} data={data} searchKey="product" />
+      <DataTable
+        columns={columns}
+        data={data}
+        searchKey="product"
+        headerActions={
+          <Link href="/product?add=true">
+            <Button className="bg-[#0b1dff] text-white hover:bg-blue-700 w-[180px] h-[40px]">
+              <Plus className="mr-2 h-4 w-4" /> Add Product
+            </Button>
+          </Link>
+        }
+      />
 
       {(showAddModal || (editId && productToEdit)) && (
         <Modal>
