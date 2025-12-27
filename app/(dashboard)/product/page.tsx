@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Modal } from "@/components/Modal";
 import { ProductForm } from "@/components/ProductForm";
 import { addProduct, updateProduct } from "../addproduct/actions";
+export const revalidate = 0;
 
 async function getData(): Promise<Product[]> {
   const { data, error } = await supabase

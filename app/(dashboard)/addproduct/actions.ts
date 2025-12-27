@@ -127,6 +127,8 @@ export async function updateProduct(productId: string, formData: FormData) {
 
         product_link = publicUrl;
         console.log("Product image updated successfully, URL:", product_link);
+    } else {
+        console.log("No new image file provided, using product_link:", product_link);
     }
 
     const { error } = await supabaseAdmin
@@ -141,6 +143,8 @@ export async function updateProduct(productId: string, formData: FormData) {
             in_stock_vailable: parseInt(quantity)
         })
         .eq('product_id', parseInt(productId));
+
+    console.log("Update query executed for ID:", productId, "with product_link:", product_link);
 
     if (error) {
         console.error("Error updating product:", error);

@@ -23,7 +23,11 @@ export function ProductForm({
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6 text-[#0B1DFF]">{title}</h1>
 
-      <form action={action} className="bg-white rounded-lg">
+      <form
+        action={action}
+        className="bg-white rounded-lg"
+        encType="multipart/form-data"
+      >
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Side: Form Fields */}
           <div className="flex-1 space-y-5">

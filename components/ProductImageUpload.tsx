@@ -82,11 +82,27 @@ export const ProductImageUpload = ({
         onChange={handleFileChange}
       />
 
-      <div className="flex gap-6">
-
-
-
+      <div className="flex gap-4 w-full justify-center">
+        {preview && (
+          <>
+            <button
+              type="button"
+              onClick={handleTriggerClick}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Change Image
+            </button>
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-md text-sm font-medium text-red-600 hover:bg-red-100 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              Remove
+            </button>
+          </>
+        )}
       </div>
-    </div >
+    </div>
   );
 };
