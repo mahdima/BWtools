@@ -4,12 +4,22 @@ import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-export function Modal({ children }: { children: React.ReactNode }) {
+export function Modal({
+  children,
+  returnUrl,
+}: {
+  children: React.ReactNode;
+  returnUrl?: string;
+}) {
   const router = useRouter();
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const onDismiss = () => {
-    router.back();
+    if (returnUrl) {
+      router.push(returnUrl);
+    } else {
+      router.back();
+    }
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {

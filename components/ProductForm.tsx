@@ -2,7 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { ProductImageUpload } from "@/components/ProductImageUpload";
+import Editor from "@/components/editor";
 import Link from "next/link";
+import { useState } from "react";
 
 interface ProductFormProps {
   categories: any[];
@@ -10,6 +12,7 @@ interface ProductFormProps {
   product?: any;
   action: (formData: FormData) => Promise<void>;
   title: string;
+  page?: string | string[];
 }
 
 export function ProductForm({
@@ -18,16 +21,20 @@ export function ProductForm({
   product,
   action,
   title,
+  page,
 }: ProductFormProps) {
+  const [description, setDescription] = useState(product?.description || "");
+
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6 text-[#0B1DFF]">{title}</h1>
+      <h1 className="text-2xl font-bold mb-6 text-foreground">{title}</h1>
 
-      <form
-        action={action}
-        className="bg-white rounded-lg"
-        encType="multipart/form-data"
-      >
+      <form action={action} className="glass-card rounded-lg">
+        <input
+          type="hidden"
+          name="page"
+          value={Array.isArray(page) ? page[0] : page || ""}
+        />
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Side: Form Fields */}
           <div className="flex-1 space-y-5">
@@ -149,14 +156,8 @@ export function ProductForm({
               >
                 Description
               </label>
-              <textarea
-                id="description"
-                name="description"
-                rows={4}
-                defaultValue={product?.description || ""}
-                className="px-4 py-3 block w-full rounded-md border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white resize-none"
-                placeholder="Product Description"
-              />
+              <Editor value={description} onChange={setDescription} />
+              <input type="hidden" name="description" value={description} />
             </div>
           </div>
 

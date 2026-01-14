@@ -49,7 +49,7 @@ export const ProductImageUpload = ({
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full h-[300px] rounded-lg mb-4 overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300 relative group">
+      <div className="w-full h-[300px] rounded-xl mb-4 overflow-hidden bg-muted/20 flex items-center justify-center border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 transition-colors relative group glass-card">
         {preview ? (
           <img
             src={preview}
@@ -58,11 +58,11 @@ export const ProductImageUpload = ({
           />
         ) : (
           <div
-            className="text-gray-400 flex flex-col items-center cursor-pointer"
+            className="text-muted-foreground flex flex-col items-center cursor-pointer hover:text-primary transition-colors"
             onClick={handleTriggerClick}
           >
-            <Plus className="h-10 w-10 " />
-            <span>Selectionner une image produit</span>
+            <Plus className="h-10 w-10 mb-2" />
+            <span className="text-sm font-medium">Select Product Image</span>
           </div>
         )}
 
@@ -88,14 +88,14 @@ export const ProductImageUpload = ({
             <button
               type="button"
               onClick={handleTriggerClick}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-background/80 backdrop-blur-sm border border-border rounded-md text-sm font-medium text-foreground hover:bg-accent transition-colors shadow-sm"
             >
               Change Image
             </button>
             <button
               type="button"
               onClick={handleRemove}
-              className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-md text-sm font-medium text-red-600 hover:bg-red-100 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-destructive/10 border border-destructive/20 rounded-md text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors shadow-sm"
             >
               <Trash2 className="h-4 w-4" />
               Remove

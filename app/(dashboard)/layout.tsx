@@ -1,5 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import { getAdminProfile } from "./profile/actions";
+import { getNotifications } from "./notifications/actions";
+import { MobileSidebarWrapper } from "@/components/mobile-sidebar-wrapper";
 
 export default async function DashboardLayout({
   children,
@@ -7,15 +9,21 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const profile = await getAdminProfile();
+  const notifications = await getNotifications();
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          userEmail={profile?.email || "Guest"}
-          userName={profile?.full_name}
-        />
-        <main className="w-full bg-accent overflow-y-auto">{children}</main>
+        <MobileSidebarWrapper>
+          <Sidebar
+            userEmail={profile?.email || "Guest"}
+            userName={profile?.full_name}
+            notifications={notifications}
+          />
+        </MobileSidebarWrapper>
+        <main className="flex-1 w-0 bg-accent overflow-hidden flex flex-col lg:ml-0">
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { DataTable } from "@/components/data-table";
 import { columns, Brand } from "./columns";
 import { Button } from "@/components/ui/button";
@@ -54,26 +54,26 @@ const BrandPage = async ({ searchParams }: BrandPageProps) => {
   }
 
   return (
-    <div className="p-4 w-[98%] mx-auto">
-      <div className="mb-4 mt-5">
-        <h1 className="text-2xl font-bold mb-1 text-gray-900">Brands</h1>
-        <p className="text-sm text-gray-500">Manage product brands</p>
-      </div>
-      <DataTable
-        columns={columns}
-        data={data}
-        searchKey="brand"
-        headerActions={
-          <Link href="/brand?add=true">
-            <Button className="bg-[#0b1dff] text-white hover:bg-blue-700 w-[180px] h-[40px]">
-              <Plus className="mr-2 h-4 w-4" /> Add Brand
-            </Button>
-          </Link>
-        }
-      />
+    <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">
+      <Suspense fallback={<div>Loading...</div>}>
+        <DataTable
+          columns={columns}
+          data={data}
+          searchKey="brand"
+          title="Brands"
+          description="Manage product brands"
+          headerActions={
+            <Link href="/brand?add=true">
+              <Button className="bg-[#0b1dff] text-white hover:bg-blue-700 w-[180px] h-[40px]">
+                <Plus className="mr-2 h-4 w-4" /> Add Brand
+              </Button>
+            </Link>
+          }
+        />
+      </Suspense>
 
       {(showAddModal || (editId && brandToEdit)) && (
-        <Modal>
+        <Modal returnUrl="/brand">
           <BrandForm
             key={editId || "add-brand"}
             brand={brandToEdit}
@@ -87,3 +87,4 @@ const BrandPage = async ({ searchParams }: BrandPageProps) => {
 };
 
 export default BrandPage;
+

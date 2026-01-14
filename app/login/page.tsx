@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { login } from "./actions";
 import material from "../../img/material.jpg";
 import logo from "../../img/Asset 3.png";
+import Image from "next/image";
 
 const initialState = {
   error: "",
@@ -19,10 +20,11 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="flex flex-col items-center mb-10 w-full">
             <div className="w-full h-full mb-4">
-              <img
-                src={logo.src}
+              <Image
+                src={logo}
                 alt="WBtools Logo"
                 className="w-full h-full object-contain"
+                priority
               />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 tracking-tight text-center">
@@ -106,10 +108,12 @@ export default function LoginPage() {
 
       {/* Right Side - Image */}
       <div className="hidden lg:block lg:w-1/2 relative bg-gray-100">
-        <img
-          src={material.src}
+        <Image
+          src={material}
           alt="Login Background"
           className="w-full h-full object-cover"
+          fill
+          priority
         />
       </div>
     </div>

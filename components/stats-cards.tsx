@@ -31,17 +31,18 @@ export function StatsCards({ stats }: StatsCardsProps) {
       icon: DollarSign,
       description: "Total earnings",
       className:
-        "bg-gradient-to-br from-blue-600 to-blue-700 text-white border-none shadow-md ring-1 ring-blue-700/50",
-      iconClass: "bg-white/20 text-white backdrop-blur-sm",
-      textClass: "text-blue-50",
+        "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground border-none shadow-lg shadow-primary/20",
+      iconClass: "bg-white/20 text-white backdrop-blur-md",
+      textClass: "text-primary-foreground/90",
     },
     {
       title: "Total Orders",
       value: stats.totalOrders.toString(),
       icon: ShoppingCart,
       description: "All time orders",
-      className: "bg-white",
-      iconClass: "bg-orange-100/50 text-orange-600",
+      className: "glass-card hover:border-primary/20",
+      iconClass:
+        "bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
       textClass: "text-muted-foreground",
     },
     {
@@ -49,8 +50,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
       value: stats.totalProducts.toString(),
       icon: Package,
       description: "In catalog",
-      className: "bg-white",
-      iconClass: "bg-emerald-100/50 text-emerald-600",
+      className: "glass-card hover:border-primary/20",
+      iconClass:
+        "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
       textClass: "text-muted-foreground",
     },
     {
@@ -58,8 +60,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
       value: stats.totalBrands.toString(),
       icon: Tag,
       description: "Partner brands",
-      className: "bg-white",
-      iconClass: "bg-violet-100/50 text-violet-600",
+      className: "glass-card hover:border-primary/20",
+      iconClass:
+        "bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400",
       textClass: "text-muted-foreground",
     },
   ];
@@ -70,7 +73,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
         <div
           key={stat.title}
           className={cn(
-            "rounded-2xl border shadow-sm p-6 transition-all hover:shadow-md",
+            "rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
             stat.className
           )}
         >
@@ -83,7 +86,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
             >
               {stat.title}
             </h3>
-            <div className={cn("p-2.5 rounded-xl", stat.iconClass)}>
+            <div
+              className={cn("p-3 rounded-xl transition-colors", stat.iconClass)}
+            >
               <stat.icon className="h-5 w-5" />
             </div>
           </div>
@@ -95,14 +100,12 @@ export function StatsCards({ stats }: StatsCardsProps) {
               <TrendingUp
                 className={cn(
                   "h-4 w-4",
-                  stat.textClass === "text-blue-50"
-                    ? "text-blue-200"
-                    : "text-green-500"
+                  stat.textClass === "text-primary-foreground/90"
+                    ? "text-white/80"
+                    : "text-emerald-500"
                 )}
               />
-              <p
-                className={cn("text-xs font-medium opacity-90", stat.textClass)}
-              >
+              <p className={cn("text-xs font-medium", stat.textClass)}>
                 {stat.description}
               </p>
             </div>

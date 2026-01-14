@@ -20,13 +20,20 @@ const Sidebaritem = ({ item }: { item: ISidebarItem }) => {
   return (
     <Link
       href={path}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 ${
+      className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out ${
         isActive
-          ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-          : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+          ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
       }`}
     >
-      <Icon size={20} />
+      <Icon
+        size={18}
+        className={`transition-colors duration-300 ${
+          isActive
+            ? "text-primary"
+            : "text-muted-foreground group-hover:text-foreground"
+        }`}
+      />
       <span>{name}</span>
     </Link>
   );

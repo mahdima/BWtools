@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { DataTable } from "@/components/data-table";
 import { columns, Product } from "./columns";
 import { Button } from "@/components/ui/button";
@@ -8,28 +8,9 @@ import { supabase } from "@/lib/supabaseClient";
 import { Modal } from "@/components/Modal";
 import { ProductForm } from "@/components/ProductForm";
 import { addProduct, updateProduct } from "../addproduct/actions";
+import { getProducts } from "../actions";
+
 export const revalidate = 0;
-
-async function getData(): Promise<Product[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*, categories(categorie_name), brands(brand_name)")
-    .order("product_id");
-
-  if (error) {
-    console.error("Error fetching products:", error);
-    return [];
-  }
-
-  return (data || []).map((item: any) => ({
-    id: item.product_id,
-    product: item.product_name,
-    category: item.categories?.categorie_name || "",
-    price: item.unite_price,
-    brand: item.brands?.brand_name || "",
-    in_stock_vailable: item.in_stock_vailable,
-  }));
-}
 
 async function getProduct(id: string) {
   const { data, error } = await supabase
@@ -65,8 +46,14 @@ interface ProductPageProps {
 }
 
 const ProductPage = async ({ searchParams }: ProductPageProps) => {
-  const data = await getData();
   const params = await searchParams;
+  const page = typeof params.page === "string" ? parseInt(params.page) : 1;
+  const search = typeof params.search === "string" ? params.search : "";
+  const limit = 20;
+
+  const { data, count } = await getProducts({ page, limit, search });
+  const pageCount = Math.ceil(count / limit);
+
   const showAddModal = params.add === "true";
   const editId = params.edit as string;
 
@@ -84,26 +71,34 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
   }
 
   return (
-    <div className="p-4 w-[98%] mx-auto">
-      <div className="mb-4 mt-5">
-        <h1 className="text-2xl font-bold mb-1 text-gray-900">Products</h1>
-        <p className="text-sm text-gray-500">Manage your product catalog</p>
-      </div>
-      <DataTable
-        columns={columns}
-        data={data}
-        searchKey="product"
-        headerActions={
-          <Link href="/product?add=true">
-            <Button className="bg-[#0b1dff] text-white hover:bg-blue-700 w-[180px] h-[40px]">
-              <Plus className="mr-2 h-4 w-4" /> Add Product
-            </Button>
-          </Link>
-        }
-      />
+    <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">
+      <Suspense fallback={<div>Loading...</div>}>
+        <DataTable
+          columns={columns}
+          data={data}
+          searchKey="product"
+          title="Products"
+          description="Manage your product catalog"
+          pageCount={pageCount}
+          isServerSide={true}
+          headerActions={
+            <Link
+              href={`/product?add=true${
+                params.page ? `&page=${params.page}` : ""
+              }`}
+            >
+              <Button className="bg-[#0b1dff] text-white hover:bg-blue-700 w-[180px] h-[40px]">
+                <Plus className="mr-2 h-4 w-4" /> Add Product
+              </Button>
+            </Link>
+          }
+        />
+      </Suspense>
 
       {(showAddModal || (editId && productToEdit)) && (
-        <Modal>
+        <Modal
+          returnUrl={`/product${params.page ? `?page=${params.page}` : ""}`}
+        >
           <ProductForm
             key={editId || "add-product"}
             categories={categories}
@@ -111,6 +106,7 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
             product={productToEdit}
             action={editId ? updateProduct.bind(null, editId) : addProduct}
             title={editId ? "Edit Product" : "Add New Product"}
+            page={params.page}
           />
         </Modal>
       )}
@@ -119,3 +115,4 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
 };
 
 export default ProductPage;
+

@@ -45,7 +45,7 @@ export const columns: ColumnDef<Product>[] = [
     },
     cell: ({ row }) => (
       <div
-        className="w-64 truncate font-medium"
+        className="font-medium min-w-[150px]"
         title={row.getValue("product")}
       >
         {row.getValue("product")}
@@ -67,7 +67,7 @@ export const columns: ColumnDef<Product>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="w-40 truncate" title={row.getValue("category")}>
+      <div className="min-w-[100px]" title={row.getValue("category")}>
         {row.getValue("category")}
       </div>
     ),
@@ -87,7 +87,7 @@ export const columns: ColumnDef<Product>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="w-32 truncate" title={row.getValue("brand")}>
+      <div className="min-w-[100px]" title={row.getValue("brand")}>
         {row.getValue("brand")}
       </div>
     ),

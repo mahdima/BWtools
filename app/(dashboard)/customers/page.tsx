@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { DataTable } from "@/components/data-table";
 import { columns, Customer } from "./columns";
 import { supabase } from "@/lib/supabaseClient";
@@ -27,21 +27,19 @@ const CustomersPage = async () => {
   const data = await getData();
 
   return (
-    <div className="p-4 w-[98%] mx-auto">
-      <div className="mb-4 mt-5">
-        <h1 className="text-2xl font-bold mb-1 text-gray-900">Customers</h1>
-        <p className="text-sm text-gray-500">
-          View and manage customer details
-        </p>
-      </div>
-      <DataTable
-        columns={columns}
-        data={data}
-        searchKey="username"
-        // No headerActions (add button removed)
-      />
+    <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">
+      <Suspense fallback={<div>Loading...</div>}>
+        <DataTable
+          columns={columns}
+          data={data}
+          searchKey="username"
+          title="Customers"
+          description="View and manage customer details"
+        />
+      </Suspense>
     </div>
   );
 };
 
 export default CustomersPage;
+

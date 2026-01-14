@@ -14,9 +14,11 @@ import {
   Mail,
   MapPin,
 } from "lucide-react";
-import { updateOrderStatus } from "../actions";
+import { updateOrderStatus, getOrderTimeline, getOrderNotes } from "../actions";
 import Image from "next/image";
 import man from "../../../../img/man.png";
+import { OrderTimeline } from "@/components/order-timeline";
+import { OrderNotes } from "@/components/order-notes";
 
 async function getOrder(id: string) {
   // First fetch the order
@@ -106,6 +108,8 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
   const { id } = await params;
   const order = await getOrder(id);
   const items = await getOrderItems(id);
+  const timeline = await getOrderTimeline(id);
+  const notes = await getOrderNotes(id);
 
   if (!order) {
     return <div>Order not found</div>;
@@ -146,6 +150,14 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <Link
+              href={`/invoice/${order.id}`}
+              target="_blank"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+            >
+              <CreditCard className="h-4 w-4" />
+              Print Invoice
+            </Link>
             <span
               className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${currentStatusColor}`}
             >
@@ -177,10 +189,13 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                   >
                     <div className="flex items-center gap-4">
                       {item.products?.product_link && (
-                        <img
+                        <Image
                           src={item.products.product_link}
-                          alt={item.products?.product_name}
+                          alt={item.products?.product_name || "Product"}
+                          width={64}
+                          height={64}
                           className="h-16 w-16 object-cover rounded-md border border-gray-100"
+                          unoptimized
                         />
                       )}
 
@@ -208,6 +223,12 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Timeline & Notes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <OrderTimeline events={timeline} />
+            <OrderNotes orderId={id} notes={notes} />
           </div>
         </div>
 

@@ -65,9 +65,12 @@ export async function addProduct(formData: FormData) {
         throw new Error(`Failed to add product: ${error.message}`);
     }
 
-    revalidatePath("/product");
-    redirect("/product");
+    const page = formData.get("page")?.toString();
+    const cursor = page ? `?page=${page}` : "";
+    const redirectPath = `/product${cursor}${cursor ? "&" : "?"}toast=success`;
 
+    revalidatePath("/product");
+    redirect(redirectPath);
 }
 
 export async function deleteProduct(productId: string) {
@@ -151,6 +154,10 @@ export async function updateProduct(productId: string, formData: FormData) {
         throw new Error(`Failed to update product: ${error.message}`);
     }
 
+    const page = formData.get("page")?.toString();
+    const cursor = page ? `?page=${page}` : "";
+    const redirectPath = `/product${cursor}${cursor ? "&" : "?"}toast=success`;
+
     revalidatePath("/product");
-    redirect("/product");
+    redirect(redirectPath);
 }

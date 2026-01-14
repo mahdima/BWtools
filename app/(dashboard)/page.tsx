@@ -26,8 +26,8 @@ export default async function Home({ searchParams }: DashboardProps) {
   const revenueData = await getRevenueData(period);
 
   return (
-    <div className="p-4 w-[98%] mx-auto h-[calc(100vh-2rem)] flex flex-col space-y-4">
-      <div className="flex-none flex items-center justify-between">
+    <div className="p-4 pl-16 lg:pl-4 w-full lg:w-[98%] mx-auto h-[calc(100vh-2rem)] flex flex-col space-y-4 overflow-auto">
+      <div className="flex-none flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-500">
@@ -53,3 +53,4 @@ export default async function Home({ searchParams }: DashboardProps) {
     </div>
   );
 }
+
