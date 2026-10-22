@@ -1,0 +1,109 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+BW Tools Dashboard: an admin panel (products, brands, categories, orders, customers, team) for an e-commerce mobile app. The backend is Supabase. Prices are in DZD (formatted with `Intl.NumberFormat("fr-DZ", { currency: "DZD" })`). Production runs at https://b-wtools.vercel.app (Vercel deploys from `master`).
+
+Project docs:
+- [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md): known security issues, bugs and missing features.
+- [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md): the ordered task list. Each task has a checkbox, its dependencies, files to change, steps and a "Done when" check.
+
+## Workflow: plan first, one task at a time
+
+Follow this for every feature, fix or refactor bigger than a one-line change.
+
+1. **Plan before editing.** Read the relevant code first. If the work is not already in `docs/IMPLEMENTATION_PLAN.md`, add it as task blocks using the template at the end of that file, in the right phase. Show the user the plan (task IDs, files, steps) and wait for approval before writing code. Use plan mode when it is available.
+2. **Keep a task list.** Split the work into small tasks that can each be checked on their own, and track them with the todo/task list tool as you go.
+3. **Implement one task at a time.** Change only what the current task needs. If you notice something else, add it to the plan as a new task instead of doing it now. When asked for "the next task", take the first unchecked box in file order, after checking its **Depends on** line.
+4. **Verify before moving on.** Run `npx tsc --noEmit`, plus `npm run lint` and `npm test` once they exist (P2-01, P2-02). Run `npm run build` at the end of each phase. For UI changes, run `npm run dev` and check the page. A task is not done until its "Done when" check passes.
+5. **Update the plan.** Tick the task's checkbox, and add a short note under the task if something was deferred or found along the way.
+6. **Report, then stop.** Summarise what changed, how it was verified, and what the next task is. If the user asked for a whole phase or feature, carry on to the next task only after the current one is verified.
+7. **Database changes go through migrations.** Write SQL in `supabase/migrations/`, or in `docs/sql/<task-id>-<name>.sql` until P2-03 sets that folder up, and ask the user to apply it. Never run DDL or data changes against the production Supabase project yourself.
+8. **Commit only when asked**: one commit per task, with the task ID in the message (for example `P1-03: only active admins can sign in`).
+
+**Never create artifacts.** Don't publish claude.ai Artifacts or Claude Docs, and don't use any artifact or docs tool, even for reports, plans, dashboards or anything else meant to be shared. Write every report, plan, analysis or write-up as a Markdown file in `docs/` in this repo, then summarise it in chat.
+
+## Commands
+
+```bash
+npm run dev      # dev server on http://localhost:3000
+npm run build    # production build (also the main type/compile check)
+npm run start    # serve the production build
+npx tsc --noEmit # type-check only
+```
+
+There is no lint script, no ESLint config and no test suite.
+
+The app needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. The database schema, RLS policies and storage buckets live in the Supabase project; there are no migrations in this repo.
+
+## Stack
+
+Next.js 16 (App Router) with React 19 and the React Compiler enabled (`reactCompiler: true`). Tailwind CSS v4 is configured CSS-first in [app/globals.css](app/globals.css) (`@theme inline`), with no `tailwind.config`. UI primitives are shadcn/ui (new-york style) in `components/ui/`. The app also uses TanStack Table, Tiptap ([components/editor.tsx](components/editor.tsx)), Recharts, sonner for toasts and next-themes. Server Actions accept bodies up to 10 MB so image uploads work.
+
+## Architecture
+
+### Supabase clients: pick the right one
+
+| Client | File | Used for |
+|---|---|---|
+| `supabaseAdmin` | [lib/supabaseAdmin.ts](lib/supabaseAdmin.ts) | Service-role key, **bypasses RLS**. Most reads and writes in server actions and server pages, plus `auth.admin.*` and storage uploads. |
+| `createClient()` (server) | [utils/supabase/server.ts](utils/supabase/server.ts) | Cookie-bound SSR client. Login/logout and `auth.getUser()` to identify the current admin; some newer actions (categories, settings, profile) also query with it. |
+
+There is no plain anon client any more. Don't add one: the anon key is public (it ships in the mobile app), so anything it can read is readable by anyone.
+
+`supabaseAdmin` skips RLS, so **every exported function in a `'use server'` file must check permissions itself**. Each export is a public endpoint, even if no UI calls it. Use the helpers in [lib/auth.ts](lib/auth.ts), with roles from [lib/roles.ts](lib/roles.ts) (`super_admin` > `admin` > `viewer`):
+
+- `await requireAdmin("admin")` as the first line of actions that throw on error. The call returns the admin; use `admin.id` for "changed by" fields instead of calling `auth.getUser()` again.
+- `if (!(await getAuthorizedAdmin("admin"))) return { success: false, message: "Not authorized" }` in actions that return result objects.
+- `await requireAdminPage()` in pages and layouts, which redirects non-admins to `/login?error=unauthorized`.
+- `getCurrentAdmin()` is cached per request. It returns `null` without a session, without an `admins` row, or for an inactive admin. A missing role is treated as `viewer`.
+
+Minimum roles: catalogue, orders and customers need `admin`; team management needs `super_admin`; own profile, password and notifications need `viewer`. Order statuses are listed in [lib/orders.ts](lib/orders.ts).
+
+**Known gap:** production still runs the old code until Phase 1 of the plan is deployed. In the old code, any Supabase account can sign in, and any signed-in user can make themselves `super_admin`.
+
+### Auth and roles
+
+- [middleware.ts](middleware.ts) calls `updateSession` in [utils/supabase/middleware.ts](utils/supabase/middleware.ts). It refreshes the Supabase session cookie and redirects to `/login` when there is no session, or to `/login?error=unauthorized` when the user is not an active admin (`findActiveAdmin()`). `/login` and `/auth` are exempt. The middleware runs on every request, including client navigations and server-action calls, which is why the admin check lives there and not only in layouts. Keep the returned `supabaseResponse` cookies intact if you change this.
+- Login ([app/login/actions.ts](app/login/actions.ts)) signs the user straight back out unless they have an active `admins` row.
+- Admin users are rows in the `admins` table, keyed by the auth user id, with `role` (`super_admin` | `admin` | `viewer`) and `is_active`. Creating a team member creates both the auth user and the `admins` row, and rolls back the auth user if the insert fails.
+- [components/AuthProvider.tsx](components/AuthProvider.tsx), [components/ProtectedRoute.tsx](components/ProtectedRoute.tsx) and [utils/supabase/client.ts](utils/supabase/client.ts) are unused leftovers (the first two are a localStorage mock). Don't build on them.
+
+### Routing layout
+
+- `app/(dashboard)/` is a route group. Its [layout.tsx](app/(dashboard)/layout.tsx) fetches the admin profile and notifications on the server and renders the `Sidebar` (wrapped for mobile). Pages use `pl-16 lg:pl-4` to leave room for the mobile sidebar toggle.
+- `app/login`, `app/logout` and `app/invoice/[id]` (printable invoice) sit outside the dashboard layout.
+- [app/(dashboard)/actions.ts](app/(dashboard)/actions.ts) holds the shared queries: dashboard stats (cached for 60s with `unstable_cache`), revenue series, and the paginated `getProducts` / `getOrders`.
+
+### Feature module pattern
+
+Each feature folder (`product`, `brand`, `categories`, `customers`, `order`, `team`, …) normally has:
+
+- `page.tsx`: an async server component that reads `searchParams` (`page`, `search`, `status`, `add`, `edit`) and fetches data.
+- `columns.tsx`: a `"use client"` file with TanStack `ColumnDef`s. Row actions call server actions directly.
+- `actions.ts`: `'use server'` functions.
+
+**Lists** use server-side pagination. Queries use `.range(from, to)` with `{ count: "exact" }`, and the page passes `pageCount` and `isServerSide` to [components/data-table.tsx](components/data-table.tsx), which writes page, search and filter changes back into the URL.
+
+**Add/edit** is driven by the URL rather than separate routes. `?add=true` or `?edit=<id>` makes the page render `<Modal returnUrl=…>` ([components/Modal.tsx](components/Modal.tsx)) around a form whose `action` is a server action (for edits, bound with the id via `.bind(null, id)`).
+
+**After a mutation**, actions call `revalidatePath(...)` and usually `redirect(...)` with `?toast=success`. [components/toast-listener.tsx](components/toast-listener.tsx) in the root layout shows the toast and strips the param. Newer actions (e.g. categories) instead return `{ success, message }` for the client form to handle.
+
+**Legacy routes** `addproduct`, `editproduct/[id]`, `addcategory` and `editcategory/[id]` still exist as standalone pages, but the modal flow has replaced them. However, product mutations used by the live modal flow still live in [app/(dashboard)/addproduct/actions.ts](app/(dashboard)/addproduct/actions.ts). Category mutations used by the live flow are in [app/(dashboard)/categories/actions.ts](app/(dashboard)/categories/actions.ts); `addcategory/actions.ts` serves only the legacy pages.
+
+### Orders
+
+Status changes go through `updateOrderStatus` in [app/(dashboard)/order/actions.ts](app/(dashboard)/order/actions.ts), which also writes an `order_status_history` row recording who made the change. Admins can attach internal notes (`order_notes`). Notifications (`notifications` table, one row per admin) are created by `createNotification` / `notifyNewOrder` in [app/(dashboard)/notifications/actions.ts](app/(dashboard)/notifications/actions.ts).
+
+## Database naming quirks (must match exactly)
+
+Several column and bucket names in the Supabase schema are misspelled or unusually cased. Use them exactly as written:
+
+- `products`: `product_id`, `product_name`, `unite_price`, `in_stock_vailable`, `Category_id` (capital C), `brand_id`, `product_link` (image URL), `description`
+- `categories`: `categorie_id`, `categorie_name`
+- `brands`: `brand_id`, `brand_name`
+- Order statuses: `New`, `processing` (lowercase), `Delivering`, `Delivered`, `Cancelled`
+- Storage buckets: `products` (product images), `StaticAssests` (category images, misspelled)
+- Customers are read from the `profiles_with_email` view and the `profiles` table.
