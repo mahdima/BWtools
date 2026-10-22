@@ -801,7 +801,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 ## Phase 6 — Should-have features
 
 ### P6-01 · Store settings
-- [ ] Done
+- [x] Done
 
 **Depends on:** P2-03
 **Files:** migration (`store_settings` single-row table: name, email, phone, address, `low_stock_threshold`, invoice footer), `settings/page.tsx` + action, `invoice-printable.tsx`
@@ -810,6 +810,16 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. The invoice header and footer read from the table.
 
 **Done when:** Nothing store-specific is hard-coded anymore.
+
+**Notes (2026-10-22):**
+- **Built to work before and after the SQL** (`docs/sql/P6-01-store-settings.sql`: a single-row table, CHECK `id = 1`, RLS on with no policies so only the service role can access it).
+- **Reading:** `getStoreSettings()` in `lib/data/settings.ts` returns the defaults when the table is missing (`PGRST205`/`42P01`, quietly) and flags `isDefault`. The table isn't in the generated types yet, so rows are read through an untyped client and validated with `storeSettingsSchema` (`lib/store-settings.ts`, 4 tests). After the SQL, run `npm run db:types`.
+- **Saving:** `updateStoreSettings` (super admin only) validates and upserts `id=1`. While the table is missing it explains that the SQL must be run first.
+- **Settings > General:** an "Your account" card plus a "Store" card. Super admins get `StoreSettingsForm` (`useFormAction`); others see read-only values; super admins also see a notice while the defaults are in use.
+- **Invoice:** the header (name, address, email, phone) and footer come from the settings. Nothing store-specific is hard-coded.
+- **Verified against the real project, where the table is still missing:** a temporary page showed the fallback to the defaults (no error logged), the prefilled form, and the real action refusing without a session with the edit kept, 4/4. The page was deleted afterwards.
+- **Checks:** `typecheck`, lint (0 errors), 118 tests, `build` and the guard audit (22/22) pass.
+- **Owner:** run the SQL, then `npm run db:types`.
 
 ### P6-02 · Notifications pipeline (needs owner)
 - [ ] Done

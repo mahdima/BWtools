@@ -129,3 +129,4 @@ Several names are misspelled or unusually cased. Use them exactly as written:
 - Order statuses: `New`, `processing` (lowercase), `Delivering`, `Delivered`, `Cancelled` (see `lib/orders.ts`)
 - Storage buckets: `products` (product images), `StaticAssests` (category images, misspelled)
 - `addresses`, `favorites` and `saved_orders` belong to the mobile app; the dashboard doesn't use them yet.
+- `store_settings` (single row, `id = 1`): store name, contact details, address, `low_stock_threshold` and invoice footer. Created by `docs/sql/P6-01-store-settings.sql`. Until it exists, `getStoreSettings()` returns `DEFAULT_STORE_SETTINGS` from `lib/store-settings.ts`. Read it through `lib/data/settings.ts` and never hard-code store details.

@@ -1,5 +1,6 @@
 import { requireAdminPage } from "@/lib/auth";
 import { getOrderWithDetails } from "@/lib/data/orders";
+import { getStoreSettings } from "@/lib/data/settings";
 import { InvoicePrintable } from "@/components/invoice-printable";
 import { notFound } from "next/navigation";
 
@@ -16,8 +17,8 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   if (!Number.isInteger(orderId)) notFound();
 
   // Same loader as the order page, so the two always agree
-  const order = await getOrderWithDetails(orderId);
+  const [order, store] = await Promise.all([getOrderWithDetails(orderId), getStoreSettings()]);
   if (!order) notFound();
 
-  return <InvoicePrintable order={order} />;
+  return <InvoicePrintable order={order} store={store} />;
 }

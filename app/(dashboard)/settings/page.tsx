@@ -3,9 +3,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SecurityForm } from "@/components/SecurityForm";
 import { requireAdminPage } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/roles";
+import { getStoreSettings } from "@/lib/data/settings";
+import { StoreSettingsForm } from "@/components/store-settings-form";
 
 const SettingsPage = async () => {
-  const admin = await requireAdminPage();
+  const [admin, settings] = await Promise.all([requireAdminPage(), getStoreSettings()]);
+  const isSuperAdmin = admin.role === "super_admin";
 
   return (
     <div className="p-4 w-[98%] mx-auto">
@@ -24,35 +27,50 @@ const SettingsPage = async () => {
 
         <TabsContent value="general" className="space-y-4">
           <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 max-w-2xl">
-            <h3 className="text-lg font-medium mb-4">Store Profile</h3>
-            <div className="grid gap-4 py-4">
+            <h3 className="text-lg font-medium mb-4">Your account</h3>
+            <dl className="grid gap-4">
               <div className="grid grid-cols-3 items-center gap-4">
-                <label className="text-sm font-medium text-gray-500">
-                  Store Name
-                </label>
-                <div className="col-span-2 font-medium text-gray-900">
-                  BW Tools
-                </div>
+                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                <dd className="col-span-2 font-medium text-gray-900">{admin.email}</dd>
               </div>
               <div className="grid grid-cols-3 items-center gap-4">
-                <label className="text-sm font-medium text-gray-500">
-                  Admin Email
-                </label>
-                <div className="col-span-2 font-medium text-gray-900">
-                  {admin.email}
-                </div>
-              </div>
-              <div className="grid grid-cols-3 items-center gap-4">
-                <label className="text-sm font-medium text-gray-500">
-                  Role
-                </label>
-                <div className="col-span-2 flex">
+                <dt className="text-sm font-medium text-gray-500">Role</dt>
+                <dd className="col-span-2 flex">
                   <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">
                     {ROLE_LABELS[admin.role]}
                   </span>
-                </div>
+                </dd>
               </div>
-            </div>
+            </dl>
+          </div>
+
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 max-w-2xl">
+            <h3 className="text-lg font-medium mb-1">Store</h3>
+            <p className="text-sm text-gray-500 mb-4">Used on invoices and for low-stock alerts.</p>
+            {isSuperAdmin && settings.isDefault && (
+              <p className="mb-4 p-3 rounded-lg bg-amber-50 text-amber-700 text-sm">
+                These are the default values. Saving needs the store settings table
+                (docs/sql/P6-01-store-settings.sql).
+              </p>
+            )}
+            {isSuperAdmin ? (
+              <StoreSettingsForm settings={settings} />
+            ) : (
+              <dl className="grid gap-4">
+                {[
+                  ["Store name", settings.store_name],
+                  ["Contact email", settings.contact_email],
+                  ["Contact phone", settings.contact_phone ?? "—"],
+                  ["Address", settings.address || "—"],
+                  ["Low-stock threshold", String(settings.low_stock_threshold)],
+                ].map(([label, value]) => (
+                  <div key={label} className="grid grid-cols-3 items-center gap-4">
+                    <dt className="text-sm font-medium text-gray-500">{label}</dt>
+                    <dd className="col-span-2 font-medium text-gray-900">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </div>
         </TabsContent>
 

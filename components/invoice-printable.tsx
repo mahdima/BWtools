@@ -5,14 +5,16 @@ import { Printer } from "lucide-react";
 import React from "react";
 import { formatAddressLines } from "@/lib/address";
 import type { OrderDetails } from "@/lib/data/orders";
+import type { StoreSettings } from "@/lib/store-settings";
 
 interface InvoiceProps {
   order: OrderDetails;
+  store: StoreSettings;
 }
 
 const dzd = new Intl.NumberFormat("fr-DZ", { style: "currency", currency: "DZD" });
 
-export function InvoicePrintable({ order }: InvoiceProps) {
+export function InvoicePrintable({ order, store }: InvoiceProps) {
   const { customer, items, shippingAddress } = order;
   const otherCharges = order.total - order.itemsTotal;
 
@@ -36,9 +38,10 @@ export function InvoicePrintable({ order }: InvoiceProps) {
           <p className="text-gray-500 mt-2">#{order.id}</p>
         </div>
         <div className="text-right">
-          <h2 className="text-xl font-bold">BW Tools</h2>
-          <p className="text-gray-600">Algeria</p>
-          <p className="text-gray-600">contact@bwtools.com</p>
+          <h2 className="text-xl font-bold">{store.store_name}</h2>
+          {store.address && <p className="text-gray-600 whitespace-pre-line">{store.address}</p>}
+          <p className="text-gray-600">{store.contact_email}</p>
+          {store.contact_phone && <p className="text-gray-600">{store.contact_phone}</p>}
         </div>
       </div>
 
@@ -156,7 +159,7 @@ export function InvoicePrintable({ order }: InvoiceProps) {
       </div>
 
       <div className="mt-16 text-center text-gray-500 text-sm">
-        <p>Thank you for your business!</p>
+        {store.invoice_footer && <p>{store.invoice_footer}</p>}
       </div>
     </div>
   );
