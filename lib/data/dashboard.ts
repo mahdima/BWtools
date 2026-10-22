@@ -1,9 +1,7 @@
-'use server'
-
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { parseOrderNumber } from "@/lib/orders";
-import { getPeriodStart, groupRevenue } from "@/lib/dates";
+import "server-only";
 import { unstable_cache } from "next/cache";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getPeriodStart, groupRevenue } from "@/lib/dates";
 
 // Cached version of dashboard stats - refreshes every 60 seconds
 export const getDashboardStats = unstable_cache(
@@ -99,98 +97,4 @@ export async function getRevenueData(period: string = "last_week") {
   }
 
   return groupRevenue(data, period, now);
-}
-
-export async function getProducts({
-  page = 1,
-  limit = 20,
-  search = "",
-}: {
-  page?: number;
-  limit?: number;
-  search?: string;
-}) {
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let query = supabaseAdmin
-    .from("products")
-    .select("*, categories(categorie_name), brands(brand_name)", { count: "exact" })
-    .order("product_id", { ascending: false })
-    .range(from, to);
-
-  if (search) {
-    query = query.ilike("product_name", `%${search}%`);
-  }
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    console.error("Error fetching products:", error);
-    return { data: [], count: 0 };
-  }
-
-  const formattedData = (data || []).map((item: any) => ({
-    id: item.product_id,
-    product: item.product_name,
-    category: item.categories?.categorie_name || "",
-    price: item.unite_price,
-    brand: item.brands?.brand_name || "",
-    in_stock_vailable: item.in_stock_vailable,
-    // Add other fields if needed for editing (used in form)
-    ...item,
-  }));
-
-  return { data: formattedData, count: count || 0 };
-}
-
-export async function getOrders({
-  page = 1,
-  limit = 20,
-  search = "",
-  status = "",
-}: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-}) {
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let query = supabaseAdmin
-    .from("orders")
-    .select("*", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  // Search is by order number only for now (customer name/phone: P5-04).
-  // Text that isn't an order number matches nothing rather than every order.
-  if (search.trim()) {
-    const orderId = parseOrderNumber(search);
-    if (orderId === null) {
-      return { data: [], count: 0 };
-    }
-    query = query.eq("id", orderId);
-  }
-
-  if (status && status !== "All") {
-    query = query.eq("status", status);
-  }
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    console.error("Error fetching orders:", error);
-    return { data: [], count: 0 };
-  }
-
-  const formattedData = (data || []).map((item: any) => ({
-    id: item.id,
-    created_at: item.created_at,
-    total: item.total,
-    status: item.status,
-  }));
-
-  return { data: formattedData, count: count || 0 };
 }

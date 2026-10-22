@@ -8,7 +8,7 @@ import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export type Brand = {
-  id: string;
+  id: number;
   brand: string;
 };
 
@@ -71,7 +71,7 @@ export const columns: ColumnDef<Brand>[] = [
             description="This permanently removes the brand. Brands that still have products can't be deleted."
             confirmLabel="Delete"
             destructive
-            action={() => deleteBrand(brand.id)}
+            action={() => deleteBrand(String(brand.id))}
             trigger={
               <Button
                 variant="ghost"

@@ -14,10 +14,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export type Order = {
-  id: string;
+  id: number;
   total: number;
   created_at: string;
-  status: string;
+  status: string | null;
 };
 
 export const columns: ColumnDef<Order>[] = [
@@ -87,7 +87,7 @@ export const columns: ColumnDef<Order>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(order.id)}
+              onClick={() => navigator.clipboard.writeText(String(order.id))}
             >
               Copy Order ID
             </DropdownMenuItem>

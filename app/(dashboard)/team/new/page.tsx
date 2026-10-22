@@ -1,14 +1,15 @@
 import React from "react";
-import { isSuperAdmin } from "../actions";
+import { requireAdminPage } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { NewAdminForm } from "@/components/new-admin-form";
 
 export default async function NewAdminPage() {
-  const isSuper = await isSuperAdmin();
+  const admin = await requireAdminPage();
 
-  if (!isSuper) {
+  // Only super admins create accounts (createAdmin checks this again)
+  if (admin.role !== "super_admin") {
     redirect("/team");
   }
 

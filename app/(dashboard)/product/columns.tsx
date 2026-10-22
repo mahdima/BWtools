@@ -9,12 +9,12 @@ import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export type Product = {
-  id: string;
+  id: number;
   product: string;
   category: string;
   price: number;
   brand: string;
-  in_stock_vailable: number;
+  in_stock_vailable: number | null;
 };
 
 export const columns: ColumnDef<Product>[] = [
@@ -125,7 +125,7 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: "in_stock_vailable",
     header: () => <div className="w-32 font-medium text-sm">Stock</div>,
     cell: ({ row }) => {
-      const quantity = row.getValue("in_stock_vailable") as number;
+      const quantity = (row.getValue("in_stock_vailable") as number | null) ?? 0;
       const isOutOfStock = quantity === 0;
 
       return (
@@ -163,7 +163,7 @@ export const columns: ColumnDef<Product>[] = [
             description="This permanently removes the product from the catalogue. This can't be undone."
             confirmLabel="Delete"
             destructive
-            action={() => deleteProduct(product.id)}
+            action={() => deleteProduct(String(product.id))}
             trigger={
               <Button
                 variant="ghost"

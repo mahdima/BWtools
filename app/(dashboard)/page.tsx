@@ -3,12 +3,7 @@ import { RecentOrders } from "@/components/recent-orders";
 import { LowStock } from "@/components/low-stock";
 import { DashboardFilter } from "@/components/dashboard-filter";
 import { RevenueChart } from "@/components/revenue-chart";
-import {
-  getDashboardStats,
-  getRecentOrders,
-  getLowStockProducts,
-  getRevenueData,
-} from "./actions";
+import { getDashboardStats, getRecentOrders, getRevenueData } from "@/lib/data/dashboard";
 
 export const revalidate = 0; // Ensure fresh data on every request
 
@@ -20,10 +15,11 @@ export default async function Home({ searchParams }: DashboardProps) {
   const params = await searchParams;
   const period = typeof params.period === "string" ? params.period : "all";
 
-  const stats = await getDashboardStats(period);
-  const recentOrders = await getRecentOrders();
-  // const lowStockProducts = await getLowStockProducts();
-  const revenueData = await getRevenueData(period);
+  const [stats, recentOrders, revenueData] = await Promise.all([
+    getDashboardStats(period),
+    getRecentOrders(),
+    getRevenueData(period),
+  ]);
 
   return (
     <div className="p-4 pl-16 lg:pl-4 w-full lg:w-[98%] mx-auto h-[calc(100vh-2rem)] flex flex-col space-y-4 overflow-auto">

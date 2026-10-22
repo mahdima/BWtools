@@ -1,6 +1,6 @@
 import Sidebar from "@/components/Sidebar";
 import { requireAdminPage } from "@/lib/auth";
-import { getNotifications } from "./notifications/actions";
+import { getNotifications } from "@/lib/data/notifications";
 import { MobileSidebarWrapper } from "@/components/mobile-sidebar-wrapper";
 
 export default async function DashboardLayout({
@@ -9,7 +9,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const admin = await requireAdminPage();
-  const notifications = await getNotifications();
+  const notifications = await getNotifications(admin.id);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">

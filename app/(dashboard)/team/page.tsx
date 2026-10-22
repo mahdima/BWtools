@@ -1,14 +1,14 @@
 import React from "react";
-import { getTeamMembers, isSuperAdmin, getCurrentUserRole } from "./actions";
+import { requireAdminPage } from "@/lib/auth";
+import { getTeamMembers } from "@/lib/data/admins";
 import { Button } from "@/components/ui/button";
 import { Users, UserPlus, Shield, Eye, UserCog } from "lucide-react";
 import Link from "next/link";
 import { TeamMemberCard } from "../../../components/team-member-card";
 
 export default async function TeamPage() {
-  const members = await getTeamMembers();
-  const isSuper = await isSuperAdmin();
-  const currentRole = await getCurrentUserRole();
+  const [admin, members] = await Promise.all([requireAdminPage(), getTeamMembers()]);
+  const isSuper = admin.role === "super_admin";
 
   return (
     <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">

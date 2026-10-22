@@ -7,9 +7,9 @@ import { CustomerForm } from "@/components/CustomerForm";
 
 export type Customer = {
   id: string;
-  username: string;
-  email: string;
-  phone: string;
+  username: string | null;
+  email: string | null;
+  phone: string | null;
 };
 
 export const columns: ColumnDef<Customer>[] = [

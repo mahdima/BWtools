@@ -4,42 +4,12 @@ import { columns, Product } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { Modal } from "@/components/Modal";
 import { ProductForm } from "@/components/ProductForm";
 import { addProduct, updateProduct } from "./actions";
-import { getProducts } from "../actions";
+import { getProductById, getProductFormOptions, getProducts } from "@/lib/data/products";
 
 export const revalidate = 0;
-
-async function getProduct(id: string) {
-  const { data, error } = await supabaseAdmin
-    .from("products")
-    .select("*")
-    .eq("product_id", parseInt(id))
-    .single();
-
-  if (error || !data) return null;
-  return data;
-}
-
-async function getCategories() {
-  const { data, error } = await supabaseAdmin
-    .from("categories")
-    .select("categorie_id, categorie_name")
-    .order("categorie_name");
-  if (error) return [];
-  return data || [];
-}
-
-async function getBrands() {
-  const { data, error } = await supabaseAdmin
-    .from("brands")
-    .select("brand_id, brand_name")
-    .order("brand_name");
-  if (error) return [];
-  return data || [];
-}
 
 interface ProductPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -57,18 +27,12 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
   const showAddModal = params.add === "true";
   const editId = params.edit as string;
 
-  let productToEdit = null;
-  let categories: any[] = [];
-  let brands: any[] = [];
-
-  if (showAddModal || editId) {
-    categories = await getCategories();
-    brands = await getBrands();
-  }
-
-  if (editId) {
-    productToEdit = await getProduct(editId);
-  }
+  // Only load what the add/edit modal needs when it is open
+  const [productToEdit, formOptions] = await Promise.all([
+    editId ? getProductById(Number(editId)) : null,
+    showAddModal || editId ? getProductFormOptions() : { categories: [], brands: [] },
+  ]);
+  const { categories, brands } = formOptions;
 
   return (
     <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">

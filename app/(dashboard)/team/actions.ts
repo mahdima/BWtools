@@ -1,59 +1,13 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthorizedAdmin, getCurrentAdmin } from "@/lib/auth";
+import { getAuthorizedAdmin } from "@/lib/auth";
 import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
 import { isRole } from "@/lib/roles";
 import { parseForm } from "@/lib/validation/form";
 import { adminCreateSchema } from "@/lib/validation/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-// Get all team members
-export async function getTeamMembers() {
-  // Exported from a 'use server' file and returns emails, so check the caller here too
-  if (!(await getAuthorizedAdmin('viewer'))) return [];
-
-  const { data, error } = await supabaseAdmin
-    .from('admins')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error("Error fetching team members:", error);
-    return [];
-  }
-  
-  // `admins` has no email column, so read each member's email from their auth user
-  // (a team is a handful of people, so one lookup each is fine)
-  const emails = await Promise.all(
-    (data || []).map(async (member) => {
-      const { data: authData } = await supabaseAdmin.auth.admin.getUserById(member.id);
-      return authData?.user?.email;
-    })
-  );
-
-  // A missing or unknown role is shown as viewer and a null is_active as active,
-  // matching what lib/auth enforces
-  return (data || []).map((member, index) => ({
-    ...member,
-    email: emails[index],
-    role: isRole(member.role) ? member.role : 'viewer',
-    is_active: member.is_active !== false,
-  }));
-}
-
-// Check if current user is super admin
-export async function isSuperAdmin() {
-  const admin = await getCurrentAdmin();
-  return admin?.role === 'super_admin';
-}
-
-// Get current user's role
-export async function getCurrentUserRole() {
-  const admin = await getCurrentAdmin();
-  return admin?.role ?? null;
-}
 
 // Create new admin (super admin only)
 // Form action (via useFormAction): returns an error to show, or redirects on success.

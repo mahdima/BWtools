@@ -52,21 +52,6 @@ export async function updateOrderStatus(orderId: number, newStatus: string): Pro
     return { success: true, message: `Order marked as ${newStatus}.` };
 }
 
-// Get order status history
-export async function getOrderTimeline(orderId: number) {
-    const { data, error } = await supabaseAdmin
-        .from('order_status_history')
-        .select('*, admins(full_name)')
-        .eq('order_id', orderId)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error("Error fetching order timeline:", error);
-        return [];
-    }
-    return data || [];
-}
-
 // Add internal note to order
 export async function addOrderNote(orderId: number, note: string): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
@@ -96,20 +81,6 @@ export async function addOrderNote(orderId: number, note: string): Promise<Actio
     return { success: true, message: "Note added." };
 }
 
-// Get all notes for an order
-export async function getOrderNotes(orderId: number) {
-    const { data, error } = await supabaseAdmin
-        .from('order_notes')
-        .select('*, admins(full_name)')
-        .eq('order_id', orderId)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error("Error fetching order notes:", error);
-        return [];
-    }
-    return data || [];
-}
 
 const EXPORT_BATCH = 1000; // Supabase returns at most 1000 rows per request
 const EXPORT_MAX_ROWS = 50_000;

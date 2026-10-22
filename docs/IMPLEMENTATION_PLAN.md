@@ -598,7 +598,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Docs:** CLAUDE.md now describes where mutations live instead of the legacy routes.
 
 ### P4-03 · Data-access layer
-- [ ] Done
+- [x] Done
 
 **Files:** new `lib/data/{products,brands,categories,orders,customers,admins,dashboard}.ts`, the pages, `app/(dashboard)/actions.ts`
 **Steps:**
@@ -608,6 +608,17 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 4. Update the Architecture section of CLAUDE.md.
 
 **Done when:** No page imports `supabaseAdmin` directly, and the build passes.
+
+**Notes (2026-10-22):**
+- **New modules:** `lib/data/{dashboard,products,orders,brands,categories,customers,admins,notifications}.ts`, all `server-only` and typed. `app/(dashboard)/actions.ts` was split by script, so the code moved verbatim minus the `any` casts, then deleted.
+- **Moved out of `'use server'` files:** `getTeamMembers`, `isSuperAdmin`, `getCurrentUserRole`, `getOrderTimeline`, `getOrderNotes` and `getNotifications`. **These were public endpoints and now are not.** No `'use server'` file exports a read any more.
+- **Pages:**
+  - None imports `supabaseAdmin`; the inline queries in the product, brand, category and customer pages moved to `lib/data`.
+  - `Promise.all` on the dashboard, product, brand and team pages.
+  - The layout passes `admin.id` to `getNotifications`, saving one `auth.getUser()` round-trip per page.
+  - The team pages use `requireAdminPage()` and `admin.role`.
+- **Types:** the row types `Brand`, `Category`, `Product` and `Order` now match the data: numeric ids, nullable status and stock. Their `any` had hidden the mismatch. `getCustomers` skips view rows with a null id.
+- **Checks:** `typecheck`, lint (0 errors, warnings down from 37 to 30), 95 tests, `build`, the guard audit (21/21) and the smoke test (11/11) pass.
 
 ### P4-04 · One dialog component and accessibility basics
 - [ ] Done

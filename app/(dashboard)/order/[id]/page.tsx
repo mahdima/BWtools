@@ -1,5 +1,5 @@
 import React from "react";
-import { getOrderWithDetails } from "@/lib/data/orders";
+import { getOrderNotes, getOrderTimeline, getOrderWithDetails } from "@/lib/data/orders";
 import { formatAddressLines } from "@/lib/address";
 import Link from "next/link";
 import {
@@ -13,7 +13,6 @@ import {
   Mail,
   MapPin,
 } from "lucide-react";
-import { getOrderTimeline, getOrderNotes } from "../actions";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import man from "../../../../img/man.png";

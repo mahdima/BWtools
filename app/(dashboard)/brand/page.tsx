@@ -4,54 +4,24 @@ import { columns, Brand } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getBrandById, getBrands } from "@/lib/data/brands";
 import { Modal } from "@/components/Modal";
 import { BrandForm } from "@/components/BrandForm";
 import { addBrand, updateBrand } from "./actions";
-
-async function getData(): Promise<Brand[]> {
-  const { data, error } = await supabaseAdmin
-    .from("brands")
-    .select("*")
-    .order("brand_id");
-
-  if (error) {
-    console.error("Error fetching brands:", error);
-    return [];
-  }
-
-  return (data || []).map((item: any) => ({
-    id: item.brand_id,
-    brand: item.brand_name,
-  }));
-}
-
-async function getBrand(id: string) {
-  const { data, error } = await supabaseAdmin
-    .from("brands")
-    .select("*")
-    .eq("brand_id", parseInt(id))
-    .single();
-
-  if (error || !data) return null;
-  return data;
-}
 
 interface BrandPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 const BrandPage = async ({ searchParams }: BrandPageProps) => {
-  const data = await getData();
   const params = await searchParams;
   const showAddModal = params.add === "true";
   const editId = params.edit as string;
 
-  let brandToEdit = null;
-
-  if (editId) {
-    brandToEdit = await getBrand(editId);
-  }
+  const [data, brandToEdit] = await Promise.all([
+    getBrands(),
+    editId ? getBrandById(Number(editId)) : null,
+  ]);
 
   return (
     <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">

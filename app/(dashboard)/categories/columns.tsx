@@ -9,7 +9,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { deleteCategory } from "./actions";
 
 export type Category = {
-  id: string;
+  id: number;
   category: string;
   image: string | null;
 };
@@ -54,7 +54,7 @@ export const columns: ColumnDef<Category>[] = [
       return (
         <div className="flex items-center gap-1">
           <CategoryForm
-            category={{ id: category.id, name: category.category, imageUrl: category.image }}
+            category={{ id: String(category.id), name: category.category, imageUrl: category.image }}
             trigger={
               <Button
                 variant="ghost"
@@ -71,7 +71,7 @@ export const columns: ColumnDef<Category>[] = [
             description="This permanently removes the category. Categories that still have products can't be deleted."
             confirmLabel="Delete"
             destructive
-            action={() => deleteCategory(category.id)}
+            action={() => deleteCategory(String(category.id))}
             trigger={
               <Button
                 variant="ghost"

@@ -4,27 +4,9 @@ import { columns, Category } from "./columns";
 import { CategoryForm } from "@/components/CategoryForm";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-async function getData(): Promise<Category[]> {
-  const { data, error } = await supabaseAdmin
-    .from("categories")
-    .select("*")
-    .order("categorie_id");
-
-  if (error) {
-    console.error("Error fetching categories:", error);
-    return [];
-  }
-
-  return (data || []).map((item: any) => ({
-    id: item.categorie_id,
-    category: item.categorie_name,
-    image: item.cat_image_url,
-  }));
-}
-
+import { getCategories } from "@/lib/data/categories";
 const CategoriesPage = async () => {
-  const data = await getData();
+  const data = await getCategories();
 
   return (
     <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">

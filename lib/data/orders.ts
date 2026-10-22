@@ -1,6 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import type { ShippingAddress } from "@/lib/address";
+import { parseOrderNumber } from "@/lib/orders";
 
 export type OrderLine = {
   id: number;
@@ -110,4 +111,86 @@ export async function getOrderWithDetails(orderId: number): Promise<OrderDetails
         }
       : null,
   };
+}
+
+// One page of the orders table, newest first, filtered by order number and status.
+export async function getOrders({
+  page = 1,
+  limit = 20,
+  search = "",
+  status = "",
+}: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) {
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  let query = supabaseAdmin
+    .from("orders")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  // Search is by order number only for now (customer name/phone: P5-04).
+  // Text that isn't an order number matches nothing rather than every order.
+  if (search.trim()) {
+    const orderId = parseOrderNumber(search);
+    if (orderId === null) {
+      return { data: [], count: 0 };
+    }
+    query = query.eq("id", orderId);
+  }
+
+  if (status && status !== "All") {
+    query = query.eq("status", status);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    console.error("Error fetching orders:", error);
+    return { data: [], count: 0 };
+  }
+
+  const formattedData = (data || []).map((item) => ({
+    id: item.id,
+    created_at: item.created_at,
+    total: item.total,
+    status: item.status,
+  }));
+
+  return { data: formattedData, count: count || 0 };
+}
+
+// Get order status history
+export async function getOrderTimeline(orderId: number) {
+    const { data, error } = await supabaseAdmin
+        .from('order_status_history')
+        .select('*, admins(full_name)')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching order timeline:", error);
+        return [];
+    }
+    return data || [];
+}
+
+// Get all notes for an order
+export async function getOrderNotes(orderId: number) {
+    const { data, error } = await supabaseAdmin
+        .from('order_notes')
+        .select('*, admins(full_name)')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching order notes:", error);
+        return [];
+    }
+    return data || [];
 }

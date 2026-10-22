@@ -1,8 +1,7 @@
 import React, { Suspense } from "react";
 import { DataTable } from "@/components/data-table";
 import { columns, Order } from "./columns";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getOrders } from "../actions";
+import { getOrders } from "@/lib/data/orders";
 import { CsvExporter } from "@/components/csv-exporter";
 import { exportOrders } from "./actions";
 
