@@ -306,7 +306,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
   - Each action keeps its error style: throwing actions throw the message, result-style actions return it.
   - The only raw `formData.get` left: login (Supabase checks the credentials) and the legacy category `existingImageUrl` (P4-02).
 - **Checks:** 30 new tests (55 total), `typecheck` clean, lint 0 errors (warnings down from 58 to 55), `build` passes, guard audit 24/24.
-- **Limitation:** in production, Next.js hides the message of an error thrown from a server action. For the throwing actions (product, brand, note, new admin), users only see the readable message once P3-01 switches them to `{ success, message }` results with a toast. The browser's `required` attributes still catch most mistakes before submit.
+- **Limitation:** in production, Next.js hides the message of an error thrown from a server action. For the throwing actions (product, brand, note, new admin), users only see the readable message once P3-10 switches them to `{ success, message }` results with a toast. The browser's `required` attributes still catch most mistakes before submit.
 
 ### P2-05 · Continuous integration
 - [ ] Done
@@ -340,7 +340,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 ## Phase 3 — Fix the bugs
 
 ### P3-01 · Confirm dialog and toast feedback for destructive actions
-- [ ] Done
+- [x] Done
 
 **Why:** Bugs: deletes happen on one click and errors are swallowed.
 **Files:** `components/ui/alert-dialog.tsx` (shadcn), new `components/confirm-button.tsx`, `product/columns.tsx`, `brand/columns.tsx`, `categories/columns.tsx`, `components/team-member-card.tsx`, the order page's "Mark as Cancelled" button
@@ -349,6 +349,23 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Make delete and deactivate actions return `{ success, message }` instead of throwing for expected errors, such as a delete blocked by existing products.
 
 **Done when:** Every destructive action asks for confirmation and shows a success or error toast.
+
+**Notes (2026-10-22):**
+- **Dialog:** `components/ui/alert-dialog.tsx` is hand-written in the project's shadcn style using `@radix-ui/react-alert-dialog` 1.2.1. The current shadcn CLI generates for the combined `radix-ui` package instead.
+- **New shared pieces:**
+  - `lib/action-result.ts`: `ActionResult`, `NOT_AUTHORIZED`, `isForeignKeyViolation`.
+  - `lib/toast-action.ts`: `runWithToast()` turns a thrown error into a generic toast, because Next hides the message in production.
+  - `components/confirm-dialog.tsx`: works with a trigger or controlled. It stays open with a spinner until the action finishes.
+- **Actions converted to `{ success, message }`:**
+  - `deleteProduct`, `deleteBrand`, `deleteCategory`: friendly text for foreign-key errors ("still has products"). They now request the deleted rows back, so a delete that RLS silently blocks reports "not found" instead of a false success.
+  - `updateAdminRole`, `deactivateAdmin`, `reactivateAdmin`, `updateOrderStatus`.
+- **UI:**
+  - Product, brand and category delete buttons use `ConfirmDialog` and gained `aria-label`s. The category one replaced the native `confirm()`, whose result was ignored.
+  - Team card: role changes and reactivate show toasts, and deactivate asks first. That dialog is controlled and opened from the dropdown, which is `modal={false}`.
+  - Order page: the five status forms became the `OrderStatusActions` client component, with toasts and a confirmation before cancelling.
+- **Verified:** `typecheck`, lint (0 errors), 59 tests (4 new for `runWithToast` and `isForeignKeyViolation`), `build`, and the guard audit (24/24).
+- **Browser check:** a temporary public page drove the real `ConfirmDialog` in headless Chrome, and every check passed with 0 page errors. Covered: open, staying open while pending, the success toast, closing, the error toast, cancel, opening from a dropdown item, and the page staying clickable afterwards. The page was deleted afterwards. The real screens (products, brands, team, orders) still need a logged-in check.
+- **Out of scope:** the legacy `addcategory/actions.ts` `deleteCategory` still throws; no UI uses it (P4-02). Showing errors on the add/edit forms moved to P3-10.
 
 ### P3-02 · Order search by ID
 - [ ] Done
@@ -441,6 +458,19 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 **Done when:** A super admin can add a member from `/team/new`, and the new member can sign in.
 
 **Notes (2026-10-22, from P2-03):** For the same reason, the Team page shows **no email** on any member card: `getTeamMembers` reads `admins.*`, which has no email. Consider loading emails from the auth users (for example `supabaseAdmin.auth.admin.listUsers()`, mapped by id) in `getTeamMembers`. The card's `email` prop is optional for now.
+
+### P3-10 · Show validation errors on add/edit forms
+- [ ] Done
+
+**Why:** Split from P3-01. Since P2-04, the product, brand, new-admin and order-note actions validate input, but they report problems by throwing. In production, Next.js replaces a thrown message with a generic error screen, so users never see "Price must be greater than 0."
+**Depends on:** P3-01
+**Files:** `addproduct/actions.ts` (`addProduct`, `updateProduct`), `brand/actions.ts` (`addBrand`, `updateBrand`), `team/actions.ts` (`createAdmin`), `order/actions.ts` (`addOrderNote`), `components/ProductForm.tsx`, `components/BrandForm.tsx`, `app/(dashboard)/team/new/page.tsx` (form moves to a client component), `components/order-notes.tsx`
+**Steps:**
+1. Make these actions return an `ActionResult` for validation and database errors. Keep `redirect()` on success, which `useActionState` follows.
+2. Wrap each form's action in `useActionState`, show the message inline above the submit button, keep the user's input, and disable the button while pending.
+3. In `OrderNotes`, use `runWithToast` instead of `console.error`.
+
+**Done when:** Submitting each form with bad input shows the specific message, and the form keeps what was typed.
 
 ---
 

@@ -1,7 +1,8 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthorizedAdmin, requireAdmin } from "@/lib/auth";
+import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
 import { parseForm } from "@/lib/validation/form";
 import { brandSchema } from "@/lib/validation/brand";
 import { revalidatePath } from "next/cache";
@@ -68,22 +69,34 @@ export async function updateBrand(brandId: string, formData: FormData) {
     redirect("/brand");
 }
 
-export async function deleteBrand(brandId: string) {
-    await requireAdmin("admin");
+export async function deleteBrand(brandId: string): Promise<ActionResult> {
+    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
 
-    if (!brandId) {
-        throw new Error("Brand ID is required for deletion");
+    const id = Number(brandId);
+    if (!Number.isInteger(id)) {
+        return { success: false, message: "Brand not found." };
     }
 
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
         .from('brands')
         .delete()
-        .eq('brand_id', parseInt(brandId));
+        .eq('brand_id', id)
+        .select('brand_id');
 
     if (error) {
         console.error("Error deleting brand:", error);
-        throw new Error(`Failed to delete brand: ${error.message}`);
+        return {
+            success: false,
+            message: isForeignKeyViolation(error)
+                ? "This brand still has products. Move or delete them first."
+                : `Failed to delete brand: ${error.message}`,
+        };
+    }
+
+    if (!data?.length) {
+        return { success: false, message: "Brand not found." };
     }
 
     revalidatePath("/brand");
+    return { success: true, message: "Brand deleted." };
 }

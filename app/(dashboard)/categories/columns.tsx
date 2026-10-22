@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryForm } from "@/components/CategoryForm";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { deleteCategory } from "./actions";
 
 export type Category = {
@@ -46,18 +47,23 @@ export const columns: ColumnDef<Category>[] = [
             }
           />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-gray-500 hover:text-red-600 hover:bg-red-50"
-            onClick={async () => {
-              if (confirm("Are you sure you want to delete this category?")) {
-                await deleteCategory(category.id);
-              }
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <ConfirmDialog
+            title={`Delete category "${category.category}"?`}
+            description="This permanently removes the category. Categories that still have products can't be deleted."
+            confirmLabel="Delete"
+            destructive
+            action={() => deleteCategory(category.id)}
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Delete ${category.category}`}
+                className="h-7 w-7 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            }
+          />
         </div>
       );
     },

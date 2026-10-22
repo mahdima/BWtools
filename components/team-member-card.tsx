@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   Shield,
   UserCog,
@@ -23,6 +23,8 @@ import {
   deactivateAdmin,
   reactivateAdmin,
 } from "@/app/(dashboard)/team/actions";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { runWithToast } from "@/lib/toast-action";
 
 interface TeamMember {
   id: string;
@@ -40,6 +42,7 @@ interface TeamMemberCardProps {
 
 export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
   const [isPending, startTransition] = useTransition();
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -65,18 +68,19 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
 
   const handleRoleChange = (newRole: string) => {
     startTransition(async () => {
-      await updateAdminRole(member.id, newRole);
+      await runWithToast(() => updateAdminRole(member.id, newRole));
     });
   };
 
   const handleToggleActive = () => {
-    startTransition(async () => {
-      if (member.is_active) {
-        await deactivateAdmin(member.id);
-      } else {
-        await reactivateAdmin(member.id);
-      }
-    });
+    if (member.is_active) {
+      // Deactivating also blocks their sign-in, so ask first
+      setConfirmDeactivate(true);
+    } else {
+      startTransition(async () => {
+        await runWithToast(() => reactivateAdmin(member.id));
+      });
+    }
   };
 
   return (
@@ -99,7 +103,7 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
         </div>
 
         {canManage && (
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -166,6 +170,16 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
           </span>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDeactivate}
+        onOpenChange={setConfirmDeactivate}
+        title={`Deactivate ${member.full_name || member.email || "this admin"}?`}
+        description="They will be signed out and blocked from signing in until a super admin reactivates them."
+        confirmLabel="Deactivate"
+        destructive
+        action={() => deactivateAdmin(member.id)}
+      />
 
       <p className="text-xs text-gray-400 mt-3">
         Joined {new Date(member.created_at).toLocaleDateString()}

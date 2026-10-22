@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { deleteBrand } from "./actions";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export type Brand = {
   id: string;
@@ -65,14 +66,23 @@ export const columns: ColumnDef<Brand>[] = [
               <Pencil className="h-4 w-4" />
             </Link>
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => deleteBrand(brand.id)}
-            className="h-7 w-7 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <ConfirmDialog
+            title={`Delete brand "${brand.brand}"?`}
+            description="This permanently removes the brand. Brands that still have products can't be deleted."
+            confirmLabel="Delete"
+            destructive
+            action={() => deleteBrand(brand.id)}
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Delete ${brand.brand}`}
+                className="h-7 w-7 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            }
+          />
         </div>
       );
     },

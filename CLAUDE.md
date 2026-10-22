@@ -97,7 +97,13 @@ Each feature folder (`product`, `brand`, `categories`, `customers`, `order`, `te
 
 **Add/edit** is driven by the URL rather than separate routes. `?add=true` or `?edit=<id>` makes the page render `<Modal returnUrl=…>` ([components/Modal.tsx](components/Modal.tsx)) around a form whose `action` is a server action (for edits, bound with the id via `.bind(null, id)`).
 
-**After a mutation**, actions call `revalidatePath(...)` and usually `redirect(...)` with `?toast=success`. [components/toast-listener.tsx](components/toast-listener.tsx) in the root layout shows the toast and strips the param. Newer actions (e.g. categories) instead return `{ success, message }` for the client form to handle.
+**After a mutation**, actions call `revalidatePath(...)`. Add/edit forms that navigate away still `redirect(...)` with `?toast=success`, and [components/toast-listener.tsx](components/toast-listener.tsx) in the root layout shows the toast and strips the param.
+
+Everything else returns an `ActionResult` (`{ success, message }`, from [lib/action-result.ts](lib/action-result.ts)) instead of throwing, because Next.js hides thrown messages in production. On the client:
+- call it through `runWithToast(() => action(...))` ([lib/toast-action.ts](lib/toast-action.ts));
+- for anything destructive, use [components/confirm-dialog.tsx](components/confirm-dialog.tsx), with a `trigger`, or controlled with `open`/`onOpenChange` when opened from a dropdown menu.
+
+For deletes, return a friendly message for `isForeignKeyViolation(error)`, and `.select()` the deleted rows to detect "nothing was deleted".
 
 **Legacy routes** `addproduct`, `editproduct/[id]`, `addcategory` and `editcategory/[id]` still exist as standalone pages, but the modal flow has replaced them. However, product mutations used by the live modal flow still live in [app/(dashboard)/addproduct/actions.ts](app/(dashboard)/addproduct/actions.ts). Category mutations used by the live flow are in [app/(dashboard)/categories/actions.ts](app/(dashboard)/categories/actions.ts); `addcategory/actions.ts` serves only the legacy pages.
 

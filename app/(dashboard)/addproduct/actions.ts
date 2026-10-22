@@ -1,7 +1,8 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthorizedAdmin, requireAdmin } from "@/lib/auth";
+import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
 import { imageExtension, parseForm } from "@/lib/validation/form";
 import { productSchema } from "@/lib/validation/product";
 import { revalidatePath } from "next/cache";
@@ -68,24 +69,36 @@ export async function addProduct(formData: FormData) {
     redirect(productListUrl(input.page));
 }
 
-export async function deleteProduct(productId: string) {
-    await requireAdmin("admin");
+export async function deleteProduct(productId: string): Promise<ActionResult> {
+    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
 
-    if (!productId) {
-        throw new Error("Product ID is required for deletion");
+    const id = Number(productId);
+    if (!Number.isInteger(id)) {
+        return { success: false, message: "Product not found." };
     }
 
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
         .from('products')
         .delete()
-        .eq('product_id', parseInt(productId));
+        .eq('product_id', id)
+        .select('product_id');
 
     if (error) {
         console.error("Error deleting product:", error);
-        throw new Error(`Failed to delete product: ${error.message}`);
+        return {
+            success: false,
+            message: isForeignKeyViolation(error)
+                ? "This product appears in existing orders or favorites, so it can't be deleted."
+                : `Failed to delete product: ${error.message}`,
+        };
+    }
+
+    if (!data?.length) {
+        return { success: false, message: "Product not found." };
     }
 
     revalidatePath("/product");
+    return { success: true, message: "Product deleted." };
 }
 
 export async function updateProduct(productId: string, formData: FormData) {

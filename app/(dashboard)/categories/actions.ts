@@ -4,9 +4,8 @@ import { createClient } from "@/utils/supabase/server";
 import { getAuthorizedAdmin } from "@/lib/auth";
 import { parseForm } from "@/lib/validation/form";
 import { categorySchema, categoryUpdateSchema } from "@/lib/validation/category";
+import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
-
-const NOT_AUTHORIZED = { success: false, message: "Not authorized" };
 
 export async function addCategory(formData: FormData) {
   if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
@@ -55,18 +54,29 @@ export async function updateCategory(formData: FormData) {
   return { success: true, message: "Category updated successfully" };
 }
 
-export async function deleteCategory(id: string) {
+export async function deleteCategory(id: string): Promise<ActionResult> {
   if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
 
   const supabase = await createClient();
 
-  const { error } = await supabase
+  // Ask for the deleted rows back: a delete blocked by RLS removes nothing without an error
+  const { data, error } = await supabase
     .from("categories")
     .delete()
-    .eq("categorie_id", Number(id));
+    .eq("categorie_id", Number(id))
+    .select("categorie_id");
 
   if (error) {
-    return { success: false, message: error.message };
+    return {
+      success: false,
+      message: isForeignKeyViolation(error)
+        ? "This category still has products. Move or delete them first."
+        : error.message,
+    };
+  }
+
+  if (!data?.length) {
+    return { success: false, message: "Category not found, or you can't delete it." };
   }
 
   revalidatePath("/categories");

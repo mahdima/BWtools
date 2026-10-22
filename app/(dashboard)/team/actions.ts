@@ -1,7 +1,8 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getCurrentAdmin, requireAdmin } from "@/lib/auth";
+import { getAuthorizedAdmin, getCurrentAdmin, requireAdmin } from "@/lib/auth";
+import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
 import { isRole } from "@/lib/roles";
 import { parseForm } from "@/lib/validation/form";
 import { adminCreateSchema } from "@/lib/validation/admin";
@@ -84,16 +85,17 @@ export async function createAdmin(formData: FormData) {
 }
 
 // Update admin role (super admin only)
-export async function updateAdminRole(adminId: string, newRole: string) {
-  const admin = await requireAdmin('super_admin');
+export async function updateAdminRole(adminId: string, newRole: string): Promise<ActionResult> {
+  const admin = await getAuthorizedAdmin('super_admin');
+  if (!admin) return NOT_AUTHORIZED;
 
   if (!isRole(newRole)) {
-    throw new Error(`Invalid role: ${newRole}`);
+    return { success: false, message: `Invalid role: ${newRole}` };
   }
 
   // Prevent a super admin from demoting themselves (and leaving no super admin)
   if (admin.id === adminId) {
-    throw new Error("You cannot change your own role");
+    return { success: false, message: "You cannot change your own role." };
   }
 
   const { error } = await supabaseAdmin
@@ -103,19 +105,21 @@ export async function updateAdminRole(adminId: string, newRole: string) {
 
   if (error) {
     console.error("Error updating role:", error);
-    throw new Error(`Failed to update role: ${error.message}`);
+    return { success: false, message: `Failed to update role: ${error.message}` };
   }
 
   revalidatePath('/team');
+  return { success: true, message: "Role updated." };
 }
 
 // Deactivate admin (super admin only)
-export async function deactivateAdmin(adminId: string) {
-  const admin = await requireAdmin('super_admin');
+export async function deactivateAdmin(adminId: string): Promise<ActionResult> {
+  const admin = await getAuthorizedAdmin('super_admin');
+  if (!admin) return NOT_AUTHORIZED;
 
   // Prevent deactivating yourself
   if (admin.id === adminId) {
-    throw new Error("You cannot deactivate your own account");
+    return { success: false, message: "You cannot deactivate your own account." };
   }
 
   const { error } = await supabaseAdmin
@@ -125,7 +129,7 @@ export async function deactivateAdmin(adminId: string) {
 
   if (error) {
     console.error("Error deactivating admin:", error);
-    throw new Error(`Failed to deactivate: ${error.message}`);
+    return { success: false, message: `Failed to deactivate: ${error.message}` };
   }
 
   // Also block the account from signing in anywhere (~100 years; undone on reactivate).
@@ -134,18 +138,19 @@ export async function deactivateAdmin(adminId: string) {
     ban_duration: '876000h',
   });
 
+  revalidatePath('/team');
+
   if (banError) {
     console.error("Error banning deactivated admin:", banError);
-    revalidatePath('/team');
-    throw new Error(`Deactivated, but failed to block sign-in: ${banError.message}`);
+    return { success: false, message: `Deactivated, but failed to block sign-in: ${banError.message}` };
   }
 
-  revalidatePath('/team');
+  return { success: true, message: "Admin deactivated." };
 }
 
 // Reactivate admin (super admin only)
-export async function reactivateAdmin(adminId: string) {
-  await requireAdmin('super_admin');
+export async function reactivateAdmin(adminId: string): Promise<ActionResult> {
+  if (!(await getAuthorizedAdmin('super_admin'))) return NOT_AUTHORIZED;
 
   // Lift the sign-in ban first, so a failure leaves the account fully deactivated
   const { error: unbanError } = await supabaseAdmin.auth.admin.updateUserById(adminId, {
@@ -154,7 +159,7 @@ export async function reactivateAdmin(adminId: string) {
 
   if (unbanError) {
     console.error("Error lifting ban on admin:", unbanError);
-    throw new Error(`Failed to reactivate: ${unbanError.message}`);
+    return { success: false, message: `Failed to reactivate: ${unbanError.message}` };
   }
 
   const { error } = await supabaseAdmin
@@ -164,8 +169,9 @@ export async function reactivateAdmin(adminId: string) {
 
   if (error) {
     console.error("Error reactivating admin:", error);
-    throw new Error(`Failed to reactivate: ${error.message}`);
+    return { success: false, message: `Failed to reactivate: ${error.message}` };
   }
 
   revalidatePath('/team');
+  return { success: true, message: "Admin reactivated." };
 }

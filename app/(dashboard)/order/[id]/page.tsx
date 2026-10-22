@@ -1,10 +1,8 @@
 import React from "react";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Box,
   Calendar,
   CreditCard,
   ShoppingBag,
@@ -14,12 +12,13 @@ import {
   Mail,
   MapPin,
 } from "lucide-react";
-import { updateOrderStatus, getOrderTimeline, getOrderNotes } from "../actions";
+import { getOrderTimeline, getOrderNotes } from "../actions";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import man from "../../../../img/man.png";
 import { OrderTimeline } from "@/components/order-timeline";
 import { OrderNotes } from "@/components/order-notes";
+import { OrderStatusActions } from "@/components/order-status-actions";
 
 async function getOrder(id: number) {
   // First fetch the order
@@ -325,61 +324,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
               <Truck className="h-5 w-5 mr-2 text-[#0B1DFF]" />
               Update Status
             </h2>
-            <div className="space-y-3">
-              <form action={updateOrderStatus.bind(null, order.id, "New")}>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start hover:bg-green-50 hover:text-green-700 hover:border-green-200"
-                  disabled={order.status === "New"}
-                >
-                  <Box className="h-4 w-4 mr-2" /> Mark as New
-                </Button>
-              </form>
-              <form
-                action={updateOrderStatus.bind(null, order.id, "processing")}
-              >
-                <Button
-                  variant="outline"
-                  className="w-full justify-start hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
-                  disabled={order.status === "processing"}
-                >
-                  <Box className="h-4 w-4 mr-2" /> Mark as Processing
-                </Button>
-              </form>
-              <form
-                action={updateOrderStatus.bind(null, order.id, "Delivering")}
-              >
-                <Button
-                  variant="outline"
-                  className="w-full justify-start hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-200"
-                  disabled={order.status === "Delivering"}
-                >
-                  <Truck className="h-4 w-4 mr-2" /> Mark as Delivering
-                </Button>
-              </form>
-              <form
-                action={updateOrderStatus.bind(null, order.id, "Delivered")}
-              >
-                <Button
-                  variant="outline"
-                  className="w-full justify-start hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200"
-                  disabled={order.status === "Delivered"}
-                >
-                  <Truck className="h-4 w-4 mr-2" /> Mark as Delivered
-                </Button>
-              </form>
-              <form
-                action={updateOrderStatus.bind(null, order.id, "Cancelled")}
-              >
-                <Button
-                  variant="outline"
-                  className="w-full justify-start hover:bg-red-50 hover:text-red-700 hover:border-red-200"
-                  disabled={order.status === "Cancelled"}
-                >
-                  <Box className="h-4 w-4 mr-2" /> Mark as Cancelled
-                </Button>
-              </form>
-            </div>
+            <OrderStatusActions orderId={orderId} currentStatus={order.status} />
           </div>
         </div>
       </div>

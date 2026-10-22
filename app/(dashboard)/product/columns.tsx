@@ -6,6 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import { deleteProduct } from "@/app/(dashboard)/addproduct/actions";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export type Product = {
   id: string;
@@ -157,14 +158,23 @@ export const columns: ColumnDef<Product>[] = [
               <Pencil className="h-4 w-4" />
             </Link>
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => deleteProduct(product.id)}
-            className="h-7 w-7 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <ConfirmDialog
+            title={`Delete "${product.product}"?`}
+            description="This permanently removes the product from the catalogue. This can't be undone."
+            confirmLabel="Delete"
+            destructive
+            action={() => deleteProduct(product.id)}
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Delete ${product.product}`}
+                className="h-7 w-7 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            }
+          />
         </div>
       );
     },

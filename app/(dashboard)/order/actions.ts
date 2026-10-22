@@ -2,20 +2,18 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthorizedAdmin, requireAdmin } from "@/lib/auth";
+import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
 import { isOrderStatus } from "@/lib/orders";
 import { parseForm } from "@/lib/validation/form";
 import { orderNoteSchema } from "@/lib/validation/order";
 
-export async function updateOrderStatus(orderId: number, newStatus: string) {
-    const admin = await requireAdmin("admin");
+export async function updateOrderStatus(orderId: number, newStatus: string): Promise<ActionResult> {
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
-    if (!Number.isInteger(orderId) || !newStatus) {
-        throw new Error("Order ID and status are required");
-    }
-
-    if (!isOrderStatus(newStatus)) {
-        throw new Error(`Invalid order status: ${newStatus}`);
+    if (!Number.isInteger(orderId) || !isOrderStatus(newStatus)) {
+        return { success: false, message: "Invalid order or status." };
     }
 
     // Get current status before update
@@ -25,7 +23,9 @@ export async function updateOrderStatus(orderId: number, newStatus: string) {
         .eq('id', orderId)
         .single();
 
-    const oldStatus = order?.status;
+    if (!order) {
+        return { success: false, message: "Order not found." };
+    }
 
     // Update the order status
     const { error } = await supabaseAdmin
@@ -35,19 +35,20 @@ export async function updateOrderStatus(orderId: number, newStatus: string) {
 
     if (error) {
         console.error("Error updating order status:", error);
-        throw new Error(`Failed to update status: ${error.message}`);
+        return { success: false, message: `Failed to update status: ${error.message}` };
     }
 
     // Log status change to history
     await supabaseAdmin.from('order_status_history').insert({
         order_id: orderId,
-        old_status: oldStatus,
+        old_status: order.status,
         new_status: newStatus,
         changed_by: admin.id,
     });
 
     revalidatePath("/order");
     revalidatePath(`/order/${orderId}`);
+    return { success: true, message: `Order marked as ${newStatus}.` };
 }
 
 // Get order status history
