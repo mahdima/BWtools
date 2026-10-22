@@ -4,7 +4,6 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { NOT_CANCELLED, fetchRevenueRows, isMissingFunction } from "@/lib/data/dashboard";
 import { getPeriodStart } from "@/lib/dates";
 import {
-  MISSING_LABELS,
   groupSales,
   previousPeriod,
   sortSales,
@@ -85,14 +84,15 @@ export async function getSalesReport(period: string, now: Date = new Date()): Pr
   );
 
   if (results.every((result) => !result.error && Array.isArray(result.data))) {
-    const [product, category, brand] = results.map((result, index) =>
+    const [product, category, brand] = results.map((result) =>
       sortSales(
         (result.data as { group_id: number | null; label: string | null; quantity: number; revenue: number }[]).map(
-          (row) => ({
+          (row): SalesRow => ({
             id: row.group_id === null ? null : Number(row.group_id),
-            label: row.label ?? MISSING_LABELS[GROUPS[index]],
+            label: row.label ?? "",
             quantity: Number(row.quantity),
             revenue: Number(row.revenue),
+            ...(row.label ? {} : { missing: true as const }),
           }),
         ),
       ),

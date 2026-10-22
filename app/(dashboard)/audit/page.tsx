@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireAdminPage } from "@/lib/auth";
 import { getAuditLog } from "@/lib/data/audit";
-import { AUDIT_ENTITY_LABELS, isAuditEntity, type AuditEntity } from "@/lib/audit-changes";
+import { AUDIT_ENTITIES, isAuditEntity, type AuditEntity } from "@/lib/audit-changes";
+import { getTranslations } from "next-intl/server";
 import { AuditLogTable } from "@/components/audit-log-table";
 
 const PAGE_SIZE = 50;
@@ -20,6 +21,7 @@ export default async function AuditPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   await requireAdminPage("super_admin");
+  const t = await getTranslations("audit");
 
   const params = await searchParams;
   const entity = isAuditEntity(params.entity) ? params.entity : undefined;
@@ -31,19 +33,18 @@ export default async function AuditPage({
   return (
     <div className="flex h-full w-full flex-col overflow-auto p-4 ps-16 lg:ps-4">
       <div className="py-4">
-        <h1 className="text-2xl font-bold text-gray-900">Audit log</h1>
-        <p className="text-sm text-gray-500">Who changed what in the dashboard, newest first</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <p className="text-sm text-gray-500">{t("subtitle")}</p>
       </div>
 
       {!available ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          The audit log isn&apos;t set up yet. Ask the project owner to run{" "}
-          <code className="font-mono">docs/sql/P7-01-audit-log.sql</code> in Supabase; changes are recorded from then on.
+          {t("notSetUp")}
         </div>
       ) : (
         <>
-          <nav aria-label="Filter by record type" className="mb-4 flex flex-wrap gap-2">
-            {[undefined, ...(Object.keys(AUDIT_ENTITY_LABELS) as AuditEntity[])].map((value) => {
+          <nav aria-label={t("filterLabel")} className="mb-4 flex flex-wrap gap-2">
+            {[undefined, ...AUDIT_ENTITIES].map((value) => {
               const active = value === entity;
               return (
                 <Link
@@ -56,7 +57,7 @@ export default async function AuditPage({
                       : "border-gray-200 bg-white text-gray-600 hover:border-primary/40 hover:text-primary"
                   }`}
                 >
-                  {value ? AUDIT_ENTITY_LABELS[value] : "All"}
+                  {value ? t(`entities.${value}`) : t("all")}
                 </Link>
               );
             })}
@@ -66,18 +67,16 @@ export default async function AuditPage({
 
           {pageCount > 1 && (
             <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-              <span>
-                Page {page} of {pageCount} · {count} entries
-              </span>
+              <span>{t("pageSummary", { page, count: pageCount, entries: count })}</span>
               <div className="flex gap-2">
                 {page > 1 && (
                   <Link href={auditUrl(entity, page - 1)} className="rounded-md border border-gray-200 bg-white px-3 py-1.5 hover:bg-gray-50">
-                    Previous
+                    {t("previous")}
                   </Link>
                 )}
                 {page < pageCount && (
                   <Link href={auditUrl(entity, page + 1)} className="rounded-md border border-gray-200 bg-white px-3 py-1.5 hover:bg-gray-50">
-                    Next
+                    {t("next")}
                   </Link>
                 )}
               </div>

@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updatePassword } from "@/app/(dashboard)/settings/actions";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function SecurityForm() {
+  const t = useTranslations("settings");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     success: boolean;
@@ -35,9 +37,9 @@ export function SecurityForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h3 className="text-lg font-medium">Password</h3>
+        <h3 className="text-lg font-medium">{t("passwordTitle")}</h3>
         <p className="text-sm text-gray-500">
-          Change your password to keep your account secure.
+          {t("passwordHelp")}
         </p>
       </div>
 
@@ -59,7 +61,7 @@ export function SecurityForm() {
         className="space-y-4 max-w-sm"
       >
         <div className="space-y-2">
-          <Label htmlFor="password">New Password</Label>
+          <Label htmlFor="password">{t("newPassword")}</Label>
           <Input
             id="password"
             name="password"
@@ -69,7 +71,7 @@ export function SecurityForm() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
           <Input
             id="confirmPassword"
             name="confirmPassword"
@@ -84,7 +86,7 @@ export function SecurityForm() {
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           {loading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-          Update Password
+          {t("updatePassword")}
         </Button>
       </form>
     </div>

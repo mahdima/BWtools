@@ -23,6 +23,12 @@ export function localeDirection(locale: string): "ltr" | "rtl" {
   return locale === "ar" ? "rtl" : "ltr";
 }
 
+// The Intl locale for dates and numbers. Algerian French and Arabic: ar-DZ keeps
+// Latin digits (12.500) where plain "ar" may use Arabic-Indic ones in browsers.
+export function intlLocale(locale: string): string {
+  return locale === "fr" ? "fr-DZ" : locale === "ar" ? "ar-DZ" : "en-US";
+}
+
 // The best supported language in an Accept-Language header, e.g.
 // "fr-DZ,fr;q=0.9,ar;q=0.8" -> "fr". Null when none is supported.
 export function matchAcceptLanguage(header: string | null | undefined): AppLocale | null {

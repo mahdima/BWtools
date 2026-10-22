@@ -6,6 +6,14 @@ export const STORE_TIME_ZONE = "Africa/Algiers";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// The dashboard's periods (components/dashboard-filter.tsx); "all" has no start.
+export const PERIODS = ["all", "last_week", "last_month", "last_3_months", "last_year"] as const;
+export type Period = (typeof PERIODS)[number];
+
+export function isPeriod(value: unknown): value is Period {
+  return typeof value === "string" && (PERIODS as readonly string[]).includes(value);
+}
+
 // Start of a dashboard period (see components/dashboard-filter.tsx), or null for
 // "all" and unknown values.
 export function getPeriodStart(period: string | undefined, now: Date = new Date()): Date | null {
@@ -66,8 +74,8 @@ function nextBucketKey(key: string, bucket: Bucket): string {
   return dateToKey(date);
 }
 
-function bucketLabel(key: string, bucket: Bucket): string {
-  return new Intl.DateTimeFormat("en-US", {
+function bucketLabel(key: string, bucket: Bucket, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: "UTC",
     month: "short",
     ...(bucket === "month" ? { year: "numeric" } : { day: "numeric" }),
@@ -78,10 +86,12 @@ function bucketLabel(key: string, bucket: Bucket): string {
 // month, keyed by full date so the same day in different years never merges.
 // Every bucket from the period start to `now` is present, with 0 when it had no
 // orders. With no orders at all, returns [] so the chart shows its empty state.
+// `locale` is the Intl locale of the labels (see intlLocale in lib/i18n.ts).
 export function groupRevenue(
   orders: { created_at: string; total: number | null }[],
   period: string | undefined,
   now: Date = new Date(),
+  locale = "en-US",
 ): { name: string; total: number }[] {
   if (orders.length === 0) return [];
 
@@ -95,7 +105,7 @@ export function groupRevenue(
     totals.set(key, (totals.get(key) ?? 0) + (order.total ?? 0));
   }
 
-  return fillRevenueBuckets(totals, bucket, start, now);
+  return fillRevenueBuckets(totals, bucket, start, now, locale);
 }
 
 // Chart rows for every bucket from `start` to `now`, taking totals from `totals`
@@ -106,6 +116,7 @@ export function fillRevenueBuckets(
   bucket: Bucket,
   start: Date,
   now: Date,
+  locale = "en-US",
 ): { name: string; total: number }[] {
   const result: { name: string; total: number }[] = [];
   const last = bucketKey(localDateKey(now), bucket);
@@ -115,7 +126,7 @@ export function fillRevenueBuckets(
     key <= last && result.length < 1000;
     key = nextBucketKey(key, bucket)
   ) {
-    result.push({ name: bucketLabel(key, bucket), total: totals.get(key) ?? 0 });
+    result.push({ name: bucketLabel(key, bucket, locale), total: totals.get(key) ?? 0 });
   }
   return result;
 }

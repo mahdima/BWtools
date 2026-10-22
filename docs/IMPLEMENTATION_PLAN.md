@@ -1118,7 +1118,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
   - A language picker in the sidebar's profile menu and on the login page.
   - **RTL:** physical Tailwind classes (`pl-`, `ml-`, `left-`, `text-left`, `border-r` …) become logical ones (`ps-`, `ms-`, `start-`, `text-start`, `border-e` …) across the app, and direction arrows flip.
   - **Translated:** sidebar and mobile menu, `DataTable` chrome (filter, pagination, selection bar), confirm dialog, login, forgot and reset password, and the error and not-found pages.
-- [ ] **P7-04b · Dashboard and admin screens:** dashboard widgets, reports, settings (password and store forms), profile dialog, team, audit log, notifications panel.
+- [x] **P7-04b · Dashboard and admin screens:** dashboard widgets, reports, settings (password and store forms), profile dialog, team, audit log, notifications panel.
 - [ ] **P7-04c · Catalogue and orders:** products (columns, form, import, bulk), brands, categories, orders (list, detail, notes, timeline, status, bulk) and customers.
 - [ ] **P7-04d · Messages from the server:** server-action results (toasts) and validation messages through `getTranslations`.
 
@@ -1141,6 +1141,22 @@ The printed invoice stays as it is: its language is a store decision, not an adm
   - A temporary preview (deleted) of the sidebar and table in Arabic: the sidebar on the right, the Arabic plural "عنصر واحد محدد", the mobile button and drawer on the right, and the pagination chevrons rotated with "first page" on the right. Screenshots were reviewed.
   - `typecheck`, lint (0 errors, 26 warnings), 187 tests, `build` and `npm audit --omit=dev` (0) pass.
 - **For P7-04c:** in RTL, an amount like "12500,00 DA" is reordered by the bidi algorithm to "DA 12500,00". Wrap amounts and other mixed number-and-Latin values in `dir="ltr"` when those columns are translated.
+
+**P7-04b notes (2026-10-22):**
+- **Translated:** dashboard (cards, period filter, chart, recent orders, low stock), reports, settings (both forms), profile and its dialog, team (page, card, new-admin form), audit log, and the notifications panel. New namespaces: `roles`, `orderStatus`, `dashboard`, `reports`, `settings`, `profile`, `team`, `audit`, `notifications`.
+- **English label maps in `lib` replaced by message keys:**
+  - `ROLE_LABELS`, `AUDIT_*_LABELS` and `COMPARISON_LABELS` are gone. `lib/audit-changes.ts` now has `AUDIT_ACTIONS`, `AUDIT_ENTITIES` and `FIELD_KEYS`.
+  - `formatChanges(changes, labels)` takes the translated words, including the "{field}: {value}" line and the "{from} → {to}" arrow. The arrow is reversed in Arabic, and French puts a non-breaking space before the colon.
+  - Report rows mark `missing` and `other` instead of English labels.
+- **Numbers and dates:**
+  - `intlLocale` maps en, fr and ar to en-US, fr-DZ and ar-DZ (Latin digits).
+  - Chart labels, audit times, join dates and notification times follow the language.
+  - `formatDA` wraps amounts in left-to-right isolates, so "12 500 DA" keeps its order in Arabic.
+  - Order statuses are now shown translated: "processing" is displayed as "Processing" / "En traitement" / "قيد المعالجة".
+- **Verified:**
+  - A temporary preview page (deleted) rendered every translated component in Arabic and French, and the screenshots were reviewed. A scan of each found none of the old English strings left, with 0 page errors.
+  - The preview caught the Arabic arrow pointing the wrong way, which is fixed.
+  - `typecheck`, lint (0 errors, 26 warnings), 189 tests and `build` pass.
 
 ### P7-05 · Full dark mode
 - [ ] Done

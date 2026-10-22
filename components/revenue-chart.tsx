@@ -9,6 +9,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { useTranslations } from "next-intl";
 
 interface RevenueChartProps {
   data: {
@@ -18,14 +19,15 @@ interface RevenueChartProps {
 }
 
 export function RevenueChart({ data }: RevenueChartProps) {
+  const t = useTranslations("dashboard");
   if (!data || data.length === 0) {
     return (
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 flex flex-col items-center justify-center h-[350px]">
         <h3 className="text-lg font-bold text-gray-900 mb-2">
-          Revenue Overview
+          {t("revenueOverview")}
         </h3>
         <p className="text-sm text-gray-500">
-          No data available for this period.
+          {t("noRevenue")}
         </p>
       </div>
     );
@@ -33,7 +35,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 h-full min-h-[300px] flex flex-col">
-      <h3 className="text-lg font-bold text-gray-900 mb-4">Revenue Overview</h3>
+      <h3 className="text-lg font-bold text-gray-900 mb-4">{t("revenueOverview")}</h3>
       {/* Time runs left to right in every language */}
       <div
         dir="ltr"

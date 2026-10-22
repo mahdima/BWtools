@@ -8,6 +8,9 @@ import {
 } from "@/components/ui/table";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { formatDA } from "@/lib/money";
+import { isOrderStatus } from "@/lib/orders";
 
 interface Order {
   id: number;
@@ -21,6 +24,8 @@ interface RecentOrdersProps {
 }
 
 export function RecentOrders({ orders }: RecentOrdersProps) {
+  const t = useTranslations("dashboard");
+  const status = useTranslations("orderStatus");
   const statusColors: Record<string, string> = {
     New: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
     processing: "bg-blue-50 text-blue-700 hover:bg-blue-100",
@@ -33,14 +38,15 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden h-full flex flex-col">
       <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-none">
         <div>
-          <h3 className="font-bold text-lg text-gray-900">Recent Orders</h3>
-          <p className="text-sm text-gray-500 mt-1">Latest transactions</p>
+          <h3 className="font-bold text-lg text-gray-900">{t("recentOrders")}</h3>
+          <p className="text-sm text-gray-500 mt-1">{t("latestTransactions")}</p>
         </div>
         <Link
           href="/order"
+          aria-label={t("viewAllOrders")}
           className="p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-400 hover:text-gray-600"
         >
-          <ArrowUpRight className="h-5 w-5" />
+          <ArrowUpRight className="h-5 w-5 rtl:-scale-x-100" />
         </Link>
       </div>
       <div className="p-0 flex-1 overflow-auto min-h-0">
@@ -48,13 +54,13 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
           <TableHeader>
             <TableRow className="hover:bg-transparent border-gray-50">
               <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 ps-6 h-10">
-                Order ID
+                {t("orderId")}
               </TableHead>
               <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 h-10">
-                Status
+                {t("status")}
               </TableHead>
               <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 text-end pe-6 h-10">
-                Amount
+                {t("amount")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -73,16 +79,11 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                       statusColors[order.status ?? ""] || "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    {order.status}
+                    {isOrderStatus(order.status) ? status(order.status) : order.status}
                   </span>
                 </TableCell>
                 <TableCell className="text-end font-medium text-gray-900 pe-6 py-4">
-                  {new Intl.NumberFormat("fr-DZ", {
-                    style: "currency",
-                    currency: "DZD",
-                  })
-                    .format(order.total)
-                    .replace("DZD", "DA")}
+                  {formatDA(order.total)}
                 </TableCell>
               </TableRow>
             ))}

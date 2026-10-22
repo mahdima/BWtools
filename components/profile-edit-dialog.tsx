@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useFormAction } from "@/lib/use-form-action";
+import { useTranslations } from "next-intl";
 
 interface ProfileEditDialogProps {
   admin: {
@@ -25,12 +26,13 @@ const inputClass =
   "w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-sm";
 
 export function ProfileEditDialog({ admin, className }: ProfileEditDialogProps) {
+  const t = useTranslations("profile");
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <button className={className}>Edit Profile</button>
+        <button className={className}>{t("editProfile")}</button>
       </DialogTrigger>
       {/* Radix mounts the content on open, so each open starts without an old error */}
       <DialogContent className="sm:max-w-md bg-white" aria-describedby={undefined}>
@@ -47,6 +49,8 @@ function ProfileFormBody({
   admin: ProfileEditDialogProps["admin"];
   onDone: () => void;
 }) {
+  const t = useTranslations("profile");
+  const tc = useTranslations("common");
   const { state, isPending, onSubmit } = useFormAction(async (prev, formData) => {
     const result = await updateAdminProfile(prev, formData);
     if (result.success) {
@@ -59,7 +63,7 @@ function ProfileFormBody({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Edit Profile</DialogTitle>
+        <DialogTitle>{t("editProfile")}</DialogTitle>
       </DialogHeader>
 
       <form onSubmit={onSubmit} className="space-y-4">
@@ -71,7 +75,7 @@ function ProfileFormBody({
 
         <div className="space-y-2">
           <label htmlFor="profile-full-name" className="text-sm font-medium text-gray-700">
-            Full Name
+            {t("fullName")}
           </label>
           <input
             id="profile-full-name"
@@ -79,13 +83,13 @@ function ProfileFormBody({
             defaultValue={admin.full_name || ""}
             required
             className={inputClass}
-            placeholder="John Doe"
+            placeholder={t("fullNamePlaceholder")}
           />
         </div>
 
         <div className="space-y-2">
           <label htmlFor="profile-email" className="text-sm font-medium text-gray-700">
-            Email
+            {t("email")}
           </label>
           <input
             id="profile-email"
@@ -97,7 +101,7 @@ function ProfileFormBody({
             aria-describedby="profile-email-help"
           />
           <p id="profile-email-help" className="text-xs text-gray-400">
-            Changing email will require confirmation.
+            {t("emailHelp")}
           </p>
         </div>
 
@@ -107,7 +111,7 @@ function ProfileFormBody({
             onClick={onDone}
             className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            Cancel
+            {tc("cancel")}
           </button>
           <button
             disabled={isPending}
@@ -115,7 +119,7 @@ function ProfileFormBody({
             className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Save Changes
+            {t("saveChanges")}
           </button>
         </div>
       </form>

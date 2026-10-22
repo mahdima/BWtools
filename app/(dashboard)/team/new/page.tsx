@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { NewAdminForm } from "@/components/new-admin-form";
+import { getTranslations } from "next-intl/server";
 
 export default async function NewAdminPage() {
-  const admin = await requireAdminPage();
+  const [admin, t] = await Promise.all([requireAdminPage(), getTranslations("team")]);
 
   // Only super admins create accounts (createAdmin checks this again)
   if (admin.role !== "super_admin") {
@@ -19,11 +20,11 @@ export default async function NewAdminPage() {
         href="/team"
         className="inline-flex items-center text-sm text-gray-500 hover:text-primary mb-4 transition-colors"
       >
-        <ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" /> Back to Team
+        <ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" /> {t("backToTeam")}
       </Link>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Add New Admin</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">{t("newTitle")}</h1>
 
         <NewAdminForm />
       </div>

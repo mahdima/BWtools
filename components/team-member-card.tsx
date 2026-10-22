@@ -25,6 +25,9 @@ import {
 } from "@/app/(dashboard)/team/actions";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { runWithToast } from "@/lib/toast-action";
+import { useLocale, useTranslations } from "next-intl";
+import { intlLocale } from "@/lib/i18n";
+import { isRole } from "@/lib/roles";
 
 interface TeamMember {
   id: string;
@@ -41,6 +44,10 @@ interface TeamMemberCardProps {
 }
 
 export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
+  const t = useTranslations("team");
+  const roles = useTranslations("roles");
+  const locale = useLocale();
+  const name = member.full_name || member.email || t("thisAdmin");
   const [isPending, startTransition] = useTransition();
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
@@ -96,7 +103,7 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
           </div>
           <div>
             <p className="font-semibold text-gray-900">
-              {member.full_name || "No name"}
+              {member.full_name || t("noName")}
             </p>
             <p className="text-sm text-gray-500">{member.email}</p>
           </div>
@@ -109,45 +116,46 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
+                aria-label={t("actionsFor", { name })}
                 disabled={isPending}
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("changeRole")}</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => handleRoleChange("super_admin")}
                 disabled={member.role === "super_admin"}
               >
                 <Shield className="h-4 w-4 me-2 text-purple-600" />
-                Super Admin
+                {roles("super_admin")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleRoleChange("admin")}
                 disabled={member.role === "admin"}
               >
                 <UserCog className="h-4 w-4 me-2 text-blue-600" />
-                Admin
+                {roles("admin")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleRoleChange("viewer")}
                 disabled={member.role === "viewer"}
               >
                 <Eye className="h-4 w-4 me-2 text-gray-600" />
-                Viewer
+                {roles("viewer")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleToggleActive}>
                 {member.is_active ? (
                   <>
                     <UserX className="h-4 w-4 me-2 text-red-600" />
-                    Deactivate
+                    {t("deactivate")}
                   </>
                 ) : (
                   <>
                     <UserCheck className="h-4 w-4 me-2 text-green-600" />
-                    Reactivate
+                    {t("reactivate")}
                   </>
                 )}
               </DropdownMenuItem>
@@ -162,11 +170,11 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
             member.role
           )}`}
         >
-          {member.role.replace("_", " ").toUpperCase()}
+          {isRole(member.role) ? roles(member.role) : member.role}
         </span>
         {!member.is_active && (
           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-            INACTIVE
+            {t("inactive")}
           </span>
         )}
       </div>
@@ -174,15 +182,15 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
       <ConfirmDialog
         open={confirmDeactivate}
         onOpenChange={setConfirmDeactivate}
-        title={`Deactivate ${member.full_name || member.email || "this admin"}?`}
-        description="They will be signed out and blocked from signing in until a super admin reactivates them."
-        confirmLabel="Deactivate"
+        title={t("deactivateTitle", { name })}
+        description={t("deactivateText")}
+        confirmLabel={t("deactivate")}
         destructive
         action={() => deactivateAdmin(member.id)}
       />
 
       <p className="text-xs text-gray-400 mt-3">
-        Joined {new Date(member.created_at).toLocaleDateString()}
+        {t("joined", { date: new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "medium" }).format(new Date(member.created_at)) })}
       </p>
     </div>
   );

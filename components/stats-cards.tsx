@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDA } from "@/lib/money";
 import { formatPercentChange } from "@/lib/reports";
+import { useTranslations } from "next-intl";
 
 interface StatsCardsProps {
   stats: {
@@ -29,10 +30,11 @@ interface StatsCardsProps {
 
 // "+12% vs previous 7 days" with an arrow; up is good for both revenue and orders.
 function Delta({ change, label, onAccent }: { change: number | null; label: string; onAccent: boolean }) {
+  const t = useTranslations("dashboard");
   if (change === null) {
     return (
       <p className={cn("text-xs font-medium", onAccent ? "text-primary-foreground/80" : "text-muted-foreground")}>
-        No earlier data to compare
+        {t("noEarlierData")}
       </p>
     );
   }
@@ -52,19 +54,20 @@ function Delta({ change, label, onAccent }: { change: number | null; label: stri
   return (
     <p className={cn("flex items-center gap-1.5 text-xs font-medium", onAccent ? "text-primary-foreground/90" : "text-muted-foreground")}>
       <Icon className={cn("h-4 w-4", tone)} aria-hidden />
-      <span className={cn("font-semibold", tone)}>{text}</span>
+      <span dir="ltr" className={cn("font-semibold", tone)}>{text}</span>
       <span>{label}</span>
     </p>
   );
 }
 
 export function StatsCards({ stats, comparison }: StatsCardsProps) {
+  const t = useTranslations("dashboard");
   const statItems = [
     {
-      title: "Total Revenue",
+      title: t("totalRevenue"),
       value: formatDA(stats.totalRevenue),
       icon: DollarSign,
-      description: "Total earnings",
+      description: t("totalEarnings"),
       change: comparison ? comparison.revenue : undefined,
       onAccent: true,
       className:
@@ -73,10 +76,10 @@ export function StatsCards({ stats, comparison }: StatsCardsProps) {
       textClass: "text-primary-foreground/90",
     },
     {
-      title: "Total Orders",
+      title: t("totalOrders"),
       value: stats.totalOrders.toString(),
       icon: ShoppingCart,
-      description: "All time orders",
+      description: t("allTimeOrders"),
       change: comparison ? comparison.orders : undefined,
       onAccent: false,
       className: "glass-card hover:border-primary/20",
@@ -85,10 +88,10 @@ export function StatsCards({ stats, comparison }: StatsCardsProps) {
       textClass: "text-muted-foreground",
     },
     {
-      title: "Total Products",
+      title: t("totalProducts"),
       value: stats.totalProducts.toString(),
       icon: Package,
-      description: "In catalog",
+      description: t("inCatalog"),
       change: undefined,
       onAccent: false,
       className: "glass-card hover:border-primary/20",
@@ -97,10 +100,10 @@ export function StatsCards({ stats, comparison }: StatsCardsProps) {
       textClass: "text-muted-foreground",
     },
     {
-      title: "Active Brands",
+      title: t("activeBrands"),
       value: stats.totalBrands.toString(),
       icon: Tag,
-      description: "Partner brands",
+      description: t("partnerBrands"),
       change: undefined,
       onAccent: false,
       className: "glass-card hover:border-primary/20",

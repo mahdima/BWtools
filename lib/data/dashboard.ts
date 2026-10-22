@@ -128,9 +128,10 @@ export async function getLowStockProducts(threshold: number, limit = 5) {
   return { products: result.data ?? [], total: result.count ?? 0 };
 }
 
-// Revenue per day/week/month for the dashboard chart. Uses the revenue_series SQL
-// function when it exists, otherwise sums the orders here (see groupRevenue).
-export async function getRevenueData(period: string = "last_week") {
+// Revenue per day/week/month for the dashboard chart, labelled in `locale` (an Intl
+// locale). Uses the revenue_series SQL function when it exists, otherwise sums the
+// orders here (see groupRevenue).
+export async function getRevenueData(period: string = "last_week", locale = "en-US") {
   const now = new Date();
   let start = getPeriodStart(period, now);
 
@@ -159,12 +160,12 @@ export async function getRevenueData(period: string = "last_week") {
     const totals = new Map<string, number>(
       data.map((row: { bucket_start: string; total: number | string }) => [row.bucket_start, Number(row.total)]),
     );
-    return fillRevenueBuckets(totals, bucket, start, now);
+    return fillRevenueBuckets(totals, bucket, start, now, locale);
   }
   if (error && !isMissingFunction(error)) console.error("revenue_series failed, using fallback:", error);
 
   try {
-    return groupRevenue(await fetchRevenueRows(getPeriodStart(period, now)), period, now);
+    return groupRevenue(await fetchRevenueRows(getPeriodStart(period, now)), period, now, locale);
   } catch (e) {
     console.error("Error fetching revenue data:", e);
     return [];

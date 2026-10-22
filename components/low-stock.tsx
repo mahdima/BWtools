@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Table,
   TableBody,
@@ -17,17 +18,18 @@ interface LowStockProps {
 }
 
 export function LowStock({ products, total, threshold }: LowStockProps) {
+  const t = useTranslations("dashboard");
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden h-full flex flex-col">
       <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-none">
         <div>
-          <h3 className="font-bold text-lg text-gray-900">Low Stock Alert</h3>
-          <p className="text-xs text-gray-500">{threshold} or fewer in stock</p>
+          <h3 className="font-bold text-lg text-gray-900">{t("lowStockTitle")}</h3>
+          <p className="text-xs text-gray-500">{t("lowStockThreshold", { threshold })}</p>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-600 border border-red-100">
           <AlertTriangle className="h-4 w-4" aria-hidden />
           <span className="text-xs font-bold">
-            {total} {total === 1 ? "item" : "items"}
+            {t("lowStockItems", { count: total })}
           </span>
         </div>
       </div>
@@ -36,10 +38,10 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
           <TableHeader>
             <TableRow className="hover:bg-transparent border-gray-50">
               <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 ps-6 h-10">
-                Product
+                {t("product")}
               </TableHead>
               <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 text-end pe-6 h-10">
-                Stock
+                {t("stock")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -47,7 +49,7 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
             {products.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center text-gray-500 py-8">
-                  No low stock products.
+                  {t("noLowStock")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -60,7 +62,7 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
                   </TableCell>
                   <TableCell className="text-end pe-6 py-4">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-600">
-                      {(product.in_stock_vailable ?? 0) === 0 ? "Out of stock" : `${product.in_stock_vailable} left`}
+                      {(product.in_stock_vailable ?? 0) === 0 ? t("outOfStock") : t("left", { count: product.in_stock_vailable ?? 0 })}
                     </span>
                   </TableCell>
                 </TableRow>
@@ -72,7 +74,7 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
       {total > 0 && (
         <div className="px-6 py-3 border-t border-gray-50 text-end">
           <Link href="/product?stock=low" className="text-sm font-medium text-primary hover:text-primary-strong">
-            View all low-stock products
+            {t("viewAllLowStock")}
           </Link>
         </div>
       )}

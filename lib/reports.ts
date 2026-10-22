@@ -10,14 +10,6 @@ export function previousPeriod(period: string | undefined, now: Date = new Date(
   return start && end ? { start, end } : null;
 }
 
-// Words for the stat cards, e.g. "vs previous 7 days".
-export const COMPARISON_LABELS: Record<string, string> = {
-  last_week: "vs previous 7 days",
-  last_month: "vs previous month",
-  last_3_months: "vs previous 3 months",
-  last_year: "vs previous year",
-};
-
 // Change from `previous` to `current` in percent, or null when there's nothing to
 // compare with (a previous value of 0).
 export function percentChange(current: number, previous: number): number | null {
@@ -34,7 +26,16 @@ export function formatPercentChange(change: number): string {
 
 export type SalesGroup = "product" | "category" | "brand";
 
-export type SalesRow = { id: number | null; label: string; quantity: number; revenue: number };
+// `missing`: the line's product, category or brand is gone (no label). `other`: the
+// row sums that many smaller rows (see topWithOther). Pages translate both.
+export type SalesRow = {
+  id: number | null;
+  label: string;
+  quantity: number;
+  revenue: number;
+  missing?: true;
+  other?: number;
+};
 
 // One order line as the fallback query returns it (see lib/data/reports.ts).
 export type SalesLine = {
@@ -48,13 +49,6 @@ export type SalesLine = {
     categories: { categorie_name: string | null } | null;
     brands: { brand_name: string | null } | null;
   } | null;
-};
-
-// Label for a line whose product, category or brand is missing.
-export const MISSING_LABELS: Record<SalesGroup, string> = {
-  product: "Unknown product",
-  category: "No category",
-  brand: "No brand",
 };
 
 // Units sold and sales (quantity × price paid) per product, category or brand, best
@@ -74,7 +68,7 @@ export function groupSales(lines: SalesLine[], group: SalesGroup): SalesRow[] {
           : product?.brands?.brand_name) ?? null;
 
     const key = `${id}`;
-    const row = rows.get(key) ?? { id, label: label || MISSING_LABELS[group], quantity: 0, revenue: 0 };
+    const row = rows.get(key) ?? (label ? { id, label, quantity: 0, revenue: 0 } : { id, label: "", quantity: 0, revenue: 0, missing: true as const });
     const quantity = line.quantity ?? 0;
     row.quantity += quantity;
     row.revenue += quantity * (line.unit_price ?? 0);
@@ -97,9 +91,10 @@ export function topWithOther(rows: SalesRow[], limit: number): SalesRow[] {
     ...rows.slice(0, limit - 1),
     {
       id: null,
-      label: `Other (${rest.length})`,
+      label: "",
       quantity: rest.reduce((sum, row) => sum + row.quantity, 0),
       revenue: rest.reduce((sum, row) => sum + row.revenue, 0),
+      other: rest.length,
     },
   ];
 }

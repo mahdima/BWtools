@@ -80,12 +80,13 @@ describe("groupSales", () => {
     ]);
   });
 
-  it("groups by category and brand, naming missing ones", () => {
+  it("groups by category and brand, marking missing ones", () => {
     expect(groupSales(lines, "category")).toEqual([
       { id: 10, label: "Power tools", quantity: 4, revenue: 17500 },
-      { id: null, label: "No category", quantity: 10, revenue: 2000 },
+      { id: null, label: "", quantity: 10, revenue: 2000, missing: true },
     ]);
-    expect(groupSales(lines, "brand").map((row) => row.label)).toEqual(["Bosch", "Makita", "No brand"]);
+    expect(groupSales(lines, "brand").map((row) => row.label)).toEqual(["Bosch", "Makita", ""]);
+    expect(groupSales(lines, "brand").at(-1)?.missing).toBe(true);
   });
 
   it("returns nothing for no lines", () => {
@@ -99,7 +100,7 @@ describe("topWithOther", () => {
     expect(topWithOther(rows, 5)).toBe(rows);
     expect(topWithOther(rows, 2)).toEqual([
       { id: 1, label: "Drill", quantity: 3, revenue: 14500 },
-      { id: null, label: "Other (2)", quantity: 11, revenue: 5000 },
+      { id: null, label: "", quantity: 11, revenue: 5000, other: 2 },
     ]);
   });
 });

@@ -23,6 +23,9 @@ import {
   markAllNotificationsAsRead,
 } from "@/app/(dashboard)/notifications/actions";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
+import { intlLocale } from "@/lib/i18n";
+import { STORE_TIME_ZONE } from "@/lib/dates";
 
 interface Notification {
   id: number;
@@ -39,6 +42,8 @@ interface NotificationsPanelProps {
 }
 
 export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
+  const t = useTranslations("notifications");
+  const locale = useLocale();
   const [isPending, startTransition] = useTransition();
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -72,7 +77,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
           variant="ghost"
           size="icon"
           className="relative"
-          aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
+          aria-label={unreadCount > 0 ? t("unread", { count: unreadCount }) : t("title")}
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -84,7 +89,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel className="flex justify-between items-center">
-          <span>Notifications</span>
+          <span>{t("title")}</span>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -93,7 +98,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
               onClick={handleMarkAllAsRead}
               disabled={isPending}
             >
-              Mark all as read
+              {t("markAllRead")}
             </Button>
           )}
         </DropdownMenuLabel>
@@ -101,7 +106,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
 
         {notifications.length === 0 ? (
           <div className="p-4 text-center text-sm text-gray-500">
-            No notifications yet
+            {t("none")}
           </div>
         ) : (
           <div className="max-h-80 overflow-y-auto">
@@ -130,7 +135,12 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
                     {notification.message}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    {notification.created_at && new Date(notification.created_at).toLocaleString()}
+                    {notification.created_at &&
+                      new Intl.DateTimeFormat(intlLocale(locale), {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                        timeZone: STORE_TIME_ZONE,
+                      }).format(new Date(notification.created_at))}
                   </p>
                 </div>
                 {notification.link && (

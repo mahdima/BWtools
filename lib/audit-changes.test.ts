@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { diffChanges, formatChanges, isAuditEntity } from "@/lib/audit-changes";
+import { diffChanges, formatChanges, isAuditAction, isAuditEntity, type ChangeLabels } from "@/lib/audit-changes";
+import en from "@/messages/en.json";
+
+// The English labels, as the /audit page builds them from messages/en.json
+const labels: ChangeLabels = {
+  field: (key) => en.audit.fields[key],
+  value: (field, value) => (field === "role" && value in en.roles ? en.roles[value as keyof typeof en.roles] : undefined),
+  yes: en.audit.yes,
+  no: en.audit.no,
+  empty: en.audit.empty,
+  image: { added: en.audit.imageAdded, removed: en.audit.imageRemoved, replaced: en.audit.imageReplaced },
+  line: (field, value) => en.audit.line.replace("{field}", field).replace("{value}", value),
+  change: (from, to) => en.audit.change.replace("{from}", from).replace("{to}", to),
+};
 
 describe("diffChanges", () => {
   it("keeps only the fields that changed", () => {
@@ -30,7 +43,7 @@ describe("formatChanges", () => {
         unite_price: { from: 1200, to: 1500 },
         in_stock_vailable: { from: null, to: 3 },
         is_active: { from: true, to: false },
-      }),
+      }, labels),
     ).toEqual(["Price: 1200 → 1500", "Stock: (empty) → 3", "Is active: yes → no"]);
   });
 
@@ -39,17 +52,21 @@ describe("formatChanges", () => {
       formatChanges({
         product_link: { from: null, to: "https://x/a.png" },
         cat_image_url: { from: "https://x/a.png", to: null },
-      }),
+      }, labels),
     ).toEqual(["Image: added", "Image: removed"]);
-    expect(formatChanges({ product_link: { from: "https://x/a.png", to: "https://x/b.png" } })).toEqual([
+    expect(formatChanges({ product_link: { from: "https://x/a.png", to: "https://x/b.png" } }, labels)).toEqual([
       "Image: replaced",
     ]);
   });
 
   it("shows new-only values and plain values", () => {
-    expect(formatChanges({ status: { to: "Delivered" } })).toEqual(["Status: Delivered"]);
-    expect(formatChanges({ rows: 42, fields: ["username", "phone"] })).toEqual(["Rows: 42", "Fields: username, phone"]);
-    expect(formatChanges(null)).toEqual([]);
+    expect(formatChanges({ status: { to: "Delivered" } }, labels)).toEqual(["Status: Delivered"]);
+    expect(formatChanges({ rows: 42, fields: ["username", "phone"] }, labels)).toEqual(["Rows: 42", "Fields: username, phone"]);
+    expect(formatChanges(null, labels)).toEqual([]);
+  });
+
+  it("translates values when a label for them exists", () => {
+    expect(formatChanges({ role: { from: "viewer", to: "super_admin" } }, labels)).toEqual(["Role: Viewer → Super Admin"]);
   });
 });
 
@@ -59,5 +76,10 @@ describe("isAuditEntity", () => {
     expect(isAuditEntity("store_settings")).toBe(true);
     expect(isAuditEntity("profiles")).toBe(false);
     expect(isAuditEntity(undefined)).toBe(false);
+  });
+
+  it("knows the logged actions", () => {
+    expect(isAuditAction("status_change")).toBe(true);
+    expect(isAuditAction("drop")).toBe(false);
   });
 });

@@ -18,34 +18,37 @@ export type AuditAction =
 
 export type AuditEntity = "product" | "brand" | "category" | "order" | "customer" | "admin" | "store_settings";
 
-export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
-  create: "Created",
-  update: "Updated",
-  delete: "Deleted",
-  archive: "Archived",
-  restore: "Restored",
-  status_change: "Changed status",
-  note: "Added a note",
-  export: "Exported",
-  import: "Imported",
-  role_change: "Changed role",
-  deactivate: "Deactivated",
-  reactivate: "Reactivated",
-  password_change: "Changed password",
-};
+export const AUDIT_ACTIONS: AuditAction[] = [
+  "create",
+  "update",
+  "delete",
+  "archive",
+  "restore",
+  "status_change",
+  "note",
+  "export",
+  "import",
+  "role_change",
+  "deactivate",
+  "reactivate",
+  "password_change",
+];
 
-export const AUDIT_ENTITY_LABELS: Record<AuditEntity, string> = {
-  product: "Product",
-  brand: "Brand",
-  category: "Category",
-  order: "Order",
-  customer: "Customer",
-  admin: "Admin",
-  store_settings: "Store settings",
-};
+export const isAuditAction = (value: unknown): value is AuditAction =>
+  typeof value === "string" && (AUDIT_ACTIONS as string[]).includes(value);
+
+export const AUDIT_ENTITIES: AuditEntity[] = [
+  "product",
+  "brand",
+  "category",
+  "order",
+  "customer",
+  "admin",
+  "store_settings",
+];
 
 export const isAuditEntity = (value: unknown): value is AuditEntity =>
-  typeof value === "string" && value in AUDIT_ENTITY_LABELS;
+  typeof value === "string" && (AUDIT_ENTITIES as string[]).includes(value);
 
 export type FieldChange = { from: unknown; to: unknown };
 
@@ -73,55 +76,90 @@ export function diffChanges(
   return changes;
 }
 
-// Column names as people know them (several columns are misspelled, see CLAUDE.md).
-const FIELD_LABELS: Record<string, string> = {
-  product_name: "Name",
-  categorie_name: "Name",
-  brand_name: "Name",
-  full_name: "Name",
-  unite_price: "Price",
-  in_stock_vailable: "Stock",
-  Category_id: "Category",
-  brand_id: "Brand",
-  description: "Description",
-  product_link: "Image",
-  cat_image_url: "Image",
-  low_stock_threshold: "Low-stock threshold",
-  invoice_footer: "Invoice footer",
+// Logged field -> its label key ("audit.fields.*" in messages/*.json). Several
+// columns are misspelled (see CLAUDE.md), and several mean "name".
+export const FIELD_KEYS = {
+  product_name: "name",
+  categorie_name: "name",
+  brand_name: "name",
+  full_name: "name",
+  unite_price: "price",
+  in_stock_vailable: "stock",
+  Category_id: "category",
+  brand_id: "brand",
+  description: "description",
+  product_link: "image",
+  cat_image_url: "image",
+  low_stock_threshold: "lowStockThreshold",
+  invoice_footer: "invoiceFooter",
+  store_name: "storeName",
+  contact_email: "contactEmail",
+  contact_phone: "contactPhone",
+  address: "address",
+  status: "status",
+  role: "role",
+  note: "note",
+  rows: "rows",
+  skipped: "skipped",
+  search: "search",
+  from: "from",
+  to: "to",
+  fields: "fields",
+  email: "email",
+} as const;
+
+export type FieldKey = (typeof FIELD_KEYS)[keyof typeof FIELD_KEYS];
+
+// The words formatChanges needs, in the admin's language.
+export type ChangeLabels = {
+  field: (key: FieldKey) => string;
+  // A translated value, e.g. a role or order status name; undefined keeps it as is
+  value?: (field: string, value: string) => string | undefined;
+  yes: string;
+  no: string;
+  empty: string;
+  image: { added: string; removed: string; replaced: string };
+  // "Price: 1200", and "1200 → 1500" (the arrow points the other way in Arabic)
+  line: (field: string, value: string) => string;
+  change: (from: string, to: string) => string;
 };
 
 const IMAGE_FIELDS = new Set(["product_link", "cat_image_url"]);
 
-const fieldLabel = (field: string) => {
-  const label = FIELD_LABELS[field] ?? field.replace(/_/g, " ");
+function fieldLabel(field: string, labels: ChangeLabels): string {
+  const key = (FIELD_KEYS as Record<string, FieldKey>)[field];
+  const label = key ? labels.field(key) : field.replace(/_/g, " ");
   return label.charAt(0).toUpperCase() + label.slice(1);
-};
+}
 
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "(empty)";
-  if (typeof value === "boolean") return value ? "yes" : "no";
-  if (Array.isArray(value)) return value.map(formatValue).join(", ");
+function formatValue(value: unknown, field: string, labels: ChangeLabels): string {
+  if (value === null || value === undefined || value === "") return labels.empty;
+  if (typeof value === "boolean") return value ? labels.yes : labels.no;
+  if (Array.isArray(value)) return value.map((item) => formatValue(item, field, labels)).join(", ");
   if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
+  return labels.value?.(field, String(value)) ?? String(value);
 }
 
 const isFieldChange = (value: unknown): value is FieldChange =>
   typeof value === "object" && value !== null && "to" in value;
 
 // One readable line per change, e.g. "Price: 1200 → 1500" or "Image: replaced".
-export function formatChanges(changes: Record<string, unknown> | null | undefined): string[] {
+export function formatChanges(changes: Record<string, unknown> | null | undefined, labels: ChangeLabels): string[] {
   if (!changes) return [];
 
   return Object.entries(changes).map(([field, change]) => {
-    const label = fieldLabel(field);
-    if (!isFieldChange(change)) return `${label}: ${formatValue(change)}`;
+    const label = fieldLabel(field, labels);
+    if (!isFieldChange(change)) return labels.line(label, formatValue(change, field, labels));
 
     if (IMAGE_FIELDS.has(field)) {
       const state = !change.from ? "added" : !change.to ? "removed" : "replaced";
-      return `${label}: ${state}`;
+      return labels.line(label, labels.image[state]);
     }
-    return "from" in change && change.from !== undefined
-      ? `${label}: ${formatValue(change.from)} → ${formatValue(change.to)}`
-      : `${label}: ${formatValue(change.to)}`;
+    return labels.line(
+      label,
+      "from" in change && change.from !== undefined
+        ? labels.change(formatValue(change.from, field, labels), formatValue(change.to, field, labels))
+        : formatValue(change.to, field, labels),
+    );
   });
 }

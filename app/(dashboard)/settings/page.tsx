@@ -2,42 +2,47 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SecurityForm } from "@/components/SecurityForm";
 import { requireAdminPage } from "@/lib/auth";
-import { ROLE_LABELS } from "@/lib/roles";
+import { getTranslations } from "next-intl/server";
 import { getStoreSettings } from "@/lib/data/settings";
 import { StoreSettingsForm } from "@/components/store-settings-form";
 
 const SettingsPage = async () => {
-  const [admin, settings] = await Promise.all([requireAdminPage(), getStoreSettings()]);
+  const [admin, settings, t, roles] = await Promise.all([
+    requireAdminPage(),
+    getStoreSettings(),
+    getTranslations("settings"),
+    getTranslations("roles"),
+  ]);
   const isSuperAdmin = admin.role === "super_admin";
 
   return (
     <div className="p-4 w-[98%] mx-auto">
       <div className="mb-6 mt-5">
-        <h1 className="text-2xl font-bold mb-1 text-gray-900">Settings</h1>
+        <h1 className="text-2xl font-bold mb-1 text-gray-900">{t("title")}</h1>
         <p className="text-sm text-gray-500">
-          Manage your account and store preferences
+          {t("subtitle")}
         </p>
       </div>
 
       <Tabs defaultValue="general" className="w-full space-y-6">
         <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="general">{t("general")}</TabsTrigger>
+          <TabsTrigger value="security">{t("security")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
           <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 max-w-2xl">
-            <h3 className="text-lg font-medium mb-4">Your account</h3>
+            <h3 className="text-lg font-medium mb-4">{t("yourAccount")}</h3>
             <dl className="grid gap-4">
               <div className="grid grid-cols-3 items-center gap-4">
-                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                <dt className="text-sm font-medium text-gray-500">{t("email")}</dt>
                 <dd className="col-span-2 font-medium text-gray-900">{admin.email}</dd>
               </div>
               <div className="grid grid-cols-3 items-center gap-4">
-                <dt className="text-sm font-medium text-gray-500">Role</dt>
+                <dt className="text-sm font-medium text-gray-500">{t("role")}</dt>
                 <dd className="col-span-2 flex">
                   <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">
-                    {ROLE_LABELS[admin.role]}
+                    {roles(admin.role)}
                   </span>
                 </dd>
               </div>
@@ -45,12 +50,11 @@ const SettingsPage = async () => {
           </div>
 
           <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 max-w-2xl">
-            <h3 className="text-lg font-medium mb-1">Store</h3>
-            <p className="text-sm text-gray-500 mb-4">Used on invoices and for low-stock alerts.</p>
+            <h3 className="text-lg font-medium mb-1">{t("store")}</h3>
+            <p className="text-sm text-gray-500 mb-4">{t("storeHelp")}</p>
             {isSuperAdmin && settings.isDefault && (
               <p className="mb-4 p-3 rounded-lg bg-amber-50 text-amber-700 text-sm">
-                These are the default values. Saving needs the store settings table
-                (docs/sql/P6-01-store-settings.sql).
+                {t("defaultsNotice")}
               </p>
             )}
             {isSuperAdmin ? (
@@ -58,11 +62,11 @@ const SettingsPage = async () => {
             ) : (
               <dl className="grid gap-4">
                 {[
-                  ["Store name", settings.store_name],
-                  ["Contact email", settings.contact_email],
-                  ["Contact phone", settings.contact_phone ?? "—"],
-                  ["Address", settings.address || "—"],
-                  ["Low-stock threshold", String(settings.low_stock_threshold)],
+                  [t("storeName"), settings.store_name],
+                  [t("contactEmail"), settings.contact_email],
+                  [t("contactPhone"), settings.contact_phone ?? "—"],
+                  [t("address"), settings.address || "—"],
+                  [t("lowStockThreshold"), String(settings.low_stock_threshold)],
                 ].map(([label, value]) => (
                   <div key={label} className="grid grid-cols-3 items-center gap-4">
                     <dt className="text-sm font-medium text-gray-500">{label}</dt>

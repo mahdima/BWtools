@@ -5,9 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Users, UserPlus, Shield, Eye, UserCog } from "lucide-react";
 import Link from "next/link";
 import { TeamMemberCard } from "../../../components/team-member-card";
+import { getTranslations } from "next-intl/server";
 
 export default async function TeamPage() {
-  const [admin, members] = await Promise.all([requireAdminPage(), getTeamMembers()]);
+  const [admin, members, t, roles] = await Promise.all([
+    requireAdminPage(),
+    getTeamMembers(),
+    getTranslations("team"),
+    getTranslations("roles"),
+  ]);
   const isSuper = admin.role === "super_admin";
 
   return (
@@ -15,15 +21,15 @@ export default async function TeamPage() {
       {/* Header */}
       <div className="flex items-center justify-between py-4 mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
           <p className="text-sm text-gray-500">
-            Manage admin accounts and permissions
+            {t("subtitle")}
           </p>
         </div>
         {isSuper && (
           <Link href="/team/new">
             <Button className="bg-primary text-white hover:bg-primary-strong">
-              <UserPlus className="me-2 h-4 w-4" /> Add Admin
+              <UserPlus className="me-2 h-4 w-4" /> {t("addAdmin")}
             </Button>
           </Link>
         )}
@@ -33,15 +39,15 @@ export default async function TeamPage() {
       <div className="flex gap-4 mb-6">
         <div className="flex items-center gap-2 text-sm">
           <Shield className="h-4 w-4 text-purple-600" />
-          <span className="text-gray-600">Super Admin</span>
+          <span className="text-gray-600">{roles("super_admin")}</span>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <UserCog className="h-4 w-4 text-blue-600" />
-          <span className="text-gray-600">Admin</span>
+          <span className="text-gray-600">{roles("admin")}</span>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Eye className="h-4 w-4 text-gray-600" />
-          <span className="text-gray-600">Viewer</span>
+          <span className="text-gray-600">{roles("viewer")}</span>
         </div>
       </div>
 
@@ -56,7 +62,7 @@ export default async function TeamPage() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-gray-500">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No team members found</p>
+            <p>{t("noMembers")}</p>
           </div>
         </div>
       )}

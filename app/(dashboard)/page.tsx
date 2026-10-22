@@ -6,7 +6,10 @@ import { RevenueChart } from "@/components/revenue-chart";
 import { getDashboardStats, getLowStockProducts, getRecentOrders, getRevenueData } from "@/lib/data/dashboard";
 import { getStoreSettings } from "@/lib/data/settings";
 import { getPreviousPeriodTotals } from "@/lib/data/reports";
-import { COMPARISON_LABELS, percentChange } from "@/lib/reports";
+import { percentChange } from "@/lib/reports";
+import { isPeriod } from "@/lib/dates";
+import { intlLocale } from "@/lib/i18n";
+import { getLocale, getTranslations } from "next-intl/server";
 
 export const revalidate = 0; // Ensure fresh data on every request
 
@@ -16,13 +19,14 @@ interface DashboardProps {
 
 export default async function Home({ searchParams }: DashboardProps) {
   const params = await searchParams;
-  const period = typeof params.period === "string" ? params.period : "all";
+  const period = isPeriod(params.period) ? params.period : "all";
+  const [t, locale] = await Promise.all([getTranslations("dashboard"), getLocale()]);
 
   const [stats, previous, recentOrders, revenueData, lowStock] = await Promise.all([
     getDashboardStats(period),
     getPreviousPeriodTotals(period),
     getRecentOrders(),
-    getRevenueData(period),
+    getRevenueData(period, intlLocale(locale)),
     getStoreSettings().then(async ({ low_stock_threshold }) => ({
       threshold: low_stock_threshold,
       ...(await getLowStockProducts(low_stock_threshold)),
@@ -30,19 +34,19 @@ export default async function Home({ searchParams }: DashboardProps) {
   ]);
 
   // Change against the window just before the period (none for "all time")
-  const comparison = previous && {
-    label: COMPARISON_LABELS[period] ?? "vs previous period",
+  const comparison = previous && period !== "all" ? {
+    label: t(`comparison.${period}`),
     revenue: percentChange(stats.totalRevenue, previous.revenue),
     orders: percentChange(stats.totalOrders, previous.orders),
-  };
+  } : null;
 
   return (
     <div className="p-4 ps-16 lg:ps-4 w-full lg:w-[98%] mx-auto h-[calc(100vh-2rem)] flex flex-col space-y-4 overflow-auto">
       <div className="flex-none flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
           <p className="text-sm text-gray-500">
-            Overview of your store&apos;s performance
+            {t("subtitle")}
           </p>
         </div>
         <DashboardFilter />
