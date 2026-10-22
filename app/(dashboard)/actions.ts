@@ -2,23 +2,13 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { parseOrderNumber } from "@/lib/orders";
+import { getPeriodStart, groupRevenue } from "@/lib/dates";
 import { unstable_cache } from "next/cache";
 
 // Cached version of dashboard stats - refreshes every 60 seconds
 export const getDashboardStats = unstable_cache(
   async (period?: string) => {
-    let startDate = new Date(0); // Default to beginning of time
-    const now = new Date();
-
-    if (period === "last_week") {
-      startDate = new Date(now.setDate(now.getDate() - 7));
-    } else if (period === "last_month") {
-      startDate = new Date(now.setMonth(now.getMonth() - 1));
-    } else if (period === "last_3_months") {
-      startDate = new Date(now.setMonth(now.getMonth() - 3));
-    } else if (period === "last_year") {
-      startDate = new Date(now.setFullYear(now.getFullYear() - 1));
-    }
+    const startDate = getPeriodStart(period); // null = all time
 
     // Base queries
     const productsQuery = supabaseAdmin.from('products').select('*', { count: 'exact', head: true });
@@ -28,7 +18,7 @@ export const getDashboardStats = unstable_cache(
     let ordersQuery = supabaseAdmin.from('orders').select('*', { count: 'exact', head: true });
     let revenueQuery = supabaseAdmin.from('orders').select('total').neq('status', 'Cancelled');
 
-    if (period && period !== 'all') {
+    if (startDate) {
       const isoDate = startDate.toISOString();
       ordersQuery = ordersQuery.gte('created_at', isoDate);
       revenueQuery = revenueQuery.gte('created_at', isoDate);
@@ -85,59 +75,30 @@ export async function getLowStockProducts() {
   return data;
 }
 
+// Revenue per day/week/month for the dashboard chart (see groupRevenue in lib/dates.ts).
+// NOTE: like getDashboardStats, this reads raw order rows, and Supabase returns at most
+// 1000 rows per request; P6-06 moves both to SQL aggregates.
 export async function getRevenueData(period: string = "last_week") {
-  let startDate = new Date(0);
   const now = new Date();
-
-  // Determine filtering similar to getDashboardStats
-  if (period === "last_week") {
-    startDate = new Date(now.setDate(now.getDate() - 7));
-  } else if (period === "last_month") {
-    startDate = new Date(now.setMonth(now.getMonth() - 1));
-  } else if (period === "last_3_months") {
-    startDate = new Date(now.setMonth(now.getMonth() - 3));
-  } else if (period === "last_year") {
-    startDate = new Date(now.setFullYear(now.getFullYear() - 1));
-  }
+  const startDate = getPeriodStart(period, now);
 
   let query = supabaseAdmin
     .from("orders")
     .select("created_at, total")
     .neq("status", "Cancelled");
 
-  if (period && period !== "all") {
+  if (startDate) {
     query = query.gte("created_at", startDate.toISOString());
   }
 
-  query = query.order("created_at", { ascending: true });
-
-  const { data, error } = await query;
+  const { data, error } = await query.order("created_at", { ascending: true });
 
   if (error || !data) {
     console.error("Error fetching revenue data:", error);
     return [];
   }
 
-  // Aggregate in JS
-  // Map: DateString -> Total
-  const groupedData: Record<string, number> = {};
-
-  data.forEach((order) => {
-    const date = new Date(order.created_at).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }); // e.g. "Dec 25"
-    if (!groupedData[date]) {
-      groupedData[date] = 0;
-    }
-    groupedData[date] += order.total || 0;
-  });
-
-  // Convert to array
-  return Object.keys(groupedData).map((key) => ({
-    name: key,
-    total: groupedData[key],
-  }));
+  return groupRevenue(data, period, now);
 }
 
 export async function getProducts({

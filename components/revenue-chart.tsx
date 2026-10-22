@@ -72,7 +72,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
               dataKey="total"
               fill="#2563EB"
               radius={[4, 4, 0, 0]}
-              barSize={40}
+              maxBarSize={40}
             />
           </BarChart>
         </ResponsiveContainer>

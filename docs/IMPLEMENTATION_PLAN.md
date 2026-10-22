@@ -455,7 +455,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Still to check when logged in:** open a real order and its invoice.
 
 ### P3-06 · Revenue chart grouping and shared date ranges
-- [ ] Done
+- [x] Done
 
 **Files:** new `lib/dates.ts` (+ test), `app/(dashboard)/actions.ts`
 **Steps:**
@@ -463,6 +463,17 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Group revenue by `YYYY-MM-DD` for ranges up to 90 days, and by month beyond that. Labels must include the year where needed.
 
 **Done when:** "All time" no longer adds together the same calendar day from different years.
+
+**Notes (2026-10-22):**
+- **`lib/dates.ts`** (pure, 9 tests, 94 total):
+  - `getPeriodStart(period, now)` uses UTC setters so it's deterministic; the tests also pass with `TZ` set to Paris and New York.
+  - `localDateKey()` buckets days in `Africa/Algiers` time, since the server runs in UTC.
+  - `groupRevenue(orders, period, now)` buckets by full date. **Deviation from the steps:** daily up to 31 days, **weekly (Monday-based) up to 120 days**, monthly beyond; a strict day/month split would make "last 3 months" only 3 bars. Every bucket from the period start is present, with 0 for quiet periods, instead of squeezing gaps out. With no orders it returns `[]`, so the chart keeps its empty state.
+- **`app/(dashboard)/actions.ts`:** `getDashboardStats` and `getRevenueData` use these; the two copies of the date-range code are gone.
+- **`RevenueChart`:** `barSize={40}` became `maxBarSize={40}`, so 31 daily bars fit.
+- **Browser check:** the real `RevenueChart` was rendered with `groupRevenue` output for all four periods on a temporary page. Bar counts were 8, 31, 14 and 25, with 0 page errors, and the screenshot was reviewed: labels are readable and monthly labels include the year. The page was deleted afterwards.
+- **Checks:** `typecheck`, lint (0 errors) and `build` pass.
+- **Found:** the revenue figures are capped at 1000 orders per period by Supabase's row limit; noted on P6-06.
 
 ### P3-07 · Small fixes
 - [ ] Done
@@ -716,6 +727,8 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 1. Replace the in-JavaScript sums with these functions.
 
 **Done when:** Dashboard queries return aggregates, not every order row.
+
+**Notes (2026-10-22, from P3-06):** This is a **correctness** fix, not just performance. Supabase returns at most 1000 rows per request, so once there are more than 1000 non-cancelled orders in a period, `getDashboardStats` (total revenue) and `getRevenueData` (chart) silently sum only the first 1000. Consider doing this task early. The SQL function should bucket in `Africa/Algiers` time, like `lib/dates.ts`, and return the same day/week/month buckets so `groupRevenue`'s labels and zero-filling can stay.
 
 ### P6-07 · Image lifecycle
 - [ ] Done
