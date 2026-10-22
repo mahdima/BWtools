@@ -863,7 +863,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
   - `typecheck`, lint (0 errors, warnings down to 28), 118 tests and `build` pass.
 
 ### P6-04 · Customer detail page and server-side paging
-- [ ] Done
+- [x] Done
 
 **Files:** new `app/(dashboard)/customers/[id]/page.tsx`, `customers/page.tsx`, `lib/data/customers.ts`
 **Steps:**
@@ -871,6 +871,13 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. The customer list gets server-side paging and search, the same as Products. Do the same for Brands.
 
 **Done when:** Clicking a customer opens their history, and the lists page on the server.
+
+**Notes (2026-10-22):**
+- **`/customers/[id]`:** `getCustomerDetails` in `lib/data/customers.ts` loads the profile, full name, orders and addresses in parallel. The page shows the order count, total spent (excluding cancelled orders), last order, contact details, saved addresses (default first, via `formatAddressLines`) and the order history linking to `/order/<id>`. A non-UUID or unknown id gives a 404. It has a loading skeleton.
+- **Customers list:** server-side paging and search by username, email or phone, using `customerSearchPattern` as in the P5-04 order search. The username cell links to the detail page. I deliberately did not make the whole row clickable, because the edit button in the same row would then also navigate.
+- **Brands list:** server-side paging and search by name, with LIKE wildcards escaped.
+- **Verified:** count-only requests to Supabase accepted all 6 new queries (there are 16 customers). `typecheck`, lint (0 errors) and `build` pass.
+- **Still to check when logged in:** open a customer, search customers, and page through brands.
 
 ### P6-05 · Transactional status change and stock movement
 - [ ] Done

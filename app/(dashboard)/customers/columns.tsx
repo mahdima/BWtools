@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 import { Can } from "@/components/admin-provider";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,15 @@ export const columns: ColumnDef<Customer>[] = [
   {
     accessorKey: "username",
     header: "Username",
+    // Links to the customer page (a link here rather than a clickable row, so the
+    // edit button in the same row doesn't also navigate)
     cell: ({ row }) => {
-      const val = row.getValue("username") as string;
-      return val && val !== "Null" ? (
-        <span className="font-medium text-gray-900">{val}</span>
-      ) : (
-        <span className="text-gray-400">-</span>
+      const val = row.getValue("username") as string | null;
+      const label = val && val !== "Null" ? val : row.original.email || "View customer";
+      return (
+        <Link href={`/customers/${row.original.id}`} className="font-medium text-gray-900 hover:text-primary hover:underline">
+          {label}
+        </Link>
       );
     },
   },

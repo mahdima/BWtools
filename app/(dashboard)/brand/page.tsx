@@ -18,13 +18,16 @@ interface BrandPageProps {
 
 const BrandPage = async ({ searchParams }: BrandPageProps) => {
   const params = await searchParams;
+  const page = typeof params.page === "string" ? parseInt(params.page) : 1;
+  const search = typeof params.search === "string" ? params.search : "";
+  const limit = 20;
   // The add/edit modal is only for admins (viewers are read-only)
   const canEdit = hasRole((await getCurrentAdmin())?.role, "admin");
   const showAddModal = canEdit && params.add === "true";
   const editId = canEdit ? (params.edit as string | undefined) : undefined;
 
-  const [data, brandToEdit] = await Promise.all([
-    getBrands(),
+  const [{ data, count }, brandToEdit] = await Promise.all([
+    getBrands({ page, limit, search }),
     editId ? getBrandById(Number(editId)) : null,
   ]);
 
@@ -35,6 +38,8 @@ const BrandPage = async ({ searchParams }: BrandPageProps) => {
           columns={columns}
           data={data}
           searchKey="brand"
+          pageCount={Math.ceil(count / limit)}
+          isServerSide={true}
           title="Brands"
           description="Manage product brands"
           headerActions={
