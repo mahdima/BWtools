@@ -16,13 +16,10 @@ async function getData(): Promise<Category[]> {
     return [];
   }
 
-  if (data && data.length > 0) {
-    console.log("Raw category data from DB (first item):", data[0]);
-  }
-
   return (data || []).map((item: any) => ({
     id: item.categorie_id,
     category: item.categorie_name,
+    image: item.cat_image_url,
   }));
 }
 

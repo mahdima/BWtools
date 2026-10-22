@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalImage } from "./form";
+import { existingImageUrl, optionalImage } from "./form";
 
 // Fields posted by components/ProductForm.tsx (add and edit).
 export const productSchema = z.object({
@@ -20,11 +20,7 @@ export const productSchema = z.object({
     .min(0, "Quantity cannot be negative."),
   description: z.string().max(20_000, "Description is too long.").optional(),
   productImage: optionalImage,
-  // The current image URL kept when no new file is chosen; empty when removed.
-  existingImageUrl: z
-    .string()
-    .refine((url) => url === "" || /^https?:\/\//.test(url), "Image URL is invalid.")
-    .optional(),
+  existingImageUrl,
   page: z.string().optional(),
 });
 

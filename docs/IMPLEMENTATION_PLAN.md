@@ -555,7 +555,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 ## Phase 4 — Clean up
 
 ### P4-01 · Category image upload in the live modal
-- [ ] Done
+- [x] Done
 
 **Why:** The legacy page could upload category images; the modal cannot. This must be done before the legacy code is deleted.
 **Files:** `components/CategoryForm.tsx`, `categories/actions.ts`, `categories/columns.tsx`
@@ -566,6 +566,16 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 **Done when:** You can add and change category images from the Categories page.
 
 **Notes (2026-10-22, from P2-03):** `brands` also has a `brand_image_url` column that the dashboard never sets. Consider the same picker for brands.
+
+**Notes (2026-10-22, implementation):**
+- **Category actions:** `addCategory` and `updateCategory` upload to the `StaticAssests` bucket (named by MIME type, with `contentType`), and keep or clear `existingImageUrl` on update. All three actions now use `supabaseAdmin` behind the role guard, like every other action; they used the cookie client, where RLS could silently no-op.
+- **Validation:** `existingImageUrl` is a shared field in `lib/validation/form.ts`, used by the product and category schemas.
+- **Image picker:** `ProductImageUpload` gained `label` and `previewClassName` and is reused for categories. The legacy `CategoryImageUpload` had a bug: Remove still posted the old URL, so an image could never be removed. It stays only for the legacy pages, which P4-02 deletes.
+- **`CategoryForm`:** the dialog body is its own component, mounted on open, so there is no stale error. It uses `useFormAction`: the error is shown inline, input and image are kept, and success toasts and closes. Labels are linked with `htmlFor`, and the close button has an `aria-label`.
+- **Table:** a thumbnail column (`next/image`, unoptimized). The categories page no longer logs raw rows.
+- **Browser check:** the real `CategoryForm` with its real server action on a temporary page, 6/6 checks with 0 page errors. Covered: the picker, the PNG preview, the action refusing without a session ("Not authorized", inline), the name and image kept, and a fresh dialog on reopen. The page was deleted afterwards.
+- **Checks:** `typecheck`, 95 tests, lint (0 errors) and `build` pass, and the guard audit is 25/25.
+- **Still to check when logged in:** add a category with an image, change it, and remove it.
 
 ### P4-02 · Delete legacy and dead code
 - [ ] Done

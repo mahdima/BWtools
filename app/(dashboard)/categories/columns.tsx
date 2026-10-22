@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import Image from "next/image";
 import { Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryForm } from "@/components/CategoryForm";
@@ -10,12 +11,30 @@ import { deleteCategory } from "./actions";
 export type Category = {
   id: string;
   category: string;
+  image: string | null;
 };
 
 export const columns: ColumnDef<Category>[] = [
   {
     accessorKey: "id",
     header: "ID",
+  },
+  {
+    id: "image",
+    header: "Image",
+    cell: ({ row }) =>
+      row.original.image ? (
+        <Image
+          src={row.original.image}
+          alt={row.original.category}
+          width={40}
+          height={40}
+          className="h-10 w-10 rounded-md object-cover border border-gray-100"
+          unoptimized
+        />
+      ) : (
+        <div className="h-10 w-10 rounded-md bg-gray-100" aria-hidden />
+      ),
   },
   {
     accessorKey: "category",
@@ -35,7 +54,7 @@ export const columns: ColumnDef<Category>[] = [
       return (
         <div className="flex items-center gap-1">
           <CategoryForm
-            category={{ id: category.id, name: category.category }}
+            category={{ id: category.id, name: category.category, imageUrl: category.image }}
             trigger={
               <Button
                 variant="ghost"

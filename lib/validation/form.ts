@@ -34,6 +34,12 @@ export const optionalImage = z.preprocess(
     .optional(),
 );
 
+// The current image URL posted back when no new file is chosen; empty when removed.
+export const existingImageUrl = z
+  .string()
+  .refine((url) => url === "" || /^https?:\/\//.test(url), "Image URL is invalid.")
+  .optional();
+
 // Extension for a file that passed `optionalImage`, taken from its MIME type, not its name.
 export function imageExtension(file: File): string {
   return IMAGE_TYPES[file.type as keyof typeof IMAGE_TYPES];

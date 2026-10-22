@@ -6,11 +6,16 @@ import { Trash2, Plus } from "lucide-react";
 interface ProductImageUploadProps {
   defaultValue?: string | null;
   name?: string;
+  label?: string;
+  // Size of the preview box (default 300px tall)
+  previewClassName?: string;
 }
 
 export const ProductImageUpload = ({
   defaultValue,
   name = "productImage",
+  label = "Select Product Image",
+  previewClassName = "h-[300px]",
 }: ProductImageUploadProps) => {
   const [preview, setPreview] = useState<string | null>(defaultValue || null);
   const [existingUrl, setExistingUrl] = useState<string | null>(
@@ -52,7 +57,7 @@ export const ProductImageUpload = ({
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full h-[300px] rounded-xl mb-4 overflow-hidden bg-muted/20 flex items-center justify-center border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 transition-colors relative group glass-card">
+      <div className={`w-full ${previewClassName} rounded-xl mb-4 overflow-hidden bg-muted/20 flex items-center justify-center border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 transition-colors relative group glass-card`}>
         {preview ? (
           <img
             src={preview}
@@ -65,7 +70,7 @@ export const ProductImageUpload = ({
             onClick={handleTriggerClick}
           >
             <Plus className="h-10 w-10 mb-2" />
-            <span className="text-sm font-medium">Select Product Image</span>
+            <span className="text-sm font-medium">{label}</span>
           </div>
         )}
 

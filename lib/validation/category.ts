@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalImage } from "./form";
+import { existingImageUrl, optionalImage } from "./form";
 
 const categoryName = z
   .string({ error: "Category name is required." })
@@ -11,6 +11,7 @@ const categoryName = z
 export const categorySchema = z.object({
   categoryName,
   categoryImage: optionalImage,
+  existingImageUrl,
 });
 
 export const categoryUpdateSchema = categorySchema.extend({
