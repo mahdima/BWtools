@@ -507,7 +507,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 **Notes (2026-10-22):** **Blocked on the owner.** The SQL is ready in `docs/sql/P3-08-brand-id-identity.sql`: inspect, then convert to an identity column that continues after the current max id, then verify. The code change (removing max + 1 from `addBrand`) must only be deployed after the SQL is applied, so it is not done yet.
 
 ### P3-09 · Adding a team member fails
-- [ ] Done
+- [x] Done
 
 **Why:** Bug, also on `master`: `createAdmin` inserts `email` into `admins`, but the table has no such column (`id, full_name, role, is_active, created_at, updated_at`). The insert fails with `42703: column "email" of relation "admins" does not exist`, and the new auth user is rolled back. Found on 2026-10-22 while granting access by hand.
 **Depends on:** —
@@ -518,6 +518,12 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 **Done when:** A super admin can add a member from `/team/new`, and the new member can sign in.
 
 **Notes (2026-10-22, from P2-03):** For the same reason, the Team page shows **no email** on any member card: `getTeamMembers` reads `admins.*`, which has no email. Consider loading emails from the auth users (for example `supabaseAdmin.auth.admin.listUsers()`, mapped by id) in `getTeamMembers`. The card's `email` prop is optional for now.
+
+**Notes (2026-10-22, implementation):**
+- **`createAdmin`:** no longer inserts `email` into `admins`.
+- **`getTeamMembers`:** loads each member's email from their auth user (`auth.admin.getUserById`, run in parallel), so the Team cards show emails again. Because it now returns emails and is an exported server function, it also checks the caller (`getAuthorizedAdmin('viewer')`), which the guard audit flagged (25/25 guarded).
+- **Checks:** `typecheck`, 95 tests, lint (0 errors) and `build` pass.
+- **Still to check when logged in (super admin):** add a member from /team/new, confirm the card shows their email, and that they can sign in.
 
 ### P3-10 · Show validation errors on add/edit forms
 - [ ] Done

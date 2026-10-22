@@ -28,7 +28,7 @@ import { runWithToast } from "@/lib/toast-action";
 
 interface TeamMember {
   id: string;
-  email?: string; // `admins` has no email column; P3-09 loads it from the auth user
+  email?: string; // from the auth user (`admins` has no email column)
   full_name: string | null;
   role: string;
   is_active: boolean;

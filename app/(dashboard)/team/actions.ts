@@ -11,6 +11,9 @@ import { redirect } from "next/navigation";
 
 // Get all team members
 export async function getTeamMembers() {
+  // Exported from a 'use server' file and returns emails, so check the caller here too
+  if (!(await getAuthorizedAdmin('viewer'))) return [];
+
   const { data, error } = await supabaseAdmin
     .from('admins')
     .select('*')
@@ -21,10 +24,20 @@ export async function getTeamMembers() {
     return [];
   }
   
+  // `admins` has no email column, so read each member's email from their auth user
+  // (a team is a handful of people, so one lookup each is fine)
+  const emails = await Promise.all(
+    (data || []).map(async (member) => {
+      const { data: authData } = await supabaseAdmin.auth.admin.getUserById(member.id);
+      return authData?.user?.email;
+    })
+  );
+
   // A missing or unknown role is shown as viewer and a null is_active as active,
   // matching what lib/auth enforces
-  return (data || []).map(member => ({
+  return (data || []).map((member, index) => ({
     ...member,
+    email: emails[index],
     role: isRole(member.role) ? member.role : 'viewer',
     is_active: member.is_active !== false,
   }));
@@ -65,9 +78,9 @@ export async function createAdmin(formData: FormData) {
   }
 
   // Create admin record
+  // `admins` has no email column: the email lives on the auth user created above
   const { error: adminError } = await supabaseAdmin.from('admins').insert({
     id: authData.user.id,
-    email,
     full_name: fullName,
     role,
     is_active: true,
