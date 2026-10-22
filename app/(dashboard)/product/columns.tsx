@@ -4,7 +4,7 @@ import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 
-import { deleteProduct } from "@/app/(dashboard)/addproduct/actions";
+import { deleteProduct } from "./actions";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 

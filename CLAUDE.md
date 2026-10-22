@@ -107,7 +107,7 @@ Everything else returns an `ActionResult` (`{ success, message }`, from [lib/act
 
 For deletes, return a friendly message for `isForeignKeyViolation(error)`, and `.select()` the deleted rows to detect "nothing was deleted".
 
-**Legacy routes** `addproduct`, `editproduct/[id]`, `addcategory` and `editcategory/[id]` still exist as standalone pages, but the modal flow has replaced them. However, product mutations used by the live modal flow still live in [app/(dashboard)/addproduct/actions.ts](app/(dashboard)/addproduct/actions.ts). Category mutations used by the live flow are in [app/(dashboard)/categories/actions.ts](app/(dashboard)/categories/actions.ts); `addcategory/actions.ts` serves only the legacy pages.
+Each feature's mutations live next to its page: [app/(dashboard)/product/actions.ts](app/(dashboard)/product/actions.ts), [categories/actions.ts](app/(dashboard)/categories/actions.ts), [brand/actions.ts](app/(dashboard)/brand/actions.ts), and so on. The old standalone add/edit pages (`/addproduct`, `/editproduct/[id]`, `/addcategory`, `/editcategory/[id]`) were removed in favour of the modals.
 
 ### Orders
 

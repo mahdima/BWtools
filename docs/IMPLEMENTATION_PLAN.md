@@ -578,7 +578,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Still to check when logged in:** add a category with an image, change it, and remove it.
 
 ### P4-02 · Delete legacy and dead code
-- [ ] Done
+- [x] Done
 
 **Depends on:** P4-01, P1-07
 **Files to delete:** ~~`app/(dashboard)/addproduct/page.tsx`, `editproduct/[id]/page.tsx`~~ (already deleted in P3-10), `addcategory/page.tsx`, `addcategory/actions.ts`, `editcategory/[id]/page.tsx`, `Navbar.tsx`, `item.tsx`, `CategoryImageUpload.tsx` (if no longer used), `utils/supabase/client.ts`. (`AuthProvider.tsx` and `ProtectedRoute.tsx` were already deleted in P2-01.)
@@ -589,6 +589,13 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 4. Update CLAUDE.md, which still mentions the legacy routes.
 
 **Done when:** The build passes and none of the deleted paths are referenced anywhere.
+
+**Notes (2026-10-22):**
+- **Deleted:** the legacy category pages (`addcategory/page.tsx`, `editcategory/[id]/page.tsx`), `addcategory/actions.ts`, `components/Navbar.tsx`, `components/CategoryImageUpload.tsx` and `utils/supabase/client.ts`. The legacy product pages went in P3-10, and `AuthProvider`/`ProtectedRoute` in P2-01.
+- **Correction:** `components/item.tsx` is **not** dead. `Sidebar` imports it as `./item`, which the original search missed, so it stays.
+- **Moved:** `addproduct/actions.ts` to `product/actions.ts`, with imports updated.
+- **Uninstalled:** `dotenv`, `@types/dotenv` and `@tiptap/extension-image`.
+- **Docs:** CLAUDE.md now describes where mutations live instead of the legacy routes.
 
 ### P4-03 · Data-access layer
 - [ ] Done

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { Modal } from "@/components/Modal";
 import { ProductForm } from "@/components/ProductForm";
-import { addProduct, updateProduct } from "../addproduct/actions";
+import { addProduct, updateProduct } from "./actions";
 import { getProducts } from "../actions";
 
 export const revalidate = 0;
