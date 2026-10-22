@@ -834,6 +834,14 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 
 **Done when:** A new order from the mobile app shows up in the bell.
 
+**Notes (2026-10-22):**
+- **Blocked on the owner.** The SQL is ready in `docs/sql/P6-02-notification-triggers.sql`; apply it after P6-01's SQL.
+  - **New order:** `orders_notify_new_order`, AFTER INSERT on `orders`, inserts a `new_order` notification for every active admin, linking to `/order/<id>`.
+  - **Low stock:** `products_notify_low_stock`, AFTER UPDATE OF `in_stock_vailable` on `products`, fires only when stock crosses down to `store_settings.low_stock_threshold` (default 10). It links to `/product?edit=<id>`.
+  - Both functions are `security definer` with a fixed `search_path`. The file ends with an optional dry run inside `begin … rollback`.
+- **Code: done.** Deleted the unused `createNotification` and `notifyNewOrder` from `notifications/actions.ts`. They were public endpoints (guarded since P1-05) and nothing called them. The guard audit is 21/21.
+- The SQL itself hasn't been executed, since DDL against production is the owner's call. Tick the box once a new mobile order shows up in the bell.
+
 ### P6-03 · Low-stock widget
 - [ ] Done
 
