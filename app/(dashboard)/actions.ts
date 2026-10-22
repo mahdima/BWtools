@@ -1,6 +1,7 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { parseOrderNumber } from "@/lib/orders";
 import { unstable_cache } from "next/cache";
 
 // Cached version of dashboard stats - refreshes every 60 seconds
@@ -202,12 +203,14 @@ export async function getOrders({
     .order("created_at", { ascending: false })
     .range(from, to);
 
-  if (search) {
-    // Search by ID or other fields if needed. IDs are usually UUIDs or ints.
-    // Assuming search logic needs to be defined. For now, maybe just ID?
-    // Or ignore search if not applicable to orders yet. 
-    // Let's assume ID search if it's text.
-    query = query.textSearch("id", search); 
+  // Search is by order number only for now (customer name/phone: P5-04).
+  // Text that isn't an order number matches nothing rather than every order.
+  if (search.trim()) {
+    const orderId = parseOrderNumber(search);
+    if (orderId === null) {
+      return { data: [], count: 0 };
+    }
+    query = query.eq("id", orderId);
   }
 
   if (status && status !== "All") {

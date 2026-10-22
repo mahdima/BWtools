@@ -368,7 +368,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Out of scope:** the legacy `addcategory/actions.ts` `deleteCategory` still throws; no UI uses it (P4-02). Showing errors on the add/edit forms moved to P3-10.
 
 ### P3-02 · Order search by ID
-- [ ] Done
+- [x] Done
 
 **Files:** `app/(dashboard)/actions.ts` (`getOrders`), `order/page.tsx`
 **Steps:**
@@ -376,6 +376,12 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Change the search placeholder to "Search by order #".
 
 **Done when:** Typing an existing order number shows that order.
+
+**Notes (2026-10-22):**
+- **Parser:** `parseOrderNumber()` in `lib/orders.ts` accepts `123`, `#123` and surrounding spaces, and rejects everything else (letters, decimals, negatives, 0, numbers beyond the safe-integer limit). 15 new test cases; 74 tests total.
+- **`getOrders`:** uses `.eq("id", …)` instead of the full-text search that always errored. Text that isn't an order number returns no results instead of silently showing every order. This deliberately differs from the step's "ignore it", so a bad search isn't mistaken for "all orders".
+- **UI:** `DataTable` gained a `searchPlaceholder` prop (default "Filter..."); the order page uses "Search by order #".
+- **Checks:** `typecheck`, lint (0 errors) and `build` pass. Logged-in check still to do: search an existing order number on /order.
 
 ### P3-03 · Status filter survives reload and Back
 - [ ] Done

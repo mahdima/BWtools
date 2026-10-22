@@ -26,6 +26,7 @@ const OrderPage = async ({ searchParams }: OrderPageProps) => {
           columns={columns}
           data={data}
           searchKey="status"
+          searchPlaceholder="Search by order #"
           title="Orders"
           description="Manage and track customer orders"
           filterTabs={[

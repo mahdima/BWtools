@@ -44,6 +44,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   searchKey?: string;
+  searchPlaceholder?: string;
   headerActions?: React.ReactNode;
   filterTabs?: {
     column: string;
@@ -60,6 +61,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
+  searchPlaceholder = "Filter...",
   headerActions,
   filterTabs,
   rowLinkPath,
@@ -245,7 +247,7 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center gap-2">
           {searchKey && (
             <Input
-              placeholder="Filter..."
+              placeholder={searchPlaceholder}
               value={
                 isServerSide
                   ? searchValue
