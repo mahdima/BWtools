@@ -682,7 +682,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 ## Phase 5 — Must-have features
 
 ### P5-01 · Forgot and reset password
-- [ ] Done
+- [x] Done
 
 **Depends on:** P1-03
 **Files:** new `app/forgot-password/page.tsx` + action, new `app/auth/confirm/route.ts`, new `app/reset-password/page.tsx` + action, `utils/supabase/middleware.ts`, `app/login/page.tsx`
@@ -695,6 +695,19 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 6. **Needs owner:** in Supabase Auth, add the site and redirect URLs for localhost and `https://b-wtools.vercel.app`, and edit the "Reset password" email template to link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password`.
 
 **Done when:** An admin can reset a forgotten password from the login page, on localhost and on production.
+
+**Notes (2026-10-22):**
+- **`/forgot-password`** (public, client form via `useFormAction`): `requestPasswordReset` validates the email (`passwordResetRequestSchema`), calls `resetPasswordForEmail` with `redirectTo = <origin>/auth/confirm?next=/reset-password`, and always returns the same neutral message; errors are only logged. The origin comes from `NEXT_PUBLIC_SITE_URL` if set, otherwise from the request host.
+- **`/auth/confirm`** (route handler) accepts both link styles: `?code=` (PKCE, from the default email template, same browser) via `exchangeCodeForSession`, and `?token_hash=&type=` via `verifyOtp`. `next` goes through `safeRedirectPath` (`lib/redirect.ts`, 11 tests), which blocks off-site and `//` redirects. Failures go to `/login?error=reset_link`.
+- **`/reset-password`:** `requireAdminPage()` (only active admins), then `ResetPasswordForm` reusing `updatePassword` (same 8–72 rule). On success it toasts and goes to the dashboard.
+- **Login page:** the dead "Contact Support" `#` link became "Forgot your password?"; a new message covers `?error=reset_link`. `/forgot-password` was added to the proxy's public paths.
+- **Browser check:** 8/8 with 0 page errors. Covered: the login link, the public page, the neutral confirmation (for a reserved `@example.com` address, so no real email was sent), four bad-link variants including an off-site `next` all landing on the login error, and `/reset-password` requiring a session. Smoke test 11/11.
+- **Still needed, by the owner (Supabase dashboard > Authentication > URL Configuration):**
+  1. **Site URL:** `https://b-wtools.vercel.app`.
+  2. **Redirect URLs:** add `https://b-wtools.vercel.app/auth/confirm` and `http://localhost:3000/auth/confirm`; without them Supabase ignores `redirectTo` and links go to the Site URL root.
+  3. Optional: set `NEXT_PUBLIC_SITE_URL=https://b-wtools.vercel.app` in Vercel.
+  4. Optional: to make links work from any browser (not just the one that asked), change the "Reset password" email template to link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password`.
+- **Logged-in check:** request a reset for your admin email and follow the link.
 
 ### P5-02 · Permission-aware UI
 - [ ] Done

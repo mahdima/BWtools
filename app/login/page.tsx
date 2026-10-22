@@ -5,6 +5,7 @@ import { login } from "./actions";
 import material from "../../img/material.jpg";
 import logo from "../../img/Asset 3.png";
 import Image from "next/image";
+import Link from "next/link";
 
 const initialState = {
   error: "",
@@ -21,7 +22,9 @@ export default function LoginPage({
     state?.error ||
     (redirectError === "unauthorized"
       ? "This account does not have dashboard access."
-      : "");
+      : redirectError === "reset_link"
+        ? "That password reset link is invalid or has expired. Request a new one."
+        : "");
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -102,15 +105,12 @@ export default function LoginPage({
             </div>
 
             <div className="text-center mt-4">
-              <span className="text-sm text-gray-600">
-                Don&apos;t have an account?{" "}
-              </span>
-              <a
-                href="#"
+              <Link
+                href="/forgot-password"
                 className="font-medium text-primary hover:text-primary-strong text-sm"
               >
-                Contact Support
-              </a>
+                Forgot your password?
+              </Link>
             </div>
           </form>
         </div>

@@ -48,8 +48,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Pages that work without a session (sign in, password reset request, email links)
   const isPublicPath =
     request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/forgot-password') ||
     request.nextUrl.pathname.startsWith('/auth')
 
   if (!user && !isPublicPath) {

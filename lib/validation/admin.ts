@@ -27,7 +27,12 @@ export const profileSchema = z.object({
   email: z.union([z.literal(""), z.email("Enter a valid email address.")]).optional(),
 });
 
-// components/SecurityForm.tsx: an admin changing their own password.
+// app/forgot-password: asking for a password reset email.
+export const passwordResetRequestSchema = z.object({
+  email: z.email("Enter a valid email address."),
+});
+
+// components/SecurityForm.tsx and app/reset-password: an admin setting a new password.
 export const passwordChangeSchema = z
   .object({
     password,

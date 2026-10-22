@@ -42,7 +42,7 @@ Unit tests cover pure helpers in `lib/` and use explicit imports (`import { desc
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs `npm ci`, typecheck, lint, test, build and the production audit on every push and pull request, with placeholder Supabase variables. Keep the build working without real credentials: don't make module-level code require a live Supabase connection.
 
-The app needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. The database schema, RLS policies and storage buckets live in the Supabase project; there are no migrations in this repo.
+The app needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. Optionally set `NEXT_PUBLIC_SITE_URL`, the public origin used in password-reset links; without it the request host is used. Password reset: `/forgot-password` → email → `/auth/confirm` (route handler) → `/reset-password`. The `/auth/confirm` URLs must be on Supabase's redirect allow-list. The database schema, RLS policies and storage buckets live in the Supabase project; there are no migrations in this repo.
 
 ## Stack
 
