@@ -1,5 +1,5 @@
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireAdminPage } from "@/lib/auth";
+import { getOrderWithDetails } from "@/lib/data/orders";
 import { InvoicePrintable } from "@/components/invoice-printable";
 import { notFound } from "next/navigation";
 
@@ -13,35 +13,11 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   await requireAdminPage();
   const { id } = await params;
   const orderId = Number(id);
-  if (!Number.isInteger(orderId)) return notFound();
+  if (!Number.isInteger(orderId)) notFound();
 
-  // Fetch Order
-  const { data: order, error: orderError } = await supabaseAdmin
-    .from("orders")
-    .select("*")
-    .eq("id", orderId)
-    .single();
+  // Same loader as the order page, so the two always agree
+  const order = await getOrderWithDetails(orderId);
+  if (!order) notFound();
 
-  if (orderError || !order) {
-    console.error("Order not found or error:", orderError);
-    return notFound();
-  }
-
-  // Fetch Order Items (Trying 'order_items' table assumption)
-  const { data: items, error: itemsError } = await supabaseAdmin
-    .from("order_items")
-    .select("*, products(product_name, unite_price)")
-    .eq("order_id", orderId);
-
-  // If order_items table exists, we map it. If not, we just pass empty array.
-  // Assuming a join with products to get details.
-  // This is speculative. If it fails, we handle graceful empty items in component.
-
-  const formattedItems = (items || []).map((item: any) => ({
-    product_name: item.products?.product_name || "Product",
-    quantity: item.quantity || 1,
-    price: item.price || item.products?.unite_price || 0,
-  }));
-
-  return <InvoicePrintable order={order} items={formattedItems} />;
+  return <InvoicePrintable order={order} />;
 }

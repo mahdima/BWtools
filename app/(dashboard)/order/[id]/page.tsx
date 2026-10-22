@@ -1,5 +1,6 @@
 import React from "react";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getOrderWithDetails } from "@/lib/data/orders";
+import { formatAddressLines } from "@/lib/address";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -20,86 +21,6 @@ import { OrderTimeline } from "@/components/order-timeline";
 import { OrderNotes } from "@/components/order-notes";
 import { OrderStatusActions } from "@/components/order-status-actions";
 
-async function getOrder(id: number) {
-  // First fetch the order
-  const { data: order, error: orderError } = await supabaseAdmin
-    .from("orders")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (orderError || !order) {
-    console.error("Error fetching order:", orderError);
-    return null;
-  }
-
-  // Fetch Profile and User Email (Auth)
-  let profile: any = null;
-
-  if (order.user_id) {
-    // Run fetches in parallel for performance
-    const [profileResult, authResult] = await Promise.all([
-      supabaseAdmin
-        .from("profiles")
-        .select("*")
-        .eq("id", order.user_id)
-        .single(),
-      supabaseAdmin.auth.admin.getUserById(order.user_id),
-    ]);
-
-    if (profileResult.data) {
-      profile = profileResult.data;
-    }
-
-    // Attach email and phone from Auth User if available
-    const authUser = authResult.data?.user;
-    if (authUser) {
-      if (!profile) profile = {}; // Init if mock/missing
-
-      // Email
-      if (!profile.email && authUser.email) {
-        profile.email = authUser.email;
-      }
-
-      // Phone
-      // Supabase Auth stores phone in 'phone' column
-      if (!profile.phone && authUser.phone) {
-        profile.phone = authUser.phone;
-      }
-
-      // Also check user_metadata for phone if main phone is e.g. placeholder
-      if (!profile.phone && authUser.user_metadata?.phone) {
-        profile.phone = authUser.user_metadata.phone;
-      }
-
-      // Also check user_metadata for phone_number (common variation)
-      if (!profile.phone && authUser.user_metadata?.phone_number) {
-        profile.phone = authUser.user_metadata.phone_number;
-      }
-    } else {
-      console.warn(
-        "Could not fetch auth user for order:",
-        authResult.error?.message
-      );
-    }
-  }
-
-  return { ...order, profiles: profile };
-}
-
-async function getOrderItems(orderId: number) {
-  const { data, error } = await supabaseAdmin
-    .from("order_items")
-    .select("*, products(product_name, product_link)")
-    .eq("order_id", orderId);
-
-  if (error) {
-    console.error("Error fetching order items:", error);
-    return [];
-  }
-  return data;
-}
-
 interface OrderDetailsPageProps {
   params: Promise<{ id: string }>;
 }
@@ -109,16 +30,16 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
   const orderId = Number(id);
   if (!Number.isInteger(orderId)) notFound();
 
-  const order = await getOrder(orderId);
-  const items = await getOrderItems(orderId);
-  const timeline = await getOrderTimeline(orderId);
-  const notes = await getOrderNotes(orderId);
+  const [order, timeline, notes] = await Promise.all([
+    getOrderWithDetails(orderId),
+    getOrderTimeline(orderId),
+    getOrderNotes(orderId),
+  ]);
 
-  if (!order) {
-    return <div>Order not found</div>;
-  }
+  if (!order) notFound();
 
-  const customer = order.profiles;
+  const { customer, items, shippingAddress } = order;
+  const callPhone = customer?.phone || shippingAddress?.phone;
 
   const statusColors = {
     New: "bg-green-100 text-green-700 border-green-200",
@@ -149,7 +70,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
             </h1>
             <div className="flex items-center text-gray-500 text-sm">
               <Calendar className="h-4 w-4 mr-2" />
-              {new Date(order.created_at).toLocaleString()}
+              {new Date(order.createdAt).toLocaleString()}
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -180,21 +101,21 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                 Order Items
               </h2>
               <span className="text-sm text-gray-500">
-                {items?.length || 0} items
+                {items.length} items
               </span>
             </div>
             <div className="p-6">
               <ul className="space-y-4">
-                {items?.map((item: any) => (
+                {items.map((item) => (
                   <li
                     key={item.id}
                     className="flex justify-between items-center py-4 border-b border-gray-50 last:border-0 last:pb-0"
                   >
                     <div className="flex items-center gap-4">
-                      {item.products?.product_link && (
+                      {item.productImage && (
                         <Image
-                          src={item.products.product_link}
-                          alt={item.products?.product_name || "Product"}
+                          src={item.productImage}
+                          alt={item.productName}
                           width={64}
                           height={64}
                           className="h-16 w-16 object-cover rounded-md border border-gray-100"
@@ -204,21 +125,27 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
 
                       <div>
                         <p className="font-medium text-gray-900">
-                          {item.products?.product_name || "Unknown Product"}
+                          {item.productName}
                         </p>
                         <p className="text-sm text-gray-500">
-                          Qty: {item.quantity} × {item.unit_price} DZD
+                          Qty: {item.quantity} × {item.unitPrice.toLocaleString()} DZD
                         </p>
                       </div>
                     </div>
                     <div className="font-semibold text-gray-900">
-                      {(item.quantity * item.unit_price).toLocaleString()} DZD
+                      {item.lineTotal.toLocaleString()} DZD
                     </div>
                   </li>
                 ))}
               </ul>
               <div className="mt-6 pt-6 border-t border-gray-100 flex justify-end">
                 <div className="text-right">
+                  {order.itemsTotal !== order.total && (
+                    <p className="text-sm text-gray-500 mb-1">
+                      Items {order.itemsTotal.toLocaleString()} DZD + other
+                      charges {(order.total - order.itemsTotal).toLocaleString()} DZD
+                    </p>
+                  )}
                   <p className="text-sm text-gray-500 mb-1">Total Amount</p>
                   <p className="text-2xl font-bold text-[#0B1DFF]">
                     {order.total.toLocaleString()} DZD
@@ -256,7 +183,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                 </div>
                 <div>
                   <p className="font-bold text-gray-900">
-                    {customer?.username || "Guest User"}
+                    {customer?.name || "Guest User"}
                   </p>
                   <p className="text-xs text-gray-500">Customer</p>
                 </div>
@@ -290,26 +217,41 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                   </div>
                 </div>
 
-                {(customer?.address || customer?.city) && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-4 w-4 text-gray-400 mt-1" />
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500 uppercase">
-                        Shipping Address
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        {customer.address}
-                        {customer.city && `, ${customer.city}`}
-                      </p>
-                    </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-4 w-4 text-gray-400 mt-1" />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 uppercase">
+                      Shipping Address
+                    </p>
+                    {shippingAddress ? (
+                      <>
+                        <p className="text-sm text-gray-700">
+                          {formatAddressLines(shippingAddress).map((line) => (
+                            <span key={line} className="block">
+                              {line}
+                            </span>
+                          ))}
+                        </p>
+                        {shippingAddress.phone && (
+                          <a
+                            href={`tel:${shippingAddress.phone}`}
+                            className="text-sm text-blue-600 font-medium hover:underline block mt-1"
+                          >
+                            Delivery phone: {shippingAddress.phone}
+                          </a>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500">No address on this order</p>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
-              {customer?.phone && (
+              {callPhone && (
                 <div className="pt-2">
                   <a
-                    href={`tel:${customer.phone}`}
+                    href={`tel:${callPhone}`}
                     className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors"
                   >
                     <Phone className="h-4 w-4" /> Call Customer

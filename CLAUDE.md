@@ -84,6 +84,7 @@ After the role check, validate input before touching the database. Add a zod sch
 - `app/(dashboard)/` is a route group. Its [layout.tsx](app/(dashboard)/layout.tsx) fetches the admin profile and notifications on the server and renders the `Sidebar` (wrapped for mobile). Pages use `pl-16 lg:pl-4` to leave room for the mobile sidebar toggle.
 - `app/login`, `app/logout` and `app/invoice/[id]` (printable invoice) sit outside the dashboard layout.
 - [app/(dashboard)/actions.ts](app/(dashboard)/actions.ts) holds the shared queries: dashboard stats (cached for 60s with `unstable_cache`), revenue series, and the paginated `getProducts` / `getOrders`.
+- New read queries go in `lib/data/<entity>.ts` (`import "server-only"`, typed results), not in `'use server'` files, where every export becomes a public endpoint. [lib/data/orders.ts](lib/data/orders.ts) (`getOrderWithDetails`) is the first one and feeds both the order page and the invoice. P4-03 moves the rest.
 
 ### Feature module pattern
 

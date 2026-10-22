@@ -421,7 +421,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Still to check when logged in:** export real orders and open the file in Excel. Customer columns can be added once the order loader joins customers (P3-05, P5-04).
 
 ### P3-05 · Invoice matches the order page
-- [ ] Done
+- [x] Done
 
 **Depends on:** P2-03 (to confirm column names)
 **Files:** new `lib/data/orders.ts`, `order/[id]/page.tsx`, `app/invoice/[id]/page.tsx`, `components/invoice-printable.tsx`
@@ -436,6 +436,23 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - `orders` has no `customer_name`, `customer_email` or `shipping_address`, so the invoice always says "Guest Customer".
 - The shipping address lives in `addresses` (`full_name, phone_number, street, city, state, zip_code, country`) via `orders.address_id`. The order page reads `profile.address` / `profile.city`, which don't exist, so **the shipping address is shown nowhere today**.
 - `getOrderWithDetails` should join `addresses`, and both pages should show it.
+
+**Notes (2026-10-22, implementation):**
+- **Loader `lib/data/orders.ts`** (server-only, the first `lib/data` module): `getOrderWithDetails(id)` returns `OrderDetails`, with the order and its items fetched in parallel.
+  - The order is joined to `addresses` through the `orders_address_id_fkey` FK.
+  - Items join `products`, with `unitPrice` taken from `order_items.unit_price` and a `lineTotal`. A missing product shows as "Deleted product".
+  - `itemsTotal` is computed, so other charges become visible.
+  - The customer comes from `profiles` (name) plus the auth user (email, and phone with the existing metadata fallbacks).
+- **`lib/address.ts`:** `ShippingAddress` and `formatAddressLines()`, which drops blanks and a region that repeats the city. 3 tests (85 total).
+- **Order page:**
+  - Uses the loader, with the timeline and notes fetched in parallel.
+  - **Now shows the shipping address and the delivery phone.** "Call Customer" falls back to the delivery phone.
+  - Shows "Items X + other charges Y" when they differ.
+  - A missing order is a real 404 (part of P3-07).
+- **Invoice:** uses the same loader, with columns Bill To (customer) and Ship To (address and phone). Lines use the price paid, and an "Other charges" row appears when the items don't add up to `orders.total`.
+- **Browser check:** the invoice rendered on a temporary page with a realistic fake order, 7/7 checks with 0 page errors, and the screenshot was reviewed. The page was deleted afterwards.
+- **Checks:** `typecheck`, lint (0 errors, warnings down from 54 to 48) and `build` pass.
+- **Still to check when logged in:** open a real order and its invoice.
 
 ### P3-06 · Revenue chart grouping and shared date ranges
 - [ ] Done
@@ -457,6 +474,8 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 3. Show the real role on the Settings page using `getCurrentAdmin()`.
 
 **Done when:** All three behave correctly, as checked manually.
+
+**Notes (2026-10-22):** Step 2 was done in P3-05. The order page calls `notFound()`, and the schema shows `orders.total` is `NOT NULL`, so no guard is needed. Steps 1 and 3 remain.
 
 ### P3-08 · Database-generated brand IDs (needs owner)
 - [ ] Done

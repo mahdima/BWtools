@@ -3,13 +3,19 @@
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import React from "react";
+import { formatAddressLines } from "@/lib/address";
+import type { OrderDetails } from "@/lib/data/orders";
 
 interface InvoiceProps {
-  order: any;
-  items?: any[];
+  order: OrderDetails;
 }
 
-export function InvoicePrintable({ order, items = [] }: InvoiceProps) {
+const dzd = new Intl.NumberFormat("fr-DZ", { style: "currency", currency: "DZD" });
+
+export function InvoicePrintable({ order }: InvoiceProps) {
+  const { customer, items, shippingAddress } = order;
+  const otherCharges = order.total - order.itemsTotal;
+
   const handlePrint = () => {
     window.print();
   };
@@ -37,16 +43,31 @@ export function InvoicePrintable({ order, items = [] }: InvoiceProps) {
       </div>
 
       {/* Info Grid */}
-      <div className="grid grid-cols-2 gap-8 mb-12">
+      <div className="grid grid-cols-3 gap-8 mb-12">
         <div>
           <h3 className="text-gray-500 font-semibold uppercase text-xs tracking-wider mb-2">
             Bill To
           </h3>
-          <p className="font-bold text-lg">
-            {order.customer_name || "Guest Customer"}
-          </p>
-          <p className="text-gray-600">{order.customer_email}</p>
-          <p className="text-gray-600">{order.shipping_address}</p>
+          <p className="font-bold text-lg">{customer?.name || "Customer"}</p>
+          {customer?.email && <p className="text-gray-600">{customer.email}</p>}
+          {customer?.phone && <p className="text-gray-600">{customer.phone}</p>}
+        </div>
+        <div>
+          <h3 className="text-gray-500 font-semibold uppercase text-xs tracking-wider mb-2">
+            Ship To
+          </h3>
+          {shippingAddress ? (
+            <>
+              {formatAddressLines(shippingAddress).map((line, index) => (
+                <p key={line} className={index === 0 ? "font-bold text-lg" : "text-gray-600"}>
+                  {line}
+                </p>
+              ))}
+              {shippingAddress.phone && <p className="text-gray-600">{shippingAddress.phone}</p>}
+            </>
+          ) : (
+            <p className="text-gray-500">No shipping address</p>
+          )}
         </div>
         <div className="text-right">
           <div className="mb-4">
@@ -54,7 +75,7 @@ export function InvoicePrintable({ order, items = [] }: InvoiceProps) {
               Invoice Date
             </h3>
             <p className="font-bold text-lg">
-              {new Date(order.created_at).toLocaleDateString()}
+              {new Date(order.createdAt).toLocaleDateString()}
             </p>
           </div>
           <div>
@@ -95,28 +116,18 @@ export function InvoicePrintable({ order, items = [] }: InvoiceProps) {
           </thead>
           <tbody>
             {items.length > 0 ? (
-              items.map((item, index) => (
-                <tr key={index} className="border-b border-gray-100">
-                  <td className="py-4 font-medium">{item.product_name}</td>
+              items.map((item) => (
+                <tr key={item.id} className="border-b border-gray-100">
+                  <td className="py-4 font-medium">{item.productName}</td>
                   <td className="py-4 text-right">{item.quantity}</td>
-                  <td className="py-4 text-right">
-                    {new Intl.NumberFormat("fr-DZ", {
-                      style: "currency",
-                      currency: "DZD",
-                    }).format(item.price)}
-                  </td>
-                  <td className="py-4 text-right font-bold">
-                    {new Intl.NumberFormat("fr-DZ", {
-                      style: "currency",
-                      currency: "DZD",
-                    }).format(item.price * item.quantity)}
-                  </td>
+                  <td className="py-4 text-right">{dzd.format(item.unitPrice)}</td>
+                  <td className="py-4 text-right font-bold">{dzd.format(item.lineTotal)}</td>
                 </tr>
               ))
             ) : (
               <tr className="border-b border-gray-100">
                 <td className="py-4 italic text-gray-500" colSpan={4}>
-                  No items found or detailed data unavailable.
+                  No items found for this order.
                 </td>
               </tr>
             )}
@@ -129,21 +140,17 @@ export function InvoicePrintable({ order, items = [] }: InvoiceProps) {
         <div className="w-64">
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-600">Subtotal</span>
-            <span className="font-medium">
-              {new Intl.NumberFormat("fr-DZ", {
-                style: "currency",
-                currency: "DZD",
-              }).format(order.total)}
-            </span>
+            <span className="font-medium">{dzd.format(order.itemsTotal)}</span>
           </div>
+          {otherCharges !== 0 && (
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-600">Other charges</span>
+              <span className="font-medium">{dzd.format(otherCharges)}</span>
+            </div>
+          )}
           <div className="flex justify-between py-4 text-xl font-bold text-gray-900">
             <span>Total</span>
-            <span>
-              {new Intl.NumberFormat("fr-DZ", {
-                style: "currency",
-                currency: "DZD",
-              }).format(order.total)}
-            </span>
+            <span>{dzd.format(order.total)}</span>
           </div>
         </div>
       </div>
