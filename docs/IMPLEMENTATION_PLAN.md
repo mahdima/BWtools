@@ -890,6 +890,14 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 
 **Done when:** A status change is atomic, and stock is correct after a cancel.
 
+**Notes (2026-10-22):**
+- **Blocked on the owner** (SQL + one decision).
+  - `docs/sql/P6-05-set-order-status.sql` creates `set_order_status(order, status, admin)`. It locks the order row (`FOR UPDATE`), updates the status, inserts the history row in **one transaction**, and validates the status. EXECUTE is granted to `service_role` only.
+  - **Stock movement** (restore on cancel, subtract on un-cancel) is written but **commented out**. Nothing in this repo changes stock, and the mobile app or an existing trigger might, so doing it twice would corrupt inventory. The owner should confirm, then uncomment.
+- **Code: done.** `updateOrderStatus` calls the function. While it's missing (`PGRST202`, confirmed on the real project today) it falls back to the previous three queries, now logging a failed history insert instead of ignoring it. `P0002` maps to "Order not found." Safe to deploy before the SQL.
+- **Checks:** `typecheck`, lint (0 errors), `build` and the guard audit (21/21) pass.
+- **Tick when:** the SQL is applied (and the stock decision taken), then a status change on a real order writes its history.
+
 ### P6-06 · Dashboard aggregates in SQL
 - [ ] Done
 

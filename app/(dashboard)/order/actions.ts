@@ -1,5 +1,6 @@
 'use server'
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { revalidatePath } from "next/cache";
 import { getAuthorizedAdmin } from "@/lib/auth";
@@ -18,18 +19,46 @@ export async function updateOrderStatus(orderId: number, newStatus: string): Pro
         return { success: false, message: "Invalid order or status." };
     }
 
-    // Get current status before update
+    // Status + history in one transaction (docs/sql/P6-05-set-order-status.sql). The
+    // function isn't in the generated types until the owner applies it, hence the cast.
+    const { error: rpcError } = await (supabaseAdmin as unknown as SupabaseClient).rpc("set_order_status", {
+        p_order_id: orderId,
+        p_new_status: newStatus,
+        p_admin_id: admin.id,
+    });
+
+    if (rpcError?.code === "PGRST202") {
+        // Function not installed yet: separate queries (not atomic)
+        const fallback = await updateStatusWithoutTransaction(orderId, newStatus, admin.id);
+        if (fallback) return fallback;
+    } else if (rpcError) {
+        if (rpcError.code === "P0002") return { success: false, message: "Order not found." };
+        console.error("Error updating order status:", rpcError);
+        return { success: false, message: `Failed to update status: ${rpcError.message}` };
+    }
+
+    revalidatePath("/order");
+    revalidatePath(`/order/${orderId}`);
+    return { success: true, message: `Order marked as ${newStatus}.` };
+}
+
+// The pre-P6-05 path: read, update, then write history. Returns an error result, or
+// null on success. Used only until set_order_status exists in the database.
+async function updateStatusWithoutTransaction(
+    orderId: number,
+    newStatus: string,
+    adminId: string,
+): Promise<ActionResult | null> {
     const { data: order } = await supabaseAdmin
         .from('orders')
         .select('status')
         .eq('id', orderId)
-        .single();
+        .maybeSingle();
 
     if (!order) {
         return { success: false, message: "Order not found." };
     }
 
-    // Update the order status
     const { error } = await supabaseAdmin
         .from('orders')
         .update({ status: newStatus })
@@ -40,17 +69,17 @@ export async function updateOrderStatus(orderId: number, newStatus: string): Pro
         return { success: false, message: `Failed to update status: ${error.message}` };
     }
 
-    // Log status change to history
-    await supabaseAdmin.from('order_status_history').insert({
+    const { error: historyError } = await supabaseAdmin.from('order_status_history').insert({
         order_id: orderId,
         old_status: order.status,
         new_status: newStatus,
-        changed_by: admin.id,
+        changed_by: adminId,
     });
+    if (historyError) {
+        console.error("Status changed but its history entry failed:", historyError);
+    }
 
-    revalidatePath("/order");
-    revalidatePath(`/order/${orderId}`);
-    return { success: true, message: `Order marked as ${newStatus}.` };
+    return null;
 }
 
 // Add internal note to order
