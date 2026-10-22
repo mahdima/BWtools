@@ -749,7 +749,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
   - `app/not-found.tsx`: a branded 404.
   - `app/global-error.tsx`: its own `<html>`/`<body>` with inline styles, since global CSS isn't loaded there.
 - **Unknown ids:** the order page and invoice already call `notFound()` (P3-05). For the product and brand pages, an unknown `?edit=` id just doesn't open the modal, which is kinder than 404-ing the whole list, so they were left as is.
-- **Browser check:** temporary pages that throw or call `notFound()`, 6/7 checks. The error page shows a digest and no internal message, and Try again works; the 404 renders with its dashboard link. The 7th "failure" is the HTTP status: `notFound()` responds 200, not 404, because the root `app/loading.tsx` makes the response stream before `notFound()` runs (standard Next.js behaviour; Next marks the page `noindex`). It's harmless here because the dashboard is never indexed. Screenshots reviewed; the test pages were deleted, and `/auth/confirm` was kept.
+- **Browser check:** temporary pages that throw or call `notFound()`, 6/7 checks. The error page shows a digest and no internal message, and Try again works; the 404 renders with its dashboard link. The 7th "failure" is the HTTP status: `notFound()` responded 200, not 404 (fixed in P5-05 by removing the root loading.tsx), because the root `app/loading.tsx` makes the response stream before `notFound()` runs (standard Next.js behaviour; Next marks the page `noindex`). It's harmless here because the dashboard is never indexed. Screenshots reviewed; the test pages were deleted, and `/auth/confirm` was kept.
 - **Checks:** `typecheck`, lint (0 errors) and `build` pass.
 
 ### P5-04 · Order search by customer and date range
@@ -781,13 +781,20 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Still to check when logged in:** search a real customer's name or phone on /order and combine it with dates and a status.
 
 ### P5-05 · Loading skeletons
-- [ ] Done
+- [x] Done
 
 **Files:** a `loading.tsx` in each dashboard route
 **Steps:**
 1. Add skeletons shaped like each page (table rows, stat cards, order detail) using `components/ui/skeleton.tsx`.
 
 **Done when:** Navigating between pages shows a skeleton instead of a frozen screen.
+
+**Notes (2026-10-22):**
+- **`components/page-skeletons.tsx`:** `DashboardSkeleton`, `TablePageSkeleton`, `OrderDetailSkeleton`, `CardGridSkeleton` and `FormPageSkeleton`. Each is shaped like its page, with the same padding, and wrapped in `role="status" aria-label="Loading"`.
+- **Routes:** a `loading.tsx` for the dashboard, product, order, `order/[id]`, customers, brand, categories, team, profile and settings.
+- **Root `app/loading.tsx` removed:** it showed a dashboard skeleton on every route (login, invoice), and it made `notFound()` stream a 200. A `notFound()` outside the dashboard now returns a real **404**, which was re-tested.
+- **Visual check:** a screenshot of the skeletons on a temporary page (deleted afterwards).
+- **Checks:** `typecheck`, lint (0 errors), 114 tests and `build` pass.
 
 ---
 
