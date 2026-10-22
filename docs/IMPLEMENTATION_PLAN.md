@@ -1070,12 +1070,37 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
   - `typecheck`, lint (0 errors, 26 warnings), 163 tests and `build` pass.
 
 ### P7-03 · Bulk actions and product import
-- [ ] Done
+- [x] Done
 
 **Steps:**
 1. Add row selection in the data table.
 2. Add bulk delete or archive, and bulk status update.
 3. Add CSV import of products, with a preview step before saving.
+
+**Notes (2026-10-22):**
+- **Row selection** (`components/data-table.tsx`, `components/table-selection.tsx`):
+  - A new `bulkActions` prop adds a checkbox column. The header checkbox selects the page and shows a dash when part of it is selected.
+  - Row ids come from `id`, and a bar shows "N selected", the page's buttons and "Clear selection".
+  - The buttons are a client element that reads the ids with `useTableSelection()`, because a server page can't pass a render function.
+  - The selection resets whenever `data` changes (paging, filters, or the refresh after an action). Checkbox clicks don't reach rows that are links (orders).
+  - Pages pass `bulkActions` only to admins, so viewers get no checkboxes.
+- **Bulk actions:**
+  - **Products:** delete, which archives products still used by orders or favorites, the same as the row action. In the Archived view, restore.
+  - **Orders:** "Set status" with a confirmation.
+  - The server actions (`deleteProducts`, `restoreProducts`, `updateOrdersStatus`) guard first, accept 1–100 ids (`parseBulkIds`), and run each item through the same helper as the row action. That helper is `removeProduct` or `changeOrderStatus`, both split out of the single actions, so status history, image cleanup and audit entries stay per item.
+  - The result is summarised by `bulkResult`, e.g. "Deleted 2 products and archived 1 …" or "… 1 failed: #9: Order not found.", and fails if anything failed.
+- **CSV import** (`/product/import`, admins; an "Import" button next to "Add Product"):
+  - `parseCsv` (in `lib/csv.ts`) handles RFC 4180 quoting and auto-detects `;`, which French Excel uses.
+  - `lib/product-import.ts` maps English or French headers, resolves categories and brands by name (ignoring case and accents) or id, and parses "1 200,50"-style numbers. Each row is validated with the product form's own `productSchema`.
+  - Rows are rejected for a name already in the catalogue or repeated in the file. Descriptions become escaped `<p>` paragraphs. Limits: 500 rows, 1 MB.
+  - `previewProductImport` returns every row with its problems. `importProducts` **re-reads and re-checks the file on the server**, inserts the valid rows in one insert, and logs one audit entry (`import`, rows/skipped).
+  - The template download uses the store's own first category and brand: "Bosch" from an earlier draft isn't a brand here, which the live check caught.
+- **Verified:**
+  - 24 new tests: 5 `parseCsv` (including reading back what `toCsv` writes), 6 import, and 5 bulk helpers. The rest are earlier test files that grew.
+  - The import check against the real catalogue (read-only): 5 categories, 10 brands, 128 names; a ready row, an existing name, and an unknown brand were each reported correctly.
+  - A temporary preview page (deleted), driven with Playwright, passed 11 checks with 0 page errors: the bar appears and counts, the indeterminate header, select all, the confirmation text, clear, ticking an order row doesn't navigate, Apply is disabled until a status is chosen, the template's content, and **the preview action answers "Not authorized" without a session**. Screenshots were reviewed.
+  - The guard check passes (33 actions). `typecheck`, lint (0 errors, 26 warnings), 179 tests and `build` pass.
+- **Still to check when logged in:** run a real bulk delete and status change, and import a small file.
 
 ### P7-04 · Arabic and French interface
 - [ ] Done

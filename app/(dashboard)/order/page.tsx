@@ -5,6 +5,9 @@ import { getOrders } from "@/lib/data/orders";
 import { CsvExporter } from "@/components/csv-exporter";
 import { OrderDateFilter } from "@/components/order-date-filter";
 import { exportOrders } from "./actions";
+import { OrderBulkActions } from "./bulk-actions";
+import { getCurrentAdmin } from "@/lib/auth";
+import { hasRole } from "@/lib/roles";
 
 interface OrderPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -20,7 +23,9 @@ const OrderPage = async ({ searchParams }: OrderPageProps) => {
   const filters = { search, status, from, to };
   const limit = 20;
 
-  const { data, count } = await getOrders({ page, limit, ...filters });
+  const [{ data, count }, admin] = await Promise.all([getOrders({ page, limit, ...filters }), getCurrentAdmin()]);
+  // Viewers are read-only: no row selection for them
+  const canEdit = hasRole(admin?.role, "admin");
   const pageCount = Math.ceil(count / limit);
 
   return (
@@ -49,6 +54,7 @@ const OrderPage = async ({ searchParams }: OrderPageProps) => {
           rowLinkPath="/order"
           pageCount={pageCount}
           isServerSide={true}
+          bulkActions={canEdit ? <OrderBulkActions /> : undefined}
           headerActions={
             <>
               <OrderDateFilter />

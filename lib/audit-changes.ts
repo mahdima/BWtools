@@ -10,6 +10,7 @@ export type AuditAction =
   | "status_change"
   | "note"
   | "export"
+  | "import"
   | "role_change"
   | "deactivate"
   | "reactivate"
@@ -26,6 +27,7 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   status_change: "Changed status",
   note: "Added a note",
   export: "Exported",
+  import: "Imported",
   role_change: "Changed role",
   deactivate: "Deactivated",
   reactivate: "Reactivated",

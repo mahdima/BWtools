@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { DataTable } from "@/components/data-table";
 import { columns, Product } from "./columns";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { Modal } from "@/components/Modal";
 import { Can } from "@/components/admin-provider";
@@ -12,6 +12,7 @@ import { getStoreSettings } from "@/lib/data/settings";
 import { hasRole } from "@/lib/roles";
 import { ProductForm } from "@/components/ProductForm";
 import { addProduct, updateProduct } from "./actions";
+import { ProductBulkActions } from "./bulk-actions";
 import { getProductById, getProductFormOptions, getProducts } from "@/lib/data/products";
 
 export const revalidate = 0;
@@ -64,6 +65,7 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
           }
           pageCount={pageCount}
           isServerSide={true}
+          bulkActions={canEdit ? <ProductBulkActions archived={archived} /> : undefined}
           headerActions={
             <>
             {archiving && <ArchiveViewLink href="/product" archived={archived} />}
@@ -76,6 +78,12 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
               {lowStockOnly ? "Show all products" : "Low stock only"}
             </Link>
             <Can minRole="admin">
+              <Link
+                href="/product/import"
+                className="inline-flex h-[40px] items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                <Upload className="h-4 w-4" /> Import
+              </Link>
               <Link
                 href={`/product?add=true${
                   params.page ? `&page=${params.page}` : ""

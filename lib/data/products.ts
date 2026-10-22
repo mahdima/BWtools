@@ -75,6 +75,21 @@ export async function getProductById(productId: number) {
   return data ?? null;
 }
 
+// Every product name (archived ones too), for spotting duplicates in a CSV import.
+export async function getProductNames(): Promise<string[]> {
+  const names: string[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabaseAdmin
+      .from("products")
+      .select("product_name")
+      .order("product_id")
+      .range(from, from + 999);
+    if (error) throw error;
+    names.push(...(data ?? []).map((row) => row.product_name ?? ""));
+    if (!data || data.length < 1000) return names;
+  }
+}
+
 // Options for the category and brand pickers in the product form: the active ones,
 // plus the edited product's own category and brand even if they were archived.
 export async function getProductFormOptions(current?: { categoryId: number | null; brandId: number | null }) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { csvField, toCsv } from "@/lib/csv";
+import { csvField, parseCsv, toCsv } from "@/lib/csv";
 
 describe("csvField", () => {
   it("leaves plain values alone", () => {
@@ -45,5 +45,41 @@ describe("toCsv", () => {
 
   it("writes just the header when there are no rows", () => {
     expect(toCsv(["A", "B"], [])).toBe("﻿A,B\r\n");
+  });
+});
+
+describe("parseCsv", () => {
+  it("splits rows and fields", () => {
+    expect(parseCsv("name,price\r\nDrill,1200\r\nSaw,900\r\n")).toEqual([
+      ["name", "price"],
+      ["Drill", "1200"],
+      ["Saw", "900"],
+    ]);
+  });
+
+  it("handles quotes, doubled quotes and line breaks inside quotes", () => {
+    expect(parseCsv('name,description\n"Drill, 18V","Says ""hi""\nline 2"\n')).toEqual([
+      ["name", "description"],
+      ["Drill, 18V", 'Says "hi"\nline 2'],
+    ]);
+  });
+
+  it("reads semicolon files from French Excel, with a byte-order mark", () => {
+    expect(parseCsv("﻿nom;prix\nPerceuse;1 200,50")).toEqual([
+      ["nom", "prix"],
+      ["Perceuse", "1 200,50"],
+    ]);
+  });
+
+  it("keeps empty fields and drops blank lines", () => {
+    expect(parseCsv("a,b,c\n1,,3\n\n,,\n")).toEqual([
+      ["a", "b", "c"],
+      ["1", "", "3"],
+    ]);
+  });
+
+  it("reads back what toCsv writes", () => {
+    const rows = [["Drill", "Says \"hi\", twice"], ["Saw", "plain"]];
+    expect(parseCsv(toCsv(["name", "note"], rows))).toEqual([["name", "note"], ...rows]);
   });
 });

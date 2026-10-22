@@ -11,6 +11,7 @@ import {
   useReactTable,
   ColumnFiltersState,
   OnChangeFn,
+  RowSelectionState,
   SortingState,
 } from "@tanstack/react-table";
 import {
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "./ui/input";
+import { SelectCheckbox, TableSelectionContext } from "./table-selection";
 import {
   Pagination,
   PaginationContent,
@@ -56,6 +58,10 @@ interface DataTableProps<TData, TValue> {
   description?: string;
   pageCount?: number;
   isServerSide?: boolean;
+  // Bulk-action buttons (P7-03). When given, rows get checkboxes and these show in a bar
+  // above the table while rows are selected; they read the selection with
+  // useTableSelection(). Rows are identified by their `id`.
+  bulkActions?: React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -70,6 +76,7 @@ export function DataTable<TData, TValue>({
   description,
   pageCount,
   isServerSide = false,
+  bulkActions,
 }: DataTableProps<TData, TValue>) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -143,9 +150,45 @@ export function DataTable<TData, TValue>({
     }
   }, [searchParams]);
 
+  // Selection is per list: new data (another page, a filter, or a refresh after a bulk
+  // action) starts with nothing selected
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [selectionData, setSelectionData] = React.useState(data);
+  if (selectionData !== data) {
+    setSelectionData(data);
+    setRowSelection({});
+  }
+
+  const selectColumn: ColumnDef<TData, TValue> = {
+    id: "select",
+    header: ({ table }) => (
+      <SelectCheckbox
+        label="Select all rows on this page"
+        checked={table.getIsAllPageRowsSelected()}
+        indeterminate={table.getIsSomePageRowsSelected()}
+        onChange={(checked) => table.toggleAllPageRowsSelected(checked)}
+      />
+    ),
+    cell: ({ row }) => (
+      <SelectCheckbox
+        label={`Select row ${row.id}`}
+        checked={row.getIsSelected()}
+        onChange={(checked) => row.toggleSelected(checked)}
+      />
+    ),
+    enableSorting: false,
+  };
+  const allColumns = bulkActions !== undefined ? [selectColumn, ...columns] : columns;
+
   const table = useReactTable({
     data,
-    columns,
+    columns: allColumns,
+    getRowId: (row, index) => {
+      const id = (row as { id?: unknown }).id;
+      return id === undefined || id === null ? String(index) : String(id);
+    },
+    enableRowSelection: bulkActions !== undefined,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange,
@@ -161,8 +204,11 @@ export function DataTable<TData, TValue>({
       columnFilters,
       sorting,
       pagination,
+      rowSelection,
     },
   });
+
+  const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
 
   // Debounce search update
   const [searchValue, setSearchValue] = React.useState(
@@ -274,6 +320,23 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
 
+      {/* Bulk actions for the selected rows */}
+      {bulkActions !== undefined && selectedIds.length > 0 && (
+        <TableSelectionContext.Provider value={{ selectedIds, clear: () => setRowSelection({}) }}>
+          <div
+            role="region"
+            aria-label="Bulk actions"
+            className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm"
+          >
+            <span className="font-medium text-gray-900">{selectedIds.length} selected</span>
+            {bulkActions}
+            <Button variant="ghost" size="sm" className="ml-auto h-8" onClick={() => setRowSelection({})}>
+              Clear selection
+            </Button>
+          </div>
+        </TableSelectionContext.Provider>
+      )}
+
       {/* Table */}
       <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border relative glass-card">
         <Table className="border-separate border-spacing-0">
@@ -327,7 +390,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={allColumns.length}
                   className="h-18 text-center"
                 >
                   No results.

@@ -10,6 +10,9 @@ import { PRODUCT_IMAGES } from "@/lib/storage-path";
 import { archiveResult, setArchived } from "@/lib/archive";
 import { logAudit } from "@/lib/audit";
 import { diffChanges } from "@/lib/audit-changes";
+import { MAX_BULK, bulkResult, countLabel, parseBulkIds } from "@/lib/bulk";
+import { getProductFormOptions, getProductNames } from "@/lib/data/products";
+import { normalizeName, readProductImport, type ImportLookup, type ImportRow } from "@/lib/product-import";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
@@ -84,6 +87,24 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
         return { success: false, message: "Product not found." };
     }
 
+    const result = await removeProduct(admin.id, id);
+    if (result.outcome === "failed") return { success: false, message: result.message };
+
+    revalidatePath("/product");
+    return {
+        success: true,
+        message: result.outcome === "deleted"
+            ? "Product deleted."
+            : "This product is used by orders or favorites, so it was archived instead of deleted.",
+    };
+}
+
+// Deletes one product, or archives it when orders, favorites or saved orders still
+// use it (P6-08). Shared by the row action and the bulk action.
+async function removeProduct(
+    adminId: string,
+    id: number,
+): Promise<{ outcome: "deleted" } | { outcome: "archived" } | { outcome: "failed"; message: string }> {
     const { data, error } = await supabaseAdmin
         .from('products')
         .delete()
@@ -91,32 +112,61 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
         .select('product_id, product_name, product_link');
 
     if (error) {
-        if (isForeignKeyViolation(error)) {
-            // Orders, favorites or saved orders still use it: archive it instead (P6-08)
-            const result = archiveResult(await setArchived("products", id, true), {
-                done: "This product is used by orders or favorites, so it was archived instead of deleted.",
-                notFound: "Product not found.",
-                unavailable: "This product appears in existing orders or favorites, so it can't be deleted.",
-                failed: "Failed to archive product",
-            });
-            if (result.success) {
-                logAudit(admin.id, "archive", "product", id);
-                revalidatePath("/product");
-            }
-            return result;
+        if (!isForeignKeyViolation(error)) {
+            console.error("Error deleting product:", error);
+            return { outcome: "failed", message: `Failed to delete product: ${error.message}` };
         }
-        console.error("Error deleting product:", error);
-        return { success: false, message: `Failed to delete product: ${error.message}` };
+
+        const archived = await setArchived("products", id, true);
+        if (archived.status === "done") {
+            logAudit(adminId, "archive", "product", id);
+            return { outcome: "archived" };
+        }
+        const { message } = archiveResult(archived, {
+            done: "",
+            notFound: "Product not found.",
+            unavailable: "This product appears in existing orders or favorites, so it can't be deleted.",
+            failed: "Failed to archive product",
+        });
+        return { outcome: "failed", message };
     }
 
     if (!data?.length) {
-        return { success: false, message: "Product not found." };
+        return { outcome: "failed", message: "Product not found." };
     }
 
     cleanUpImage(data[0].product_link);
-    logAudit(admin.id, "delete", "product", id, { product_name: data[0].product_name });
-    revalidatePath("/product");
-    return { success: true, message: "Product deleted." };
+    logAudit(adminId, "delete", "product", id, { product_name: data[0].product_name });
+    return { outcome: "deleted" };
+}
+
+// Bulk delete (P7-03): each product is deleted, or archived when it's still used.
+export async function deleteProducts(productIds: string[]): Promise<ActionResult> {
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
+
+    const ids = parseBulkIds(productIds);
+    if (!ids) return { success: false, message: `Select between 1 and ${MAX_BULK} products.` };
+
+    let deleted = 0;
+    let archived = 0;
+    const failures: string[] = [];
+    // One at a time: each delete may fall back to archiving
+    for (const id of ids) {
+        const result = await removeProduct(admin.id, id);
+        if (result.outcome === "deleted") deleted++;
+        else if (result.outcome === "archived") archived++;
+        else failures.push(`#${id}: ${result.message}`);
+    }
+
+    if (deleted || archived) revalidatePath("/product");
+    return bulkResult(
+        [
+            deleted ? `Deleted ${countLabel(deleted, "product")}` : "",
+            archived ? `${deleted ? "archived" : "Archived"} ${countLabel(archived, "product")} still used by orders or favorites` : "",
+        ].filter(Boolean),
+        failures,
+    );
 }
 
 export async function restoreProduct(productId: string): Promise<ActionResult> {
@@ -128,17 +178,43 @@ export async function restoreProduct(productId: string): Promise<ActionResult> {
         return { success: false, message: "Product not found." };
     }
 
-    const result = archiveResult(await setArchived("products", id, false), {
-        done: "Product restored.",
-        notFound: "Product not found.",
-        unavailable: "Archiving isn't set up yet.",
-        failed: "Failed to restore product",
-    });
+    const result = archiveResult(await setArchived("products", id, false), RESTORE_MESSAGES);
     if (result.success) {
         logAudit(admin.id, "restore", "product", id);
         revalidatePath("/product");
     }
     return result;
+}
+
+const RESTORE_MESSAGES = {
+    done: "Product restored.",
+    notFound: "Product not found.",
+    unavailable: "Archiving isn't set up yet.",
+    failed: "Failed to restore product",
+};
+
+// Bulk restore from the Archived view (P7-03).
+export async function restoreProducts(productIds: string[]): Promise<ActionResult> {
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
+
+    const ids = parseBulkIds(productIds);
+    if (!ids) return { success: false, message: `Select between 1 and ${MAX_BULK} products.` };
+
+    let restored = 0;
+    const failures: string[] = [];
+    for (const id of ids) {
+        const result = archiveResult(await setArchived("products", id, false), RESTORE_MESSAGES);
+        if (result.success) {
+            restored++;
+            logAudit(admin.id, "restore", "product", id);
+        } else {
+            failures.push(`#${id}: ${result.message}`);
+        }
+    }
+
+    if (restored) revalidatePath("/product");
+    return bulkResult(restored ? [`Restored ${countLabel(restored, "product")}`] : [], failures);
 }
 
 // Form action bound to a product id (via useFormAction): returns an error or redirects.
@@ -212,4 +288,62 @@ export async function updateProduct(
     logAudit(admin.id, "update", "product", id, diffChanges(current, values));
     revalidatePath("/product");
     redirect(productListUrl(input.page));
+}
+
+// One checked row of a CSV import, as the preview shows it (P7-03).
+export type ImportPreviewRow = Omit<ImportRow, "values">;
+export type ImportPreviewResult = ActionResult & { rows?: ImportPreviewRow[]; validCount?: number };
+
+// Categories and brands an import may use (active ones), and the names already taken.
+async function importLookup(): Promise<ImportLookup> {
+    const [{ categories, brands }, names] = await Promise.all([getProductFormOptions(), getProductNames()]);
+    return { categories, brands, existingNames: new Set(names.map(normalizeName)) };
+}
+
+// Checks a products CSV without saving anything, for the preview step.
+export async function previewProductImport(csv: string): Promise<ImportPreviewResult> {
+    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+    if (typeof csv !== "string") return { success: false, message: "Choose a CSV file." };
+
+    const { error, rows } = readProductImport(csv, await importLookup());
+    if (error) return { success: false, message: error };
+
+    const validCount = rows.filter((row) => row.values).length;
+    return {
+        success: true,
+        message: `${countLabel(validCount, "product")} of ${rows.length} ready to import.`,
+        rows: rows.map(({ row, name, category, brand, price, quantity, errors }) => ({
+            row, name, category, brand, price, quantity, errors,
+        })),
+        validCount,
+    };
+}
+
+// Imports the valid rows of a products CSV. The file is checked again here: the
+// preview is only for the admin, never trusted.
+export async function importProducts(csv: string): Promise<ActionResult> {
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
+    if (typeof csv !== "string") return { success: false, message: "Choose a CSV file." };
+
+    const { error, rows } = readProductImport(csv, await importLookup());
+    if (error) return { success: false, message: error };
+
+    const values = rows.flatMap((row) => (row.values ? [row.values] : []));
+    if (values.length === 0) return { success: false, message: "No row is ready to import. Fix the file and try again." };
+
+    // One insert: either every valid row is saved or none is
+    const { error: insertError } = await supabaseAdmin.from('products').insert(values);
+    if (insertError) {
+        console.error("Error importing products:", insertError);
+        return { success: false, message: `Import failed: ${insertError.message}` };
+    }
+
+    const skipped = rows.length - values.length;
+    logAudit(admin.id, "import", "product", null, { rows: values.length, skipped });
+    revalidatePath("/product");
+    return {
+        success: true,
+        message: `Imported ${countLabel(values.length, "product")}${skipped ? `; ${skipped} row${skipped === 1 ? " was" : "s were"} skipped` : ""}.`,
+    };
 }

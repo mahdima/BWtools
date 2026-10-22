@@ -93,6 +93,7 @@ Each feature folder (`product`, `brand`, `categories`, `customers`, `order`, `te
 
 - `page.tsx`: an async server component that reads `searchParams` (`page`, `search`, `status`, `add`, `edit`) and fetches data.
 - `columns.tsx`: a `"use client"` file with TanStack `ColumnDef`s. Row actions call server actions directly.
+- Optional `bulk-actions.tsx` (P7-03): a client component passed to `DataTable` as `bulkActions`; only pass it to admins. `DataTable` then adds row checkboxes (rows are identified by `id`) and shows the component in a bar while rows are selected. It reads the ids with `useTableSelection()`. The matching server action takes the id list, validates it with `parseBulkIds` (at most `MAX_BULK`), handles each item through the same helper as the single-row action (so history and audit entries stay per item), and reports with `bulkResult` from [lib/bulk.ts](lib/bulk.ts).
 - `actions.ts`: `'use server'` functions.
 
 **Lists** use server-side pagination. Queries use `.range(from, to)` with `{ count: "exact" }`, and the page passes `pageCount` and `isServerSide` to [components/data-table.tsx](components/data-table.tsx), which writes page, search and filter changes back into the URL.

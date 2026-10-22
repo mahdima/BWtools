@@ -11,7 +11,8 @@ interface CsvExporterProps {
   action: () => Promise<CsvExportResult>;
 }
 
-function download(csv: string, filename: string) {
+// Saves CSV text as a file in the browser (also used for the import template).
+export function downloadCsv(csv: string, filename: string) {
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
@@ -33,7 +34,7 @@ export function CsvExporter({ action }: CsvExporterProps) {
           toast.error(result.message);
           return;
         }
-        download(result.csv, result.filename ?? "export.csv");
+        downloadCsv(result.csv, result.filename ?? "export.csv");
         toast.success(result.message);
       } catch (error) {
         console.error(error);

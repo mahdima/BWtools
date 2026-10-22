@@ -12,6 +12,7 @@ import { parseForm } from "@/lib/validation/form";
 import { orderNoteSchema } from "@/lib/validation/order";
 import { logAudit } from "@/lib/audit";
 import { shorten } from "@/lib/audit-changes";
+import { MAX_BULK, bulkResult, countLabel, parseBulkIds } from "@/lib/bulk";
 
 export async function updateOrderStatus(orderId: number, newStatus: string): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
@@ -21,17 +22,49 @@ export async function updateOrderStatus(orderId: number, newStatus: string): Pro
         return { success: false, message: "Invalid order or status." };
     }
 
+    const error = await changeOrderStatus(admin.id, orderId, newStatus);
+    if (error) return error;
+
+    revalidatePath("/order");
+    revalidatePath(`/order/${orderId}`);
+    return { success: true, message: `Order marked as ${newStatus}.` };
+}
+
+// Bulk status change (P7-03): each order gets its own history entry and audit row.
+export async function updateOrdersStatus(orderIds: number[], newStatus: string): Promise<ActionResult> {
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
+
+    const ids = parseBulkIds(orderIds);
+    if (!ids || !isOrderStatus(newStatus)) {
+        return { success: false, message: `Choose a status and between 1 and ${MAX_BULK} orders.` };
+    }
+
+    let changed = 0;
+    const failures: string[] = [];
+    for (const id of ids) {
+        const error = await changeOrderStatus(admin.id, id, newStatus);
+        if (error) failures.push(`#${id}: ${error.message}`);
+        else changed++;
+    }
+
+    if (changed) revalidatePath("/order");
+    return bulkResult(changed ? [`Marked ${countLabel(changed, "order")} as ${newStatus}`] : [], failures);
+}
+
+// Changes one order's status and records it. Returns an error result, or null on success.
+async function changeOrderStatus(adminId: string, orderId: number, newStatus: string): Promise<ActionResult | null> {
     // Status + history in one transaction (docs/sql/P6-05-set-order-status.sql). The
     // function isn't in the generated types until the owner applies it, hence the cast.
     const { error: rpcError } = await (supabaseAdmin as unknown as SupabaseClient).rpc("set_order_status", {
         p_order_id: orderId,
         p_new_status: newStatus,
-        p_admin_id: admin.id,
+        p_admin_id: adminId,
     });
 
     if (rpcError?.code === "PGRST202") {
         // Function not installed yet: separate queries (not atomic)
-        const fallback = await updateStatusWithoutTransaction(orderId, newStatus, admin.id);
+        const fallback = await updateStatusWithoutTransaction(orderId, newStatus, adminId);
         if (fallback) return fallback;
     } else if (rpcError) {
         if (rpcError.code === "P0002") return { success: false, message: "Order not found." };
@@ -39,10 +72,8 @@ export async function updateOrderStatus(orderId: number, newStatus: string): Pro
         return { success: false, message: `Failed to update status: ${rpcError.message}` };
     }
 
-    logAudit(admin.id, "status_change", "order", orderId, { status: { to: newStatus } });
-    revalidatePath("/order");
-    revalidatePath(`/order/${orderId}`);
-    return { success: true, message: `Order marked as ${newStatus}.` };
+    logAudit(adminId, "status_change", "order", orderId, { status: { to: newStatus } });
+    return null;
 }
 
 // The pre-P6-05 path: read, update, then write history. Returns an error result, or
