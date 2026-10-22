@@ -38,7 +38,13 @@ export function localDateKey(date: Date, timeZone: string = STORE_TIME_ZONE): st
   }).format(date);
 }
 
-type Bucket = "day" | "week" | "month";
+export type Bucket = "day" | "week" | "month";
+
+// Chart granularity for a range: daily up to 31 days, weekly up to 120, else monthly.
+export function chooseRevenueBucket(start: Date, now: Date): Bucket {
+  const spanDays = (now.getTime() - start.getTime()) / DAY_MS;
+  return spanDays <= 31 ? "day" : spanDays <= 120 ? "week" : "month";
+}
 
 // Date keys are plain calendar dates, so do their arithmetic in UTC.
 const keyToDate = (key: string) => new Date(`${key}T00:00:00Z`);
@@ -81,8 +87,7 @@ export function groupRevenue(
 
   const start =
     getPeriodStart(period, now) ?? new Date(Math.min(...orders.map((order) => Date.parse(order.created_at))));
-  const spanDays = (now.getTime() - start.getTime()) / DAY_MS;
-  const bucket: Bucket = spanDays <= 31 ? "day" : spanDays <= 120 ? "week" : "month";
+  const bucket = chooseRevenueBucket(start, now);
 
   const totals = new Map<string, number>();
   for (const order of orders) {
@@ -90,6 +95,18 @@ export function groupRevenue(
     totals.set(key, (totals.get(key) ?? 0) + (order.total ?? 0));
   }
 
+  return fillRevenueBuckets(totals, bucket, start, now);
+}
+
+// Chart rows for every bucket from `start` to `now`, taking totals from `totals`
+// (keyed by the bucket's first day, "YYYY-MM-DD") and 0 for quiet buckets. Used with
+// totals summed here (groupRevenue) or by the database (revenue_series).
+export function fillRevenueBuckets(
+  totals: Map<string, number>,
+  bucket: Bucket,
+  start: Date,
+  now: Date,
+): { name: string; total: number }[] {
   const result: { name: string; total: number }[] = [];
   const last = bucketKey(localDateKey(now), bucket);
   // Keys are YYYY-MM-DD, so string order is date order; the cap guards against bad data

@@ -1,44 +1,85 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getPeriodStart, groupRevenue } from "@/lib/dates";
+import {
+  STORE_TIME_ZONE,
+  chooseRevenueBucket,
+  fillRevenueBuckets,
+  getPeriodStart,
+  groupRevenue,
+} from "@/lib/dates";
+
+// The aggregate functions from docs/sql/P6-06-dashboard-aggregates.sql aren't in the
+// generated types until the owner applies them, hence the untyped client for rpc().
+const untyped = () => supabaseAdmin as unknown as SupabaseClient;
+
+// PostgREST error when a function doesn't exist (yet): use the fallback path.
+const isMissingFunction = (error: { code?: string } | null) => error?.code === "PGRST202";
+
+// "Revenue" counts orders that are not cancelled; a missing status is not cancelled.
+const NOT_CANCELLED = "status.is.null,status.neq.Cancelled";
+
+// Fallback: every non-cancelled order (created_at, total) since `start`, fetched in
+// pages because Supabase returns at most 1000 rows per request.
+async function fetchRevenueRows(start: Date | null) {
+  const rows: { created_at: string; total: number }[] = [];
+  for (let from = 0; ; from += 1000) {
+    let query = supabaseAdmin
+      .from("orders")
+      .select("created_at, total")
+      .or(NOT_CANCELLED)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + 999);
+    if (start) query = query.gte("created_at", start.toISOString());
+
+    const { data, error } = await query;
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < 1000) return rows;
+  }
+}
 
 // Cached version of dashboard stats - refreshes every 60 seconds
 export const getDashboardStats = unstable_cache(
   async (period?: string) => {
     const startDate = getPeriodStart(period); // null = all time
 
-    // Base queries
-    const productsQuery = supabaseAdmin.from('products').select('*', { count: 'exact', head: true });
-    const brandsQuery = supabaseAdmin.from('brands').select('*', { count: 'exact', head: true });
-    
-    // Order-related queries need date filtering
-    let ordersQuery = supabaseAdmin.from('orders').select('*', { count: 'exact', head: true });
-    let revenueQuery = supabaseAdmin.from('orders').select('total').neq('status', 'Cancelled');
-
-    if (startDate) {
-      const isoDate = startDate.toISOString();
-      ordersQuery = ordersQuery.gte('created_at', isoDate);
-      revenueQuery = revenueQuery.gte('created_at', isoDate);
+    const { data, error } = await untyped().rpc("dashboard_stats", { p_start: startDate?.toISOString() ?? null });
+    const row = Array.isArray(data) ? data[0] : null;
+    if (!error && row) {
+      return {
+        totalProducts: Number(row.total_products),
+        totalOrders: Number(row.total_orders),
+        totalBrands: Number(row.total_brands),
+        totalRevenue: Number(row.total_revenue),
+      };
     }
+    if (error && !isMissingFunction(error)) console.error("dashboard_stats failed, using fallback:", error);
 
-    const [products, orders, brands, revenueResult] = await Promise.all([
-      productsQuery,
+    // Fallback until the SQL function exists: counts, plus revenue summed here
+    let ordersQuery = supabaseAdmin.from("orders").select("*", { count: "exact", head: true });
+    if (startDate) ordersQuery = ordersQuery.gte("created_at", startDate.toISOString());
+
+    const [products, orders, brands, revenueRows] = await Promise.all([
+      supabaseAdmin.from("products").select("*", { count: "exact", head: true }),
       ordersQuery,
-      brandsQuery,
-      revenueQuery,
+      supabaseAdmin.from("brands").select("*", { count: "exact", head: true }),
+      fetchRevenueRows(startDate).catch((e) => {
+        console.error("Error fetching revenue:", e);
+        return [];
+      }),
     ]);
-
-    const totalRevenue = revenueResult.data?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
 
     return {
       totalProducts: products.count || 0,
       totalOrders: orders.count || 0,
       totalBrands: brands.count || 0,
-      totalRevenue,
+      totalRevenue: revenueRows.reduce((sum, order) => sum + (order.total || 0), 0),
     };
   },
-  ['dashboard-stats'],
+  ["dashboard-stats"],
   { revalidate: 60 } // Cache for 60 seconds
 );
 
@@ -75,28 +116,45 @@ export async function getLowStockProducts(threshold: number, limit = 5) {
   return { products: data ?? [], total: count ?? 0 };
 }
 
-// Revenue per day/week/month for the dashboard chart (see groupRevenue in lib/dates.ts).
-// NOTE: like getDashboardStats, this reads raw order rows, and Supabase returns at most
-// 1000 rows per request; P6-06 moves both to SQL aggregates.
+// Revenue per day/week/month for the dashboard chart. Uses the revenue_series SQL
+// function when it exists, otherwise sums the orders here (see groupRevenue).
 export async function getRevenueData(period: string = "last_week") {
   const now = new Date();
-  const startDate = getPeriodStart(period, now);
+  let start = getPeriodStart(period, now);
 
-  let query = supabaseAdmin
-    .from("orders")
-    .select("created_at, total")
-    .neq("status", "Cancelled");
-
-  if (startDate) {
-    query = query.gte("created_at", startDate.toISOString());
+  // "All time" starts at the first non-cancelled order
+  if (!start) {
+    const { data: first } = await supabaseAdmin
+      .from("orders")
+      .select("created_at")
+      .or(NOT_CANCELLED)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (!first) return [];
+    start = new Date(first.created_at);
   }
 
-  const { data, error } = await query.order("created_at", { ascending: true });
+  const bucket = chooseRevenueBucket(start, now);
+  const { data, error } = await untyped().rpc("revenue_series", {
+    p_start: start.toISOString(),
+    p_bucket: bucket,
+    p_time_zone: STORE_TIME_ZONE,
+  });
 
-  if (error || !data) {
-    console.error("Error fetching revenue data:", error);
+  if (!error && Array.isArray(data)) {
+    if (data.length === 0) return [];
+    const totals = new Map<string, number>(
+      data.map((row: { bucket_start: string; total: number | string }) => [row.bucket_start, Number(row.total)]),
+    );
+    return fillRevenueBuckets(totals, bucket, start, now);
+  }
+  if (error && !isMissingFunction(error)) console.error("revenue_series failed, using fallback:", error);
+
+  try {
+    return groupRevenue(await fetchRevenueRows(getPeriodStart(period, now)), period, now);
+  } catch (e) {
+    console.error("Error fetching revenue data:", e);
     return [];
   }
-
-  return groupRevenue(data, period, now);
 }

@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { getPeriodStart, groupRevenue, localDateKey, localDayStartUtc, nextDateKey, parseDateKey } from "@/lib/dates";
+import {
+  chooseRevenueBucket,
+  fillRevenueBuckets,
+  getPeriodStart,
+  groupRevenue,
+  localDateKey,
+  localDayStartUtc,
+  nextDateKey,
+  parseDateKey,
+} from "@/lib/dates";
 
 // Wednesday 22 Oct 2026, 10:00 UTC (11:00 in Algiers)
 const now = new Date("2026-10-22T10:00:00Z");
@@ -123,5 +132,44 @@ describe("localDayStartUtc / nextDateKey", () => {
   it("steps to the next day across month and year ends", () => {
     expect(nextDateKey("2026-10-31")).toBe("2026-11-01");
     expect(nextDateKey("2026-12-31")).toBe("2027-01-01");
+  });
+});
+
+describe("chooseRevenueBucket", () => {
+  it("picks day, week or month from the range length", () => {
+    expect(chooseRevenueBucket(getPeriodStart("last_week", now)!, now)).toBe("day");
+    expect(chooseRevenueBucket(getPeriodStart("last_month", now)!, now)).toBe("day");
+    expect(chooseRevenueBucket(getPeriodStart("last_3_months", now)!, now)).toBe("week");
+    expect(chooseRevenueBucket(getPeriodStart("last_year", now)!, now)).toBe("month");
+  });
+});
+
+describe("fillRevenueBuckets", () => {
+  it("fills totals already bucketed by the database, with 0 for gaps", () => {
+    // revenue_series returns the first day of each bucket
+    const totals = new Map([
+      ["2026-10-19", 15], // week of Monday 19 Oct
+      ["2026-10-05", 40],
+    ]);
+    const rows = fillRevenueBuckets(totals, "week", new Date("2026-10-01T00:00:00Z"), now);
+    expect(rows).toEqual([
+      { name: "Sep 28", total: 0 },
+      { name: "Oct 5", total: 40 },
+      { name: "Oct 12", total: 0 },
+      { name: "Oct 19", total: 15 },
+    ]);
+  });
+
+  it("matches groupRevenue for the same orders", () => {
+    const orders = [
+      { created_at: "2026-10-16T09:00:00Z", total: 100 },
+      { created_at: "2026-10-21T23:30:00Z", total: 70 },
+    ];
+    const start = getPeriodStart("last_week", now)!;
+    const totals = new Map([
+      ["2026-10-16", 100],
+      ["2026-10-22", 70],
+    ]);
+    expect(fillRevenueBuckets(totals, "day", start, now)).toEqual(groupRevenue(orders, "last_week", now));
   });
 });

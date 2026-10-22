@@ -910,6 +910,20 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 
 **Notes (2026-10-22, from P3-06):** This is a **correctness** fix, not just performance. Supabase returns at most 1000 rows per request, so once there are more than 1000 non-cancelled orders in a period, `getDashboardStats` (total revenue) and `getRevenueData` (chart) silently sum only the first 1000. Consider doing this task early. The SQL function should bucket in `Africa/Algiers` time, like `lib/dates.ts`, and return the same day/week/month buckets so `groupRevenue`'s labels and zero-filling can stay.
 
+**Notes (2026-10-22):**
+- **Blocked on the owner (SQL only).** `docs/sql/P6-06-dashboard-aggregates.sql` creates:
+  - `dashboard_stats(p_start)`: product, brand and order counts plus non-cancelled revenue.
+  - `revenue_series(p_start, p_bucket, p_time_zone)`: one row per day, week (Monday) or month, bucketed in `Africa/Algiers` time and returning `bucket_start date`.
+  - EXECUTE is granted to `service_role` only.
+- **Code: done, safe to deploy before the SQL.** `lib/data/dashboard.ts` calls both functions through an untyped client.
+  - **While they're missing** (`PGRST202`, confirmed on the real project today), it falls back to summing order rows. Those rows are now **fetched in pages of 1000**, so the 1000-row cap is fixed even without the SQL.
+  - **Any other RPC error** is logged and also falls back.
+- **One revenue rule everywhere:** "not cancelled" includes a NULL status (`status.is.null,status.neq.Cancelled` in the client, `is distinct from 'Cancelled'` in SQL). The real data has no NULL statuses (17 of 21 orders match either rule), so today's totals don't change.
+- **`lib/dates.ts`:** `chooseRevenueBucket` and `fillRevenueBuckets` were split out of `groupRevenue`. The chart gets the same labels and zero-filled gaps whichever path ran. For "all time", the range starts at the first non-cancelled order.
+  - New tests, including "matches groupRevenue for the same orders" (16 in `lib/dates.test.ts`, 121 in total).
+- **Checks:** `typecheck`, lint (0 errors), tests and `build` pass.
+- **Tick when:** the SQL is applied, then the dashboard totals and chart match the fallback's for each period.
+
 ### P6-07 · Image lifecycle
 - [ ] Done
 
