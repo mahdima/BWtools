@@ -1,7 +1,8 @@
 import { type NextRequest } from 'next/server'
 import { updateSession } from './utils/supabase/middleware'
 
-export async function middleware(request: NextRequest) {
+// Next 16 "proxy" (formerly middleware): runs on every matched request, on the Node.js runtime
+export async function proxy(request: NextRequest) {
   return await updateSession(request)
 }
 
@@ -12,8 +13,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
+     * - robots.txt (crawlers must read it without a session)
+     * - image files
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

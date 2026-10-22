@@ -662,7 +662,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Checks:** `typecheck`, lint (0 errors), 95 tests and `build` pass.
 
 ### P4-06 · Logging cleanup and Next 16 conventions
-- [ ] Done
+- [x] Done
 
 **Steps:**
 1. Remove debug `console.log` calls and keep `console.error` calls that give context.
@@ -670,6 +670,12 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 3. Let `/robots.txt` (and `/icon.png`, if needed) through the middleware without a session. Today crawlers are redirected to `/login` and never see the robots file.
 
 **Done when:** There are no debug logs and no build warnings.
+
+**Notes (2026-10-22):**
+- **Logs:** no `console.log` is left; earlier tasks removed them while rewriting each file. The remaining `console.error`/`console.warn` calls carry context.
+- **Proxy:** `middleware.ts` was renamed to `proxy.ts`, with the function renamed to `proxy`, as the `middleware-to-proxy` codemod would do. Next 16 runs proxy on the Node.js runtime by default, which the service-role admin check needs. The build no longer prints the deprecation warning.
+- **`robots.txt`:** added to the matcher's exclusions, so it returns 200 `Disallow: /` instead of a 307 to /login. `/icon.png` was already excluded by the image rule.
+- **Checks:** the smoke test is 11/11 and protected routes still redirect.
 
 ---
 
