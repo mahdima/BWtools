@@ -241,7 +241,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Audit:** the ESLint toolchain brings in 5 high advisories, all from `braces` ≤ 3.0.3 (GHSA-vfj7-8cjw-p6xm), which has no patched release yet. They are dev-only: `npm audit --omit=dev` reports 0. Re-check when `braces` publishes a fix.
 
 ### P2-02 · Unit test runner
-- [ ] Done
+- [x] Done
 
 **Files:** `vitest.config.ts`, `package.json`, `lib/**/*.test.ts`
 **Steps:**
@@ -249,6 +249,12 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Write the first tests: `hasRole` in `lib/roles.ts`, and the `ORDER_STATUSES` validation.
 
 **Done when:** `npm test` passes. Later tasks add tests for any pure helper they create.
+
+**Notes (2026-10-22):**
+- **Setup:** Vitest 5.0.5 with `vitest.config.mts`. The `.mts` extension is needed because the package is CommonJS. It uses Vite's native `resolve.tsconfigPaths` instead of `vite-tsconfig-paths`, which Vite reported as redundant and which I uninstalled.
+- **Node types:** Vitest 5 needs `@types/node` ≥ 22, so the project moved from `^20` to `^22`. Runtime Node is 24 locally; check the Vercel project's Node version and keep CI (P2-05) on the same major.
+- **Tests:** `lib/roles.test.ts` and `lib/orders.test.ts`, 25 tests, all passing. Deliberately breaking the role ranking made a test fail, so the tests do catch regressions.
+- **Other checks:** lint (0 errors), `typecheck` and `build` pass, and the production audit is 0.
 
 ### P2-03 · Versioned schema and generated types (needs owner)
 - [ ] Done
