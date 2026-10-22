@@ -8,6 +8,8 @@ import { productSchema } from "@/lib/validation/product";
 import { removeUnusedImage, uploadImage } from "@/lib/image-storage";
 import { PRODUCT_IMAGES } from "@/lib/storage-path";
 import { archiveResult, setArchived } from "@/lib/archive";
+import { logAudit } from "@/lib/audit";
+import { diffChanges } from "@/lib/audit-changes";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
@@ -24,7 +26,8 @@ function cleanUpImage(url: string | null | undefined) {
 
 // Form action (via useFormAction): returns an error to show, or redirects on success.
 export async function addProduct(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
-    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
     const parsed = parseForm(productSchema, formData);
     if (!parsed.success) {
@@ -41,19 +44,21 @@ export async function addProduct(_prevState: ActionResult | null, formData: Form
         }
     }
 
-    const { error } = await supabaseAdmin
+    const values = {
+        product_name: input.product,
+        Category_id: input.category,
+        unite_price: input.price,
+        brand_id: input.brand,
+        description: input.description,
+        product_link,
+        in_stock_vailable: input.quantity,
+    };
+
+    const { data: created, error } = await supabaseAdmin
         .from('products')
-        .insert([
-            {
-                product_name: input.product,
-                Category_id: input.category,
-                unite_price: input.price,
-                brand_id: input.brand,
-                description: input.description,
-                product_link,
-                in_stock_vailable: input.quantity,
-            }
-        ]);
+        .insert([values])
+        .select('product_id')
+        .single();
 
     if (error) {
         console.error("Error inserting product:", error);
@@ -61,12 +66,18 @@ export async function addProduct(_prevState: ActionResult | null, formData: Form
         return { success: false, message: `Failed to add product: ${error.message}` };
     }
 
+    logAudit(admin.id, "create", "product", created.product_id, {
+        product_name: values.product_name,
+        unite_price: values.unite_price,
+        in_stock_vailable: values.in_stock_vailable,
+    });
     revalidatePath("/product");
     redirect(productListUrl(input.page));
 }
 
 export async function deleteProduct(productId: string): Promise<ActionResult> {
-    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
     const id = Number(productId);
     if (!Number.isInteger(id)) {
@@ -77,7 +88,7 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
         .from('products')
         .delete()
         .eq('product_id', id)
-        .select('product_id, product_link');
+        .select('product_id, product_name, product_link');
 
     if (error) {
         if (isForeignKeyViolation(error)) {
@@ -88,7 +99,10 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
                 unavailable: "This product appears in existing orders or favorites, so it can't be deleted.",
                 failed: "Failed to archive product",
             });
-            if (result.success) revalidatePath("/product");
+            if (result.success) {
+                logAudit(admin.id, "archive", "product", id);
+                revalidatePath("/product");
+            }
             return result;
         }
         console.error("Error deleting product:", error);
@@ -100,12 +114,14 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
     }
 
     cleanUpImage(data[0].product_link);
+    logAudit(admin.id, "delete", "product", id, { product_name: data[0].product_name });
     revalidatePath("/product");
     return { success: true, message: "Product deleted." };
 }
 
 export async function restoreProduct(productId: string): Promise<ActionResult> {
-    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
     const id = Number(productId);
     if (!Number.isInteger(id)) {
@@ -118,7 +134,10 @@ export async function restoreProduct(productId: string): Promise<ActionResult> {
         unavailable: "Archiving isn't set up yet.",
         failed: "Failed to restore product",
     });
-    if (result.success) revalidatePath("/product");
+    if (result.success) {
+        logAudit(admin.id, "restore", "product", id);
+        revalidatePath("/product");
+    }
     return result;
 }
 
@@ -128,7 +147,8 @@ export async function updateProduct(
     _prevState: ActionResult | null,
     formData: FormData,
 ): Promise<ActionResult> {
-    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
     const id = Number(productId);
     if (!Number.isInteger(id)) {
@@ -141,9 +161,10 @@ export async function updateProduct(
     }
     const input = parsed.data;
 
+    // The whole row: its image URL, and the "before" values for the audit log
     const { data: current, error: readError } = await supabaseAdmin
         .from('products')
-        .select('product_link')
+        .select('*')
         .eq('product_id', id)
         .maybeSingle();
 
@@ -166,17 +187,19 @@ export async function updateProduct(
         }
     }
 
+    const values = {
+        product_name: input.product,
+        Category_id: input.category,
+        unite_price: input.price,
+        brand_id: input.brand,
+        description: input.description,
+        product_link,
+        in_stock_vailable: input.quantity,
+    };
+
     const { error } = await supabaseAdmin
         .from('products')
-        .update({
-            product_name: input.product,
-            Category_id: input.category,
-            unite_price: input.price,
-            brand_id: input.brand,
-            description: input.description,
-            product_link,
-            in_stock_vailable: input.quantity,
-        })
+        .update(values)
         .eq('product_id', id);
 
     if (error) {
@@ -186,6 +209,7 @@ export async function updateProduct(
     }
 
     if (current.product_link !== product_link) cleanUpImage(current.product_link);
+    logAudit(admin.id, "update", "product", id, diffChanges(current, values));
     revalidatePath("/product");
     redirect(productListUrl(input.page));
 }

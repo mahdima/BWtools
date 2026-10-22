@@ -1006,6 +1006,37 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Call `logAudit(action, entity, id, changes)` from every mutating action.
 3. Add a page that only super admins can see.
 
+**Notes (2026-10-22):**
+- **Blocked on the owner (SQL only).** `docs/sql/P7-01-audit-log.sql` creates `audit_log`:
+  - columns `id`, `created_at`, `admin_id` (→ `admins`, `on delete set null`), `action`, `entity`, `entity_id` (text, since admin and customer ids are UUIDs) and `changes` (jsonb);
+  - indexes on time and on (entity, id);
+  - RLS on, with anon and authenticated revoked;
+  - an **append-only** trigger that rejects UPDATE and DELETE.
+  The real project answers `PGRST205` today.
+- **Code: done, safe to deploy before the SQL.**
+  - `lib/audit-changes.ts` (pure) holds the action and entity types and their labels. `diffChanges(before, after)` returns `{ field: { from, to } }` for changed fields only and shortens long text. `formatChanges` turns entries into lines like "Price: 1200 → 1500" or "Image: replaced", using readable names for the misspelled columns.
+  - `lib/audit.ts`: `logAudit(adminId, action, entity, id, changes)` inserts through an untyped client inside `after()`, so it never delays or fails an action. It is silent while the table is missing (reuses `isMissingTableError`) and logs any other failure.
+- **What is logged** (25 actions):
+  - **Products, brands and categories:** create (key fields), update (diff of the row before and after), delete (name), archive, restore.
+  - **Orders:** status change (new status), note (shortened), and **CSV export**: row count, status and dates, and whether a search was used, but not the search text, which can be a customer's name.
+  - **Customer update:** which fields were saved, never their values.
+  - **Own profile** (name or email diff) and **password change** (no data).
+  - **Store settings** (diff), plus the team actions: create, role change (from → to), deactivate, reactivate.
+  - **Not logged:** reading notifications (personal state), and login, logout and password reset (Supabase Auth already records those).
+- **Side fixes:**
+  - `updateBrand` and `updateAdminRole` read the record first, so a missing id now returns "not found" instead of reporting success.
+  - `addProduct` and `addCategory` select the new id.
+- **Page `/audit`** (`requireAdminPage("super_admin")`, plus an "Audit log" link in the Sidebar that only super admins see, via a new `minRole` on sidebar items):
+  - filter chips by record type, server-side paging (50 per page), and times in Algiers time;
+  - each record links to its page; numeric ids are shown, UUIDs aren't;
+  - a "not set up yet" notice while the table is missing, and a skeleton `loading.tsx`.
+  - The table lives in `components/audit-log-table.tsx`.
+- **Verified:**
+  - 10 new tests: 7 for diffing and formatting, and 3 for `logAudit` with `after()` and the client mocked.
+  - A temporary preview page (deleted) rendered the audit table and the P6-08 archived-products view with sample data. The screenshots were reviewed at 1280 px and 390 px: 6 rows with readable change lines, 2 Restore buttons, no Delete in the archived view, and the "Back to active" link going to `/product`. There were 0 page errors once hydrated; an earlier hydration warning came from screenshotting before hydration.
+  - The guard check passes (28 actions, only login, logout and forgot-password unguarded). `typecheck`, lint (0 errors, 27 warnings), 155 tests and `build` pass.
+- **Tick when:** the SQL is applied (then `npm run db:types`). Then a product edit, a role change and an export appear at `/audit` with the right admin, and an UPDATE on `audit_log` is rejected.
+
 ### P7-02 · Reports
 - [ ] Done
 

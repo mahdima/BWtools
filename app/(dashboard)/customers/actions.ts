@@ -5,9 +5,11 @@ import { getAuthorizedAdmin } from "@/lib/auth";
 import { parseForm } from "@/lib/validation/form";
 import { customerSchema } from "@/lib/validation/customer";
 import { revalidatePath } from "next/cache";
+import { logAudit } from "@/lib/audit";
 
 export async function updateCustomer(formData: FormData) {
-  if (!(await getAuthorizedAdmin("admin"))) {
+  const admin = await getAuthorizedAdmin("admin");
+  if (!admin) {
     return { success: false, message: "Not authorized" };
   }
 
@@ -44,6 +46,8 @@ export async function updateCustomer(formData: FormData) {
     }
   }
 
+  // Customer details are personal data: log which fields were saved, not their values
+  logAudit(admin.id, "update", "customer", id, { fields: phone ? ["username", "phone"] : ["username"] });
   revalidatePath("/customers");
   return { success: true, message: "Customer updated successfully" };
 }

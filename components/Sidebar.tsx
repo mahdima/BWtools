@@ -11,6 +11,7 @@ import {
   Tag,
   User,
   ChevronUp,
+  History,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,11 +27,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NotificationsPanel } from "@/components/notifications-panel";
+import { useAdmin } from "@/components/admin-provider";
+import { hasRole, type Role } from "@/lib/roles";
 
 interface ISidebarItem {
   name: string;
   path: string;
   icon: LucideIcon;
+  // Shown only to admins with at least this role (the page checks it too)
+  minRole?: Role;
 }
 
 const items: ISidebarItem[] = [
@@ -69,6 +74,12 @@ const items: ISidebarItem[] = [
     path: "/team",
     icon: ShieldUser,
   },
+  {
+    name: "Audit log",
+    path: "/audit",
+    icon: History,
+    minRole: "super_admin",
+  },
 ];
 
 interface Notification {
@@ -93,6 +104,8 @@ const Sidebar = ({
   notifications = [],
 }: SidebarProps) => {
   const displayName = userName || userEmail.split("@")[0];
+  const admin = useAdmin();
+  const visibleItems = items.filter((item) => !item.minRole || (admin && hasRole(admin.role, item.minRole)));
 
   return (
     <div className="w-64 border-r border-sidebar-border bg-sidebar/50 backdrop-blur-xl flex flex-col justify-between h-full py-6 transition-all duration-300 relative z-20">
@@ -108,7 +121,7 @@ const Sidebar = ({
 
       {/* Middle: Navigation */}
       <div className="flex flex-col space-y-1.5 w-[88%] mx-auto flex-1">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <Sidebaritem key={item.path} item={item} />
         ))}
       </div>

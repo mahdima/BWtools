@@ -70,7 +70,7 @@ The catalogue and order screens work, but day-to-day operations are missing: acc
 | Should have | Stock movement on orders | No code in this repo lowers stock on a sale or restores it when an order is cancelled (verify whether the mobile app or a database trigger does). |
 | Should have | Category images in the live screen | The legacy page uploaded category images to `StaticAssests`, but the current category modal only edits the name. |
 | Should have | Store settings | Store name, contact email and invoice header are hard-coded ("BW Tools", `contact@bwtools.com`). |
-| Nice to have | Audit log of admin actions | Only order status changes are recorded. Product, price, stock and role changes leave no trace. |
+| Nice to have | Audit log of admin actions | Only order status changes are recorded. Product, price, stock and role changes leave no trace. **Code ready (P7-01):** every dashboard change and order export is logged and shown at `/audit` once the owner applies `docs/sql/P7-01-audit-log.sql`. |
 | Nice to have | Reports | There is no comparison with the previous period, no best sellers and no revenue by category or brand. The stat cards show totals with no trend. |
 | Nice to have | Bulk actions and import | There is no bulk delete, bulk status update or CSV import of products. |
 | Nice to have | Arabic and French interface | Prices are formatted for Algeria (`fr-DZ`, DZD) but the interface is English only, with no right-to-left support. |

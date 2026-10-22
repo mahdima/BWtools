@@ -5,6 +5,8 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getCurrentAdmin } from "@/lib/auth";
 import { parseForm } from "@/lib/validation/form";
 import { profileSchema } from "@/lib/validation/admin";
+import { logAudit } from "@/lib/audit";
+import { diffChanges } from "@/lib/audit-changes";
 import { revalidatePath } from "next/cache";
 
 export async function updateAdminProfile(prevState: any, formData: FormData) {
@@ -30,6 +32,11 @@ export async function updateAdminProfile(prevState: any, formData: FormData) {
   if (profileError) {
     return { success: false, message: "Failed to update profile details: " + profileError.message };
   }
+
+  logAudit(admin.id, "update", "admin", admin.id, {
+    ...diffChanges({ full_name: admin.full_name }, { full_name: fullName }),
+    ...(email && email !== admin.email ? { email: { from: admin.email, to: email } } : {}),
+  });
 
   // 2. Sync to Auth Metadata for extra redundancy
   const supabase = await createClient();

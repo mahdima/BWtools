@@ -6,13 +6,15 @@ import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
 import { isRole } from "@/lib/roles";
 import { parseForm } from "@/lib/validation/form";
 import { adminCreateSchema } from "@/lib/validation/admin";
+import { logAudit } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 // Create new admin (super admin only)
 // Form action (via useFormAction): returns an error to show, or redirects on success.
 export async function createAdmin(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  if (!(await getAuthorizedAdmin('super_admin'))) return NOT_AUTHORIZED;
+  const admin = await getAuthorizedAdmin('super_admin');
+  if (!admin) return NOT_AUTHORIZED;
 
   const parsed = parseForm(adminCreateSchema, formData);
   if (!parsed.success) {
@@ -48,6 +50,7 @@ export async function createAdmin(_prevState: ActionResult | null, formData: For
     return { success: false, message: `Failed to create admin: ${adminError.message}` };
   }
 
+  logAudit(admin.id, "create", "admin", authData.user.id, { full_name: fullName, role });
   revalidatePath('/team');
   redirect('/team');
 }
@@ -66,6 +69,12 @@ export async function updateAdminRole(adminId: string, newRole: string): Promise
     return { success: false, message: "You cannot change your own role." };
   }
 
+  // The previous role, for the audit log
+  const { data: target } = await supabaseAdmin.from('admins').select('role').eq('id', adminId).maybeSingle();
+  if (!target) {
+    return { success: false, message: "Admin not found." };
+  }
+
   const { error } = await supabaseAdmin
     .from('admins')
     .update({ role: newRole })
@@ -76,6 +85,7 @@ export async function updateAdminRole(adminId: string, newRole: string): Promise
     return { success: false, message: `Failed to update role: ${error.message}` };
   }
 
+  logAudit(admin.id, "role_change", "admin", adminId, { role: { from: target.role, to: newRole } });
   revalidatePath('/team');
   return { success: true, message: "Role updated." };
 }
@@ -100,6 +110,8 @@ export async function deactivateAdmin(adminId: string): Promise<ActionResult> {
     return { success: false, message: `Failed to deactivate: ${error.message}` };
   }
 
+  logAudit(admin.id, "deactivate", "admin", adminId);
+
   // Also block the account from signing in anywhere (~100 years; undone on reactivate).
   // If this fails the admin is still locked out of the dashboard by `is_active`.
   const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(adminId, {
@@ -118,7 +130,8 @@ export async function deactivateAdmin(adminId: string): Promise<ActionResult> {
 
 // Reactivate admin (super admin only)
 export async function reactivateAdmin(adminId: string): Promise<ActionResult> {
-  if (!(await getAuthorizedAdmin('super_admin'))) return NOT_AUTHORIZED;
+  const admin = await getAuthorizedAdmin('super_admin');
+  if (!admin) return NOT_AUTHORIZED;
 
   // Lift the sign-in ban first, so a failure leaves the account fully deactivated
   const { error: unbanError } = await supabaseAdmin.auth.admin.updateUserById(adminId, {
@@ -140,6 +153,7 @@ export async function reactivateAdmin(adminId: string): Promise<ActionResult> {
     return { success: false, message: `Failed to reactivate: ${error.message}` };
   }
 
+  logAudit(admin.id, "reactivate", "admin", adminId);
   revalidatePath('/team');
   return { success: true, message: "Admin reactivated." };
 }

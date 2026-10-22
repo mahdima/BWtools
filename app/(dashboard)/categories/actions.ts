@@ -8,6 +8,8 @@ import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/
 import { removeUnusedImage, uploadImage } from "@/lib/image-storage";
 import { CATEGORY_IMAGES } from "@/lib/storage-path";
 import { archiveResult, hasActiveProducts, setArchived } from "@/lib/archive";
+import { logAudit } from "@/lib/audit";
+import { diffChanges } from "@/lib/audit-changes";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 
@@ -17,7 +19,8 @@ function cleanUpImage(url: string | null | undefined) {
 }
 
 export async function addCategory(formData: FormData): Promise<ActionResult> {
-  if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+  const admin = await getAuthorizedAdmin("admin");
+  if (!admin) return NOT_AUTHORIZED;
 
   const parsed = parseForm(categorySchema, formData);
   if (!parsed.success) {
@@ -34,21 +37,25 @@ export async function addCategory(formData: FormData): Promise<ActionResult> {
     }
   }
 
-  const { error } = await supabaseAdmin
+  const { data: created, error } = await supabaseAdmin
     .from("categories")
-    .insert([{ categorie_name: categoryName, cat_image_url }]);
+    .insert([{ categorie_name: categoryName, cat_image_url }])
+    .select("categorie_id")
+    .single();
 
   if (error) {
     cleanUpImage(cat_image_url); // the upload belongs to no category
     return { success: false, message: error.message };
   }
 
+  logAudit(admin.id, "create", "category", created.categorie_id, { categorie_name: categoryName });
   revalidatePath("/categories");
   return { success: true, message: "Category added successfully" };
 }
 
 export async function updateCategory(formData: FormData): Promise<ActionResult> {
-  if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+  const admin = await getAuthorizedAdmin("admin");
+  if (!admin) return NOT_AUTHORIZED;
 
   const parsed = parseForm(categoryUpdateSchema, formData);
   if (!parsed.success) {
@@ -58,7 +65,7 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
 
   const { data: current, error: readError } = await supabaseAdmin
     .from("categories")
-    .select("cat_image_url")
+    .select("categorie_name, cat_image_url")
     .eq("categorie_id", id)
     .maybeSingle();
 
@@ -91,12 +98,14 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
   }
 
   if (current.cat_image_url !== cat_image_url) cleanUpImage(current.cat_image_url);
+  logAudit(admin.id, "update", "category", id, diffChanges(current, { categorie_name: categoryName, cat_image_url }));
   revalidatePath("/categories");
   return { success: true, message: "Category updated successfully" };
 }
 
 export async function deleteCategory(categoryId: string): Promise<ActionResult> {
-  if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+  const admin = await getAuthorizedAdmin("admin");
+  if (!admin) return NOT_AUTHORIZED;
 
   const id = Number(categoryId);
   if (!Number.isInteger(id)) {
@@ -108,7 +117,7 @@ export async function deleteCategory(categoryId: string): Promise<ActionResult> 
     .from("categories")
     .delete()
     .eq("categorie_id", id)
-    .select("categorie_id, cat_image_url");
+    .select("categorie_id, categorie_name, cat_image_url");
 
   if (error) {
     if (!isForeignKeyViolation(error)) return { success: false, message: error.message };
@@ -123,7 +132,10 @@ export async function deleteCategory(categoryId: string): Promise<ActionResult> 
       unavailable: stillHasProducts,
       failed: "Failed to archive category",
     });
-    if (result.success) revalidatePath("/categories");
+    if (result.success) {
+      logAudit(admin.id, "archive", "category", id);
+      revalidatePath("/categories");
+    }
     return result;
   }
 
@@ -132,12 +144,14 @@ export async function deleteCategory(categoryId: string): Promise<ActionResult> 
   }
 
   cleanUpImage(data[0].cat_image_url);
+  logAudit(admin.id, "delete", "category", id, { categorie_name: data[0].categorie_name });
   revalidatePath("/categories");
   return { success: true, message: "Category deleted successfully" };
 }
 
 export async function restoreCategory(categoryId: string): Promise<ActionResult> {
-  if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+  const admin = await getAuthorizedAdmin("admin");
+  if (!admin) return NOT_AUTHORIZED;
 
   const id = Number(categoryId);
   if (!Number.isInteger(id)) {
@@ -150,6 +164,9 @@ export async function restoreCategory(categoryId: string): Promise<ActionResult>
     unavailable: "Archiving isn't set up yet.",
     failed: "Failed to restore category",
   });
-  if (result.success) revalidatePath("/categories");
+  if (result.success) {
+    logAudit(admin.id, "restore", "category", id);
+    revalidatePath("/categories");
+  }
   return result;
 }

@@ -10,6 +10,8 @@ import { resolveOrderFilters, type OrderFilterInput } from "@/lib/data/orders";
 import { toCsv, type CsvExportResult } from "@/lib/csv";
 import { parseForm } from "@/lib/validation/form";
 import { orderNoteSchema } from "@/lib/validation/order";
+import { logAudit } from "@/lib/audit";
+import { shorten } from "@/lib/audit-changes";
 
 export async function updateOrderStatus(orderId: number, newStatus: string): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
@@ -37,6 +39,7 @@ export async function updateOrderStatus(orderId: number, newStatus: string): Pro
         return { success: false, message: `Failed to update status: ${rpcError.message}` };
     }
 
+    logAudit(admin.id, "status_change", "order", orderId, { status: { to: newStatus } });
     revalidatePath("/order");
     revalidatePath(`/order/${orderId}`);
     return { success: true, message: `Order marked as ${newStatus}.` };
@@ -107,6 +110,7 @@ export async function addOrderNote(orderId: number, note: string): Promise<Actio
         return { success: false, message: `Failed to add note: ${error.message}` };
     }
 
+    logAudit(admin.id, "note", "order", orderId, { note: shorten(parsed.data.note) });
     revalidatePath(`/order/${orderId}`);
     return { success: true, message: "Note added." };
 }
@@ -122,7 +126,8 @@ function formatUtc(timestamp: string) {
 
 // Every order matching the list's search and status filter, as a CSV file.
 export async function exportOrders(filterInput: OrderFilterInput): Promise<CsvExportResult> {
-    if (!(await getAuthorizedAdmin("viewer"))) return NOT_AUTHORIZED;
+    const admin = await getAuthorizedAdmin("viewer");
+    if (!admin) return NOT_AUTHORIZED;
 
     // Same filters as the list (search, status, date range)
     const filters = await resolveOrderFilters(filterInput);
@@ -157,6 +162,16 @@ export async function exportOrders(filterInput: OrderFilterInput): Promise<CsvEx
             if (data.length < EXPORT_BATCH) break;
         }
     }
+
+    // Exports copy customer data out of the dashboard, so they are logged too. The
+    // search text may be a customer's name, so only its use is recorded.
+    logAudit(admin.id, "export", "order", null, {
+        rows: rows.length,
+        status: filters.status ?? undefined,
+        from: filterInput.from,
+        to: filterInput.to,
+        search: filterInput.search?.trim() ? "used" : undefined,
+    });
 
     const truncated = rows.length >= EXPORT_MAX_ROWS;
     const date = new Date().toISOString().slice(0, 10);

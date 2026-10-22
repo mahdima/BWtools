@@ -85,6 +85,7 @@ After the role check, validate input before touching the database. Add a zod sch
 - `app/login`, `app/logout` and `app/invoice/[id]` (printable invoice) sit outside the dashboard layout.
 - **Reads** live in [lib/data/](lib/data/), one module per entity (`import "server-only"`, typed by the generated `Database` types): `dashboard` (stats cached 60s with `unstable_cache`, revenue, recent orders, low stock), `products`, `orders` (list, `getOrderWithDetails` for the order page and invoice, timeline, notes), `brands`, `categories`, `customers`, `admins`, `notifications`. Pages and layouts call these; no page imports `supabaseAdmin`. Don't put reads in `'use server'` files: every export there is a public endpoint. They need no guard of their own because only server components behind the layout and proxy call them.
 - **Writes** are server actions in each feature folder's `actions.ts` (see Auth and roles).
+- **Audit log (P7-01):** after a successful change, call `logAudit(admin.id, action, entity, id, changes)` from [lib/audit.ts](lib/audit.ts). Build `changes` with `diffChanges(before, after)` from [lib/audit-changes.ts](lib/audit-changes.ts), so keep the guard's `admin` and read the "before" row when needed. It writes after the response and does nothing until `audit_log` exists (`docs/sql/P7-01-audit-log.sql`). Log which customer fields changed, never their values. Super admins read it at `/audit`.
 
 ### Feature module pattern
 

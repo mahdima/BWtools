@@ -6,12 +6,14 @@ import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/
 import { parseForm } from "@/lib/validation/form";
 import { brandSchema } from "@/lib/validation/brand";
 import { archiveResult, hasActiveProducts, setArchived } from "@/lib/archive";
+import { logAudit } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 // Form action (via useFormAction): returns an error to show, or redirects on success.
 export async function addBrand(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
-    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
     const parsed = parseForm(brandSchema, formData);
     if (!parsed.success) {
@@ -39,6 +41,7 @@ export async function addBrand(_prevState: ActionResult | null, formData: FormDa
         return { success: false, message: `Failed to add brand: ${error.message}` };
     }
 
+    logAudit(admin.id, "create", "brand", nextId, { brand_name });
     revalidatePath("/brand");
     redirect("/brand");
 }
@@ -49,7 +52,8 @@ export async function updateBrand(
     _prevState: ActionResult | null,
     formData: FormData,
 ): Promise<ActionResult> {
-    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
     const id = Number(brandId);
     if (!Number.isInteger(id)) {
@@ -62,6 +66,17 @@ export async function updateBrand(
     }
     const brand_name = parsed.data.brand;
 
+    // The update returns the new name only, so read the old one for the audit log
+    const { data: current } = await supabaseAdmin
+        .from('brands')
+        .select('brand_name')
+        .eq('brand_id', id)
+        .maybeSingle();
+
+    if (!current) {
+        return { success: false, message: "Brand not found." };
+    }
+
     const { error } = await supabaseAdmin
         .from('brands')
         .update({ brand_name })
@@ -72,12 +87,16 @@ export async function updateBrand(
         return { success: false, message: `Failed to update brand: ${error.message}` };
     }
 
+    if (current.brand_name !== brand_name) {
+        logAudit(admin.id, "update", "brand", id, { brand_name: { from: current.brand_name, to: brand_name } });
+    }
     revalidatePath("/brand");
     redirect("/brand");
 }
 
 export async function deleteBrand(brandId: string): Promise<ActionResult> {
-    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
     const id = Number(brandId);
     if (!Number.isInteger(id)) {
@@ -88,7 +107,7 @@ export async function deleteBrand(brandId: string): Promise<ActionResult> {
         .from('brands')
         .delete()
         .eq('brand_id', id)
-        .select('brand_id');
+        .select('brand_id, brand_name');
 
     if (error) {
         if (!isForeignKeyViolation(error)) {
@@ -106,7 +125,10 @@ export async function deleteBrand(brandId: string): Promise<ActionResult> {
             unavailable: stillHasProducts,
             failed: "Failed to archive brand",
         });
-        if (result.success) revalidatePath("/brand");
+        if (result.success) {
+            logAudit(admin.id, "archive", "brand", id);
+            revalidatePath("/brand");
+        }
         return result;
     }
 
@@ -114,12 +136,14 @@ export async function deleteBrand(brandId: string): Promise<ActionResult> {
         return { success: false, message: "Brand not found." };
     }
 
+    logAudit(admin.id, "delete", "brand", id, { brand_name: data[0].brand_name });
     revalidatePath("/brand");
     return { success: true, message: "Brand deleted." };
 }
 
 export async function restoreBrand(brandId: string): Promise<ActionResult> {
-    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
     const id = Number(brandId);
     if (!Number.isInteger(id)) {
@@ -132,6 +156,9 @@ export async function restoreBrand(brandId: string): Promise<ActionResult> {
         unavailable: "Archiving isn't set up yet.",
         failed: "Failed to restore brand",
     });
-    if (result.success) revalidatePath("/brand");
+    if (result.success) {
+        logAudit(admin.id, "restore", "brand", id);
+        revalidatePath("/brand");
+    }
     return result;
 }

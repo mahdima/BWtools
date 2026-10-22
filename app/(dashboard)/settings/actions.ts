@@ -6,12 +6,15 @@ import { parseForm } from "@/lib/validation/form";
 import { passwordChangeSchema } from "@/lib/validation/admin";
 import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
 import { isMissingTableError, storeSettingsSchema } from "@/lib/store-settings";
-import { storeSettingsTable } from "@/lib/data/settings";
+import { getStoreSettings, storeSettingsTable } from "@/lib/data/settings";
+import { logAudit } from "@/lib/audit";
+import { diffChanges } from "@/lib/audit-changes";
 import { revalidatePath } from "next/cache";
 
 export async function updatePassword(formData: FormData) {
   // Any active admin may change their own password.
-  if (!(await getAuthorizedAdmin("viewer"))) {
+  const admin = await getAuthorizedAdmin("viewer");
+  if (!admin) {
     return { success: false, message: "Not authorized" };
   }
 
@@ -29,17 +32,22 @@ export async function updatePassword(formData: FormData) {
     return { success: false, message: error.message };
   }
 
+  logAudit(admin.id, "password_change", "admin", admin.id);
   return { success: true, message: "Password updated successfully" };
 }
 
 // Form action (via useFormAction): super admins edit the store-wide settings.
 export async function updateStoreSettings(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  if (!(await getAuthorizedAdmin("super_admin"))) return NOT_AUTHORIZED;
+  const admin = await getAuthorizedAdmin("super_admin");
+  if (!admin) return NOT_AUTHORIZED;
 
   const parsed = parseForm(storeSettingsSchema, formData);
   if (!parsed.success) {
     return { success: false, message: parsed.message };
   }
+
+  // The previous values, for the audit log
+  const before = await getStoreSettings();
 
   const { error } = await storeSettingsTable().upsert({
     id: 1,
@@ -57,6 +65,7 @@ export async function updateStoreSettings(_prevState: ActionResult | null, formD
     };
   }
 
+  logAudit(admin.id, "update", "store_settings", 1, diffChanges(before, parsed.data));
   revalidatePath("/settings");
   return { success: true, message: "Store settings saved." };
 }
