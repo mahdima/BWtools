@@ -59,6 +59,7 @@ export const columns: ColumnDef<Category>[] = [
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label={`Edit ${category.category}`}
                 className="h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
               >
                 <Pencil className="h-4 w-4" />

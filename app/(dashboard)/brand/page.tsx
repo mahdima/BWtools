@@ -43,7 +43,7 @@ const BrandPage = async ({ searchParams }: BrandPageProps) => {
       </Suspense>
 
       {(showAddModal || (editId && brandToEdit)) && (
-        <Modal returnUrl="/brand">
+        <Modal returnUrl="/brand" title={editId ? "Edit Brand" : "Add New Brand"}>
           <BrandForm
             key={editId || "add-brand"}
             brand={brandToEdit}

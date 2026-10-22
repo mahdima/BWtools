@@ -154,7 +154,7 @@ export const columns: ColumnDef<Product>[] = [
             size="icon"
             className="h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
           >
-            <Link href={`/product?edit=${product.id}`}>
+            <Link href={`/product?edit=${product.id}`} aria-label={`Edit ${product.product}`}>
               <Pencil className="h-4 w-4" />
             </Link>
           </Button>

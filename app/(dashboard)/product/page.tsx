@@ -62,6 +62,7 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
       {(showAddModal || (editId && productToEdit)) && (
         <Modal
           returnUrl={`/product${params.page ? `?page=${params.page}` : ""}`}
+          title={editId ? "Edit Product" : "Add New Product"}
         >
           <ProductForm
             key={editId || "add-product"}

@@ -1,18 +1,20 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
+// A URL-driven dialog (e.g. /product?add=true): closing it navigates to `returnUrl`.
+// The content renders its own visible heading; `title` names the dialog for screen readers.
 export function Modal({
   children,
   returnUrl,
+  title,
 }: {
   children: React.ReactNode;
   returnUrl?: string;
+  title: string;
 }) {
   const router = useRouter();
-  const overlayRef = useRef<HTMLDivElement>(null);
 
   const onDismiss = () => {
     if (returnUrl) {
@@ -22,42 +24,15 @@ export function Modal({
     }
   };
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) {
-      onDismiss();
-    }
-  };
-
-  const handleCloseClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onDismiss();
-  };
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onDismiss();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
-
   return (
-    <div
-      ref={overlayRef}
-      role="dialog"
-      aria-modal="true"
-      onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-    >
-      <div className="relative w-full max-w-5xl bg-white rounded-lg shadow-2xl overflow-y-auto max-h-[90vh] animate-in zoom-in-95 duration-200">
-        <button
-          onClick={handleCloseClick}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
-        >
-          <X className="h-6 w-6 text-gray-500" />
-        </button>
+    <Dialog open onOpenChange={(open) => !open && onDismiss()}>
+      <DialogContent
+        className="sm:max-w-5xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-white"
+        aria-describedby={undefined}
+      >
+        <DialogTitle className="sr-only">{title}</DialogTitle>
         {children}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

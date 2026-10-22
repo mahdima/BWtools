@@ -621,7 +621,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Checks:** `typecheck`, lint (0 errors, warnings down from 37 to 30), 95 tests, `build`, the guard audit (21/21) and the smoke test (11/11) pass.
 
 ### P4-04 · One dialog component and accessibility basics
-- [ ] Done
+- [x] Done
 
 **Files:** `components/Modal.tsx`, `CategoryForm.tsx`, `CustomerForm.tsx`, `profile-edit-dialog.tsx`, the column files
 **Steps:**
@@ -629,6 +629,19 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Add an `aria-label` to every icon-only button, and `htmlFor`/`id` pairs to form labels and inputs.
 
 **Done when:** Every dialog traps focus and closes with Escape, and icon buttons have accessible names.
+
+**Notes (2026-10-22):**
+- **Dialog:** `components/ui/dialog.tsx` is hand-written in the project's shadcn style using `@radix-ui/react-dialog` 1.3.1, the same version alert-dialog already used, so there is one copy.
+- **Migrated:**
+  - `Modal` (URL-driven, now needs a `title` for screen readers).
+  - `CategoryForm` and `CustomerForm` (were `createPortal` with z-[9999]).
+  - `ProfileEditDialog` (a hand-made overlay with no Escape).
+  - Radix mounts content on open, so each open is fresh. `CustomerForm` and `ProfileEditDialog` also moved to `useFormAction`: they used `<form action>`, which wiped input on errors.
+- **Accessibility:**
+  - `aria-label` on the product, brand, category and customer edit buttons, the notifications bell (with the unread count), and the mobile menu toggle (plus `aria-expanded`).
+  - `htmlFor`/`id` on the customer and profile form labels.
+- **Browser check:** the real dialogs, `Modal` and the product table on a temporary page, 13/13 checks with 0 page or console errors. Covered: accessible names, focus moving in, the Tab focus trap, Escape, focus returning to the trigger, the built-in Close button, real actions refusing without a session (inline, input kept), linked labels, Escape on the URL modal navigating to `returnUrl`, and the edit/delete accessible names. The page was deleted afterwards.
+- **Checks:** `typecheck`, lint (0 errors, 29 warnings), 95 tests and `build` pass.
 
 ### P4-05 · Design tokens and forced light theme
 - [ ] Done
