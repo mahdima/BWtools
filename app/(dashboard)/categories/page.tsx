@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import { DataTable } from "@/components/data-table";
 import { columns, Category } from "./columns";
 import { CategoryForm } from "@/components/CategoryForm";
+import { Can } from "@/components/admin-provider";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { getCategories } from "@/lib/data/categories";
@@ -18,13 +19,15 @@ const CategoriesPage = async () => {
           title="Categories"
           description="Manage your product categories"
           headerActions={
-            <CategoryForm
-              trigger={
-                <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
-                  <Plus className="mr-2 h-4 w-4" /> Add Category
-                </Button>
-              }
-            />
+            <Can minRole="admin">
+              <CategoryForm
+                trigger={
+                  <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
+                    <Plus className="mr-2 h-4 w-4" /> Add Category
+                  </Button>
+                }
+              />
+            </Can>
           }
         />
       </Suspense>

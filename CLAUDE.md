@@ -66,7 +66,7 @@ There is no plain anon client any more. Don't add one: the anon key is public (i
 - `await requireAdminPage()` in pages and layouts, which redirects non-admins to `/login?error=unauthorized`.
 - `getCurrentAdmin()` is cached per request. It returns `null` without a session, without an `admins` row, or for an inactive admin. A missing role is treated as `viewer`.
 
-Minimum roles: catalogue, orders and customers need `admin`; team management needs `super_admin`; own profile, password and notifications need `viewer`. Order statuses are listed in [lib/orders.ts](lib/orders.ts).
+Minimum roles: catalogue, orders and customers need `admin`; team management needs `super_admin`; own profile, password and notifications need `viewer`. In the UI, wrap controls a viewer can't use in `<Can minRole="admin">` from [components/admin-provider.tsx](components/admin-provider.tsx) (the layout provides the role; `useAdmin()` reads it). Server pages can check `hasRole((await getCurrentAdmin())?.role, "admin")`. Hiding is only for UX: the action must still check the role. Order statuses are listed in [lib/orders.ts](lib/orders.ts).
 
 After the role check, validate input before touching the database. Add a zod schema in [lib/validation/](lib/validation/) (one file per entity, with user-facing messages) and call `parseForm(schema, formData)`. It returns `{ success, data }` or `{ success: false, message }` with the first problem as a sentence. For image uploads, use `optionalImage` (JPEG/PNG/WebP, 5 MB max) and name the stored file with `imageExtension(file)`, never the client's file name. Don't read raw `formData.get(...)` values into queries.
 

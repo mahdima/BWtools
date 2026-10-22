@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { Can } from "@/components/admin-provider";
 import Image from "next/image";
 import { Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,9 @@ export const columns: ColumnDef<Category>[] = [
     cell: ({ row }) => {
       const category = row.original;
 
+      // Viewers are read-only; the server actions check the role too
       return (
+        <Can minRole="admin">
         <div className="flex items-center gap-1">
           <CategoryForm
             category={{ id: String(category.id), name: category.category, imageUrl: category.image }}
@@ -85,6 +88,7 @@ export const columns: ColumnDef<Category>[] = [
             }
           />
         </div>
+        </Can>
       );
     },
   },

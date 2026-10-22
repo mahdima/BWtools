@@ -710,7 +710,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Logged-in check:** request a reset for your admin email and follow the link.
 
 ### P5-02 · Permission-aware UI
-- [ ] Done
+- [x] Done
 
 **Depends on:** P1-05
 **Files:** new `components/admin-provider.tsx` (client context), `app/(dashboard)/layout.tsx`, the column files, page headers
@@ -719,6 +719,18 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Hide the Add, Edit, Delete and status buttons for viewers. Server checks from P1-05 stay as the real protection.
 
 **Done when:** A viewer sees a read-only dashboard.
+
+**Notes (2026-10-22):**
+- **`components/admin-provider.tsx`:** `AdminProvider` (the dashboard layout passes `admin.role`), `useAdmin()`, and `<Can minRole fallback>`. It only hides controls; the server actions check the role again.
+- **Hidden for viewers:**
+  - The Add buttons for products, brands and categories.
+  - The Edit and Delete cells in the product, brand, category and customer tables.
+  - The order "Update Status" card and the note form; notes stay readable.
+  - The product and brand pages also ignore `?add=`/`?edit=` for viewers, so the modal never opens and its data is not loaded.
+- **Kept for viewers** (read-only features): CSV export, invoices, their own profile and password, and notifications.
+- **Browser check:** the real product table, `OrderNotes` and a `<Can>` under a `viewer` and an `admin` provider side by side on a temporary page, 7/7 with 0 page errors. The page was deleted afterwards.
+- **Checks:** `typecheck`, lint (0 errors), 106 tests and `build` pass.
+- **Logged-in check:** sign in as a viewer and confirm the screens are read-only.
 
 ### P5-03 · Error and not-found pages
 - [ ] Done

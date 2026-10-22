@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, Send } from "lucide-react";
 import { addOrderNote } from "@/app/(dashboard)/order/actions";
 import { runWithToast } from "@/lib/toast-action";
+import { Can } from "@/components/admin-provider";
 
 interface OrderNotesProps {
   orderId: number;
@@ -41,7 +42,8 @@ export function OrderNotes({ orderId, notes }: OrderNotesProps) {
         </h2>
       </div>
       <div className="p-6">
-        {/* Add Note Form */}
+        {/* Add Note Form (viewers only read notes) */}
+        <Can minRole="admin">
         <form onSubmit={handleSubmit} className="mb-4">
           <div className="flex gap-2">
             <input
@@ -60,6 +62,7 @@ export function OrderNotes({ orderId, notes }: OrderNotesProps) {
             </Button>
           </div>
         </form>
+        </Can>
 
         {/* Notes List */}
         <div className="space-y-3 max-h-64 overflow-y-auto">

@@ -2,6 +2,7 @@ import Sidebar from "@/components/Sidebar";
 import { requireAdminPage } from "@/lib/auth";
 import { getNotifications } from "@/lib/data/notifications";
 import { MobileSidebarWrapper } from "@/components/mobile-sidebar-wrapper";
+import { AdminProvider } from "@/components/admin-provider";
 
 export default async function DashboardLayout({
   children,
@@ -12,6 +13,7 @@ export default async function DashboardLayout({
   const notifications = await getNotifications(admin.id);
 
   return (
+    <AdminProvider role={admin.role}>
     <div className="flex flex-col h-screen overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
         <MobileSidebarWrapper>
@@ -26,5 +28,6 @@ export default async function DashboardLayout({
         </main>
       </div>
     </div>
+    </AdminProvider>
   );
 }

@@ -6,6 +6,9 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { getBrandById, getBrands } from "@/lib/data/brands";
 import { Modal } from "@/components/Modal";
+import { Can } from "@/components/admin-provider";
+import { getCurrentAdmin } from "@/lib/auth";
+import { hasRole } from "@/lib/roles";
 import { BrandForm } from "@/components/BrandForm";
 import { addBrand, updateBrand } from "./actions";
 
@@ -15,8 +18,10 @@ interface BrandPageProps {
 
 const BrandPage = async ({ searchParams }: BrandPageProps) => {
   const params = await searchParams;
-  const showAddModal = params.add === "true";
-  const editId = params.edit as string;
+  // The add/edit modal is only for admins (viewers are read-only)
+  const canEdit = hasRole((await getCurrentAdmin())?.role, "admin");
+  const showAddModal = canEdit && params.add === "true";
+  const editId = canEdit ? (params.edit as string | undefined) : undefined;
 
   const [data, brandToEdit] = await Promise.all([
     getBrands(),
@@ -33,11 +38,13 @@ const BrandPage = async ({ searchParams }: BrandPageProps) => {
           title="Brands"
           description="Manage product brands"
           headerActions={
-            <Link href="/brand?add=true">
-              <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
-                <Plus className="mr-2 h-4 w-4" /> Add Brand
-              </Button>
-            </Link>
+            <Can minRole="admin">
+              <Link href="/brand?add=true">
+                <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
+                  <Plus className="mr-2 h-4 w-4" /> Add Brand
+                </Button>
+              </Link>
+            </Can>
           }
         />
       </Suspense>

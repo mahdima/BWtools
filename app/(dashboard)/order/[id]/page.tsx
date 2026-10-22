@@ -19,6 +19,7 @@ import man from "../../../../img/man.png";
 import { OrderTimeline } from "@/components/order-timeline";
 import { OrderNotes } from "@/components/order-notes";
 import { OrderStatusActions } from "@/components/order-status-actions";
+import { Can } from "@/components/admin-provider";
 
 interface OrderDetailsPageProps {
   params: Promise<{ id: string }>;
@@ -260,13 +261,15 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 className="font-semibold text-gray-900 mb-4 flex items-center">
-              <Truck className="h-5 w-5 mr-2 text-primary" />
-              Update Status
-            </h2>
-            <OrderStatusActions orderId={orderId} currentStatus={order.status} />
-          </div>
+          <Can minRole="admin">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <h2 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <Truck className="h-5 w-5 mr-2 text-primary" />
+                Update Status
+              </h2>
+              <OrderStatusActions orderId={orderId} currentStatus={order.status} />
+            </div>
+          </Can>
         </div>
       </div>
     </div>

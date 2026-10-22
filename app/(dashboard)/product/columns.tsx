@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
+import { Can } from "@/components/admin-provider";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -146,7 +147,9 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) => {
       const product = row.original;
 
+      // Viewers are read-only; the server actions check the role too
       return (
+        <Can minRole="admin">
         <div className="flex justify-center items-center gap-1">
           <Button
             asChild
@@ -176,6 +179,7 @@ export const columns: ColumnDef<Product>[] = [
             }
           />
         </div>
+        </Can>
       );
     },
   },

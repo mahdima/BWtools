@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { Modal } from "@/components/Modal";
+import { Can } from "@/components/admin-provider";
+import { getCurrentAdmin } from "@/lib/auth";
+import { hasRole } from "@/lib/roles";
 import { ProductForm } from "@/components/ProductForm";
 import { addProduct, updateProduct } from "./actions";
 import { getProductById, getProductFormOptions, getProducts } from "@/lib/data/products";
@@ -24,8 +27,10 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
   const { data, count } = await getProducts({ page, limit, search });
   const pageCount = Math.ceil(count / limit);
 
-  const showAddModal = params.add === "true";
-  const editId = params.edit as string;
+  // The add/edit modal is only for admins (viewers are read-only)
+  const canEdit = hasRole((await getCurrentAdmin())?.role, "admin");
+  const showAddModal = canEdit && params.add === "true";
+  const editId = canEdit ? (params.edit as string | undefined) : undefined;
 
   // Only load what the add/edit modal needs when it is open
   const [productToEdit, formOptions] = await Promise.all([
@@ -46,15 +51,17 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
           pageCount={pageCount}
           isServerSide={true}
           headerActions={
-            <Link
-              href={`/product?add=true${
-                params.page ? `&page=${params.page}` : ""
-              }`}
-            >
-              <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
-                <Plus className="mr-2 h-4 w-4" /> Add Product
-              </Button>
-            </Link>
+            <Can minRole="admin">
+              <Link
+                href={`/product?add=true${
+                  params.page ? `&page=${params.page}` : ""
+                }`}
+              >
+                <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
+                  <Plus className="mr-2 h-4 w-4" /> Add Product
+                </Button>
+              </Link>
+            </Can>
           }
         />
       </Suspense>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { Can } from "@/components/admin-provider";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CustomerForm } from "@/components/CustomerForm";
@@ -57,7 +58,9 @@ export const columns: ColumnDef<Customer>[] = [
     cell: ({ row }) => {
       const customer = row.original;
 
+      // Viewers are read-only; the server actions check the role too
       return (
+        <Can minRole="admin">
         <div className="flex justify-center gap-2">
           <CustomerForm
             customer={{
@@ -78,6 +81,7 @@ export const columns: ColumnDef<Customer>[] = [
             }
           />
         </div>
+        </Can>
       );
     },
   },
