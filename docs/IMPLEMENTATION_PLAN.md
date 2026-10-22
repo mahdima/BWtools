@@ -219,7 +219,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 ## Phase 2 — Safety net
 
 ### P2-01 · Lint and typecheck scripts
-- [ ] Done
+- [x] Done
 
 **Files:** `eslint.config.mjs`, `package.json`
 **Steps:**
@@ -228,6 +228,17 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 3. Fix errors. Set `@typescript-eslint/no-explicit-any` to `warn` for now.
 
 **Done when:** `npm run lint` and `npm run typecheck` both exit 0.
+
+**Notes (2026-10-22):**
+- **Setup:** `eslint` 9.39.5 and `eslint-config-next` 16.4.2, using the flat config from the bundled Next docs (core-web-vitals and TypeScript presets).
+- **Result:** lint exits 0 with 0 errors and 58 warnings, mostly `any` (P2-03) and unused imports. `typecheck` and `build` pass, and the browser smoke test is still 11/11.
+- **The 8 errors fixed:**
+  - Two unescaped apostrophes.
+  - Empty `InputProps` interface turned into a type alias.
+  - `CategoryForm`/`CustomerForm`: removed the `mounted` flag set in an effect, since their portals only open after a click.
+  - `ProductImageUpload` and `mobile-sidebar-wrapper`: replaced setState-in-effect with React's "adjust state during render" pattern.
+  - Deleted the dead `AuthProvider.tsx` and `ProtectedRoute.tsx` (part of P4-02).
+- **Audit:** the ESLint toolchain brings in 5 high advisories, all from `braces` ≤ 3.0.3 (GHSA-vfj7-8cjw-p6xm), which has no patched release yet. They are dev-only: `npm audit --omit=dev` reports 0. Re-check when `braces` publishes a fix.
 
 ### P2-02 · Unit test runner
 - [ ] Done
@@ -271,7 +282,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 **Depends on:** P2-01, P2-02
 **Files:** `.github/workflows/ci.yml`
 **Steps:**
-1. Use Node 24 and run `npm ci`, `typecheck`, `lint`, `test` and `build` on every push and pull request.
+1. Use Node 24 and run `npm ci`, `typecheck`, `lint`, `test` and `build` on every push and pull request. Add `npm audit --omit=dev --audit-level=high`, since dev-only tooling advisories are tracked separately (see P2-01 notes).
 2. Set placeholder `NEXT_PUBLIC_SUPABASE_*` / `SUPABASE_SERVICE_ROLE_KEY` values so the build does not fail on missing environment variables.
 
 **Done when:** The workflow is green on a pull request.
@@ -383,7 +394,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - [ ] Done
 
 **Depends on:** P4-01, P1-07
-**Files to delete:** `app/(dashboard)/addproduct/page.tsx`, `editproduct/[id]/page.tsx`, `addcategory/page.tsx`, `addcategory/actions.ts`, `editcategory/[id]/page.tsx`, `components/AuthProvider.tsx`, `ProtectedRoute.tsx`, `Navbar.tsx`, `item.tsx`, `CategoryImageUpload.tsx` (if no longer used), `utils/supabase/client.ts`
+**Files to delete:** `app/(dashboard)/addproduct/page.tsx`, `editproduct/[id]/page.tsx`, `addcategory/page.tsx`, `addcategory/actions.ts`, `editcategory/[id]/page.tsx`, `Navbar.tsx`, `item.tsx`, `CategoryImageUpload.tsx` (if no longer used), `utils/supabase/client.ts`. (`AuthProvider.tsx` and `ProtectedRoute.tsx` were already deleted in P2-01.)
 **Steps:**
 1. Move the product actions from `addproduct/actions.ts` to `product/actions.ts` and update the imports.
 2. Delete the files listed above.

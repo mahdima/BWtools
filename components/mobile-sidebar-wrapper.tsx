@@ -12,11 +12,13 @@ interface MobileSidebarWrapperProps {
 export function MobileSidebarWrapper({ children }: MobileSidebarWrapperProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const [lastPathname, setLastPathname] = useState(pathname);
 
-  // Close sidebar on route change
-  useEffect(() => {
+  // Close sidebar on route change (adjusting state during render, not in an effect)
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
     setIsOpen(false);
-  }, [pathname]);
+  }
 
   // Close on escape key
   useEffect(() => {

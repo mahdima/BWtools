@@ -17,11 +17,14 @@ export const ProductImageUpload = ({
     defaultValue || null
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [lastDefaultValue, setLastDefaultValue] = useState(defaultValue);
 
-  React.useEffect(() => {
+  // Reset when a different product's image is passed in (adjusting state during render)
+  if (defaultValue !== lastDefaultValue) {
+    setLastDefaultValue(defaultValue);
     setPreview(defaultValue || null);
     setExistingUrl(defaultValue || null);
-  }, [defaultValue]);
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

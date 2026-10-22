@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Pencil, Loader2, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
@@ -33,11 +33,6 @@ function SubmitButton() {
 export function CustomerForm({ customer, trigger }: CustomerFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   async function clientAction(formData: FormData) {
     setMessage(null);
@@ -60,8 +55,8 @@ export function CustomerForm({ customer, trigger }: CustomerFormProps) {
         )}
       </div>
 
+      {/* Portal only renders after a click, so `document` always exists here */}
       {isOpen &&
-        mounted &&
         createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
             <div

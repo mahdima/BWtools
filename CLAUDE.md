@@ -17,7 +17,7 @@ Follow this for every feature, fix or refactor bigger than a one-line change.
 1. **Plan before editing.** Read the relevant code first. If the work is not already in `docs/IMPLEMENTATION_PLAN.md`, add it as task blocks using the template at the end of that file, in the right phase. Show the user the plan (task IDs, files, steps) and wait for approval before writing code. Use plan mode when it is available.
 2. **Keep a task list.** Split the work into small tasks that can each be checked on their own, and track them with the todo/task list tool as you go.
 3. **Implement one task at a time.** Change only what the current task needs. If you notice something else, add it to the plan as a new task instead of doing it now. When asked for "the next task", take the first unchecked box in file order, after checking its **Depends on** line.
-4. **Verify before moving on.** Run `npx tsc --noEmit`, plus `npm run lint` and `npm test` once they exist (P2-01, P2-02). Run `npm run build` at the end of each phase. For UI changes, run `npm run dev` and check the page. A task is not done until its "Done when" check passes.
+4. **Verify before moving on.** Run `npm run typecheck` and `npm run lint`, plus `npm test` once it exists (P2-02). Run `npm run build` at the end of each phase. For UI changes, run `npm run dev` and check the page. A task is not done until its "Done when" check passes.
 5. **Update the plan.** Tick the task's checkbox, and add a short note under the task if something was deferred or found along the way.
 6. **Report, then stop.** Summarise what changed, how it was verified, and what the next task is. If the user asked for a whole phase or feature, carry on to the next task only after the current one is verified.
 7. **Database changes go through migrations.** Write SQL in `supabase/migrations/`, or in `docs/sql/<task-id>-<name>.sql` until P2-03 sets that folder up, and ask the user to apply it. Never run DDL or data changes against the production Supabase project yourself.
@@ -28,13 +28,14 @@ Follow this for every feature, fix or refactor bigger than a one-line change.
 ## Commands
 
 ```bash
-npm run dev      # dev server on http://localhost:3000
-npm run build    # production build (also the main type/compile check)
-npm run start    # serve the production build
-npx tsc --noEmit # type-check only
+npm run dev        # dev server on http://localhost:3000
+npm run build      # production build
+npm run start      # serve the production build
+npm run typecheck  # tsc --noEmit
+npm run lint       # eslint . (flat config in eslint.config.mjs; warnings are allowed, errors are not)
 ```
 
-There is no lint script, no ESLint config and no test suite.
+There is no test suite yet (P2-02 adds Vitest). The ESLint toolchain has a known dev-only `braces` advisory with no fix released, so use `npm audit --omit=dev` to check what ships.
 
 The app needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. The database schema, RLS policies and storage buckets live in the Supabase project; there are no migrations in this repo.
 

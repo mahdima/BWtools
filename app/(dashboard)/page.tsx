@@ -31,7 +31,7 @@ export default async function Home({ searchParams }: DashboardProps) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-500">
-            Overview of your store's performance
+            Overview of your store&apos;s performance
           </p>
         </div>
         <DashboardFilter />

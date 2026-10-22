@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Plus, Pencil, Loader2, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
@@ -34,12 +34,7 @@ function SubmitButton({ isEdit }: { isEdit: boolean }) {
 export function CategoryForm({ category, trigger }: CategoryFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
   const isEdit = !!category;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   async function clientAction(formData: FormData) {
     setMessage(null);
@@ -63,8 +58,8 @@ export function CategoryForm({ category, trigger }: CategoryFormProps) {
         )}
       </div>
 
+      {/* Portal only renders after a click, so `document` always exists here */}
       {isOpen &&
-        mounted &&
         createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
             <div
