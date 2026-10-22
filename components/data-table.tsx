@@ -10,6 +10,7 @@ import {
   getSortedRowModel,
   useReactTable,
   ColumnFiltersState,
+  OnChangeFn,
   SortingState,
 } from "@tanstack/react-table";
 import {
@@ -77,9 +78,38 @@ export function DataTable<TData, TValue>({
   const page = searchParams.get("page");
   const initialPageIndex = page ? parseInt(page) - 1 : 0;
 
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+  // Server-side tables keep their filter tabs in the URL (the single source of truth),
+  // so a reload or the Back button keeps the selected filter.
+  const [localColumnFilters, setLocalColumnFilters] =
+    React.useState<ColumnFiltersState>([]);
+  const columnFilters: ColumnFiltersState =
+    isServerSide && filterTabs
+      ? filterTabs.flatMap((group) => {
+          const value = searchParams.get(group.column);
+          return value ? [{ id: group.column, value }] : [];
+        })
+      : localColumnFilters;
+
+  const onColumnFiltersChange: OnChangeFn<ColumnFiltersState> = (updater) => {
+    const next =
+      typeof updater === "function" ? updater(columnFilters) : updater;
+    if (!isServerSide || !filterTabs) {
+      setLocalColumnFilters(next);
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    filterTabs.forEach((group) => {
+      const active = next.find((f) => f.id === group.column);
+      if (active?.value) {
+        params.set(group.column, String(active.value));
+      } else {
+        params.delete(group.column);
+      }
+    });
+    params.delete("page"); // Back to the first page on filter change
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
     pageIndex: initialPageIndex,
@@ -118,7 +148,7 @@ export function DataTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onColumnFiltersChange: setColumnFilters,
+    onColumnFiltersChange,
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
@@ -158,32 +188,6 @@ export function DataTable<TData, TValue>({
 
     return () => clearTimeout(timeout);
   }, [searchValue, isServerSide, pathname, router, searchParams]);
-
-  // Sync column filters to URL (for server-side)
-  React.useEffect(() => {
-    if (!isServerSide || !filterTabs) return;
-
-    const params = new URLSearchParams(searchParams.toString());
-    let hasChanges = false;
-
-    filterTabs.forEach((group) => {
-      const activeFilter = columnFilters.find((f) => f.id === group.column);
-      const currentParam = params.get(group.column);
-
-      if (activeFilter && activeFilter.value !== currentParam) {
-        params.set(group.column, activeFilter.value as string);
-        hasChanges = true;
-      } else if (!activeFilter && currentParam) {
-        params.delete(group.column);
-        hasChanges = true;
-      }
-    });
-
-    if (hasChanges) {
-      params.set("page", "1"); // Reset to page 1 on filter change
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  }, [columnFilters, isServerSide, filterTabs, pathname, router, searchParams]);
 
   return (
     <div className="flex flex-col h-full space-y-2">

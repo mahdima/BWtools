@@ -384,13 +384,19 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Checks:** `typecheck`, lint (0 errors) and `build` pass. Logged-in check still to do: search an existing order number on /order.
 
 ### P3-03 · Status filter survives reload and Back
-- [ ] Done
+- [x] Done
 
 **Files:** `components/data-table.tsx`
 **Steps:**
 1. Initialise `columnFilters` from the URL for each `filterTabs` group.
 
 **Done when:** `/order?status=Delivered` still shows the Delivered tab and rows after a reload.
+
+**Notes (2026-10-22):**
+- **Root cause:** two bugs. Filter state always started empty, and an effect then deleted `status` from the URL. The same effect also fought the Back button by pushing the stale filter again.
+- **Fix:** for server-side tables, the filter tabs are now derived from the URL on every render, and `onColumnFiltersChange` writes straight to the URL, resetting to page 1. The sync effect is gone. Client-side tables keep local state.
+- **Browser check:** a temporary public page rendered `DataTable` with the status tabs in headless Chrome, and 7/7 checks passed. Covered: the initial `?status=` is kept and selected, clicking a tab updates the URL, reload keeps it, Back restores the previous filter without being overridden, and "All" clears it. Against the old `DataTable` the same check failed 4 ways (status wiped on load, lost on reload, Back broken), so the test does detect the bug. The page was deleted afterwards.
+- **Checks:** `typecheck`, 74 tests, lint (0 errors) and `build` pass.
 
 ### P3-04 · Full CSV export
 - [ ] Done
