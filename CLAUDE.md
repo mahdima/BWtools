@@ -102,7 +102,8 @@ Each feature folder (`product`, `brand`, `categories`, `customers`, `order`, `te
 
 Everything else returns an `ActionResult` (`{ success, message }`, from [lib/action-result.ts](lib/action-result.ts)) instead of throwing, because Next.js hides thrown messages in production. On the client:
 - call it through `runWithToast(() => action(...))` ([lib/toast-action.ts](lib/toast-action.ts));
-- for anything destructive, use [components/confirm-dialog.tsx](components/confirm-dialog.tsx), with a `trigger`, or controlled with `open`/`onOpenChange` when opened from a dropdown menu.
+- for anything destructive, use [components/confirm-dialog.tsx](components/confirm-dialog.tsx), with a `trigger`, or controlled with `open`/`onOpenChange` when opened from a dropdown menu;
+- for forms, give the action the signature `(prevState: ActionResult | null, formData: FormData) => Promise<ActionResult>` (bind ids first) and use `useFormAction(action)` from [lib/use-form-action.ts](lib/use-form-action.ts). It returns `{ state, isPending, onSubmit }`: show `state.message` inline when `!state.success`. Don't use `<form action={serverAction}>` for forms that can fail validation, because React resets the fields after the action and the user loses their input.
 
 For deletes, return a friendly message for `isForeignKeyViolation(error)`, and `.select()` the deleted rows to detect "nothing was deleted".
 

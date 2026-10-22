@@ -1,7 +1,7 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthorizedAdmin, getCurrentAdmin, requireAdmin } from "@/lib/auth";
+import { getAuthorizedAdmin, getCurrentAdmin } from "@/lib/auth";
 import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
 import { isRole } from "@/lib/roles";
 import { parseForm } from "@/lib/validation/form";
@@ -56,12 +56,13 @@ export async function getCurrentUserRole() {
 }
 
 // Create new admin (super admin only)
-export async function createAdmin(formData: FormData) {
-  await requireAdmin('super_admin');
+// Form action (via useFormAction): returns an error to show, or redirects on success.
+export async function createAdmin(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  if (!(await getAuthorizedAdmin('super_admin'))) return NOT_AUTHORIZED;
 
   const parsed = parseForm(adminCreateSchema, formData);
   if (!parsed.success) {
-    throw new Error(parsed.message);
+    return { success: false, message: parsed.message };
   }
   const { email, password, fullName, role } = parsed.data;
 
@@ -74,7 +75,7 @@ export async function createAdmin(formData: FormData) {
 
   if (authError) {
     console.error("Error creating auth user:", authError);
-    throw new Error(`Failed to create user: ${authError.message}`);
+    return { success: false, message: `Failed to create user: ${authError.message}` };
   }
 
   // Create admin record
@@ -90,7 +91,7 @@ export async function createAdmin(formData: FormData) {
     console.error("Error creating admin record:", adminError);
     // Clean up auth user if admin creation fails
     await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-    throw new Error(`Failed to create admin: ${adminError.message}`);
+    return { success: false, message: `Failed to create admin: ${adminError.message}` };
   }
 
   revalidatePath('/team');

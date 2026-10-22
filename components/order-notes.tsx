@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Send } from "lucide-react";
 import { addOrderNote } from "@/app/(dashboard)/order/actions";
+import { runWithToast } from "@/lib/toast-action";
 
 interface OrderNotesProps {
   orderId: number;
@@ -24,14 +25,11 @@ export function OrderNotes({ orderId, notes }: OrderNotesProps) {
     if (!newNote.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    try {
-      await addOrderNote(orderId, newNote.trim());
+    // Keep the text if it fails, so nothing typed is lost
+    if (await runWithToast(() => addOrderNote(orderId, newNote.trim()))) {
       setNewNote("");
-    } catch (error) {
-      console.error("Failed to add note:", error);
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   };
 
   return (

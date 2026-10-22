@@ -2,7 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { revalidatePath } from "next/cache";
-import { getAuthorizedAdmin, requireAdmin } from "@/lib/auth";
+import { getAuthorizedAdmin } from "@/lib/auth";
 import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
 import { isOrderStatus, parseOrderNumber } from "@/lib/orders";
 import { toCsv, type CsvExportResult } from "@/lib/csv";
@@ -68,16 +68,17 @@ export async function getOrderTimeline(orderId: number) {
 }
 
 // Add internal note to order
-export async function addOrderNote(orderId: number, note: string) {
-    const admin = await requireAdmin("admin");
+export async function addOrderNote(orderId: number, note: string): Promise<ActionResult> {
+    const admin = await getAuthorizedAdmin("admin");
+    if (!admin) return NOT_AUTHORIZED;
 
     if (!Number.isInteger(orderId)) {
-        throw new Error("Order ID is required");
+        return { success: false, message: "Order not found." };
     }
 
     const parsed = parseForm(orderNoteSchema, { note });
     if (!parsed.success) {
-        throw new Error(parsed.message);
+        return { success: false, message: parsed.message };
     }
 
     const { error } = await supabaseAdmin.from('order_notes').insert({
@@ -88,10 +89,11 @@ export async function addOrderNote(orderId: number, note: string) {
 
     if (error) {
         console.error("Error adding order note:", error);
-        throw new Error(`Failed to add note: ${error.message}`);
+        return { success: false, message: `Failed to add note: ${error.message}` };
     }
 
     revalidatePath(`/order/${orderId}`);
+    return { success: true, message: "Note added." };
 }
 
 // Get all notes for an order

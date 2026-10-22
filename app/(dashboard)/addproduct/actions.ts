@@ -1,7 +1,7 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthorizedAdmin, requireAdmin } from "@/lib/auth";
+import { getAuthorizedAdmin } from "@/lib/auth";
 import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
 import { imageExtension, parseForm } from "@/lib/validation/form";
 import { productSchema } from "@/lib/validation/product";
@@ -35,16 +35,24 @@ function productListUrl(page: string | undefined) {
     return `/product${cursor}${cursor ? "&" : "?"}toast=success`;
 }
 
-export async function addProduct(formData: FormData) {
-    await requireAdmin("admin");
+// Form action (via useFormAction): returns an error to show, or redirects on success.
+export async function addProduct(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
+    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
 
     const parsed = parseForm(productSchema, formData);
     if (!parsed.success) {
-        throw new Error(parsed.message);
+        return { success: false, message: parsed.message };
     }
     const input = parsed.data;
 
-    const product_link = input.productImage ? await uploadProductImage(input.productImage) : null;
+    let product_link: string | null = null;
+    if (input.productImage) {
+        try {
+            product_link = await uploadProductImage(input.productImage);
+        } catch (error) {
+            return { success: false, message: (error as Error).message };
+        }
+    }
 
     const { error } = await supabaseAdmin
         .from('products')
@@ -62,7 +70,7 @@ export async function addProduct(formData: FormData) {
 
     if (error) {
         console.error("Error inserting product:", error);
-        throw new Error(`Failed to add product: ${error.message}`);
+        return { success: false, message: `Failed to add product: ${error.message}` };
     }
 
     revalidatePath("/product");
@@ -101,24 +109,34 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
     return { success: true, message: "Product deleted." };
 }
 
-export async function updateProduct(productId: string, formData: FormData) {
-    await requireAdmin("admin");
+// Form action bound to a product id (via useFormAction): returns an error or redirects.
+export async function updateProduct(
+    productId: string,
+    _prevState: ActionResult | null,
+    formData: FormData,
+): Promise<ActionResult> {
+    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
 
     const id = Number(productId);
     if (!Number.isInteger(id)) {
-        throw new Error("Product not found");
+        return { success: false, message: "Product not found." };
     }
 
     const parsed = parseForm(productSchema, formData);
     if (!parsed.success) {
-        throw new Error(parsed.message);
+        return { success: false, message: parsed.message };
     }
     const input = parsed.data;
 
     // A new file replaces the image; otherwise keep the current URL (empty when removed)
-    const product_link = input.productImage
-        ? await uploadProductImage(input.productImage)
-        : input.existingImageUrl || null;
+    let product_link = input.existingImageUrl || null;
+    if (input.productImage) {
+        try {
+            product_link = await uploadProductImage(input.productImage);
+        } catch (error) {
+            return { success: false, message: (error as Error).message };
+        }
+    }
 
     const { error } = await supabaseAdmin
         .from('products')
@@ -135,7 +153,7 @@ export async function updateProduct(productId: string, formData: FormData) {
 
     if (error) {
         console.error("Error updating product:", error);
-        throw new Error(`Failed to update product: ${error.message}`);
+        return { success: false, message: `Failed to update product: ${error.message}` };
     }
 
     revalidatePath("/product");

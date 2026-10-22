@@ -526,7 +526,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Still to check when logged in (super admin):** add a member from /team/new, confirm the card shows their email, and that they can sign in.
 
 ### P3-10 · Show validation errors on add/edit forms
-- [ ] Done
+- [x] Done
 
 **Why:** Split from P3-01. Since P2-04, the product, brand, new-admin and order-note actions validate input, but they report problems by throwing. In production, Next.js replaces a thrown message with a generic error screen, so users never see "Price must be greater than 0."
 **Depends on:** P3-01
@@ -537,6 +537,18 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 3. In `OrderNotes`, use `runWithToast` instead of `console.error`.
 
 **Done when:** Submitting each form with bad input shows the specific message, and the form keeps what was typed.
+
+**Notes (2026-10-22):**
+- **`lib/use-form-action.ts`:** `useFormAction(action)` wraps `useActionState` but submits from `onSubmit` + `startTransition`. React 19 resets a `<form action>`'s fields after the action runs, which would wipe the input on a validation error.
+- **Actions with the `(prevState, formData) => Promise<ActionResult>` signature:** `addProduct`, `updateProduct(id, …)`, `addBrand`, `updateBrand(id, …)` and `createAdmin`. They return errors for not-authorized, validation, upload and database failures, and still `redirect()` on success.
+- **`addOrderNote`:** returns an `ActionResult`.
+- **UI:**
+  - `ProductForm` and `BrandForm` show the message inline (`role="alert"`), with a spinner and a disabled submit while pending.
+  - The `/team/new` form moved to the client component `components/new-admin-form.tsx`.
+  - `OrderNotes` uses `runWithToast` and only clears the text on success.
+- **Removed** the dead legacy product pages `/addproduct` and `/editproduct/[id]` (part of P4-02). They used the old action signatures and nothing linked to them.
+- **Browser check:** the real `BrandForm` and `ProductForm` were driven with fake failing-then-succeeding actions on a temporary page, 7/7 checks with 0 page errors. Covered: pending state, the inline error, every field kept after an error (including selects and the rich-text description), and the corrected resubmit sending the kept values. The screenshot was reviewed and the page deleted afterwards.
+- **Checks:** `typecheck`, 95 tests, lint (0 errors, 44 warnings), `build` and the guard audit (25/25) pass.
 
 ---
 
@@ -559,7 +571,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - [ ] Done
 
 **Depends on:** P4-01, P1-07
-**Files to delete:** `app/(dashboard)/addproduct/page.tsx`, `editproduct/[id]/page.tsx`, `addcategory/page.tsx`, `addcategory/actions.ts`, `editcategory/[id]/page.tsx`, `Navbar.tsx`, `item.tsx`, `CategoryImageUpload.tsx` (if no longer used), `utils/supabase/client.ts`. (`AuthProvider.tsx` and `ProtectedRoute.tsx` were already deleted in P2-01.)
+**Files to delete:** ~~`app/(dashboard)/addproduct/page.tsx`, `editproduct/[id]/page.tsx`~~ (already deleted in P3-10), `addcategory/page.tsx`, `addcategory/actions.ts`, `editcategory/[id]/page.tsx`, `Navbar.tsx`, `item.tsx`, `CategoryImageUpload.tsx` (if no longer used), `utils/supabase/client.ts`. (`AuthProvider.tsx` and `ProtectedRoute.tsx` were already deleted in P2-01.)
 **Steps:**
 1. Move the product actions from `addproduct/actions.ts` to `product/actions.ts` and update the imports.
 2. Delete the files listed above.

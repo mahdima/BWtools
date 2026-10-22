@@ -1,19 +1,20 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthorizedAdmin, requireAdmin } from "@/lib/auth";
+import { getAuthorizedAdmin } from "@/lib/auth";
 import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
 import { parseForm } from "@/lib/validation/form";
 import { brandSchema } from "@/lib/validation/brand";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-export async function addBrand(formData: FormData) {
-    await requireAdmin("admin");
+// Form action (via useFormAction): returns an error to show, or redirects on success.
+export async function addBrand(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
+    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
 
     const parsed = parseForm(brandSchema, formData);
     if (!parsed.success) {
-        throw new Error(parsed.message);
+        return { success: false, message: parsed.message };
     }
     const brand_name = parsed.data.brand;
 
@@ -34,24 +35,29 @@ export async function addBrand(formData: FormData) {
 
     if (error) {
         console.error("Error inserting brand:", error);
-        throw new Error(`Failed to add brand: ${error.message}`);
+        return { success: false, message: `Failed to add brand: ${error.message}` };
     }
 
     revalidatePath("/brand");
     redirect("/brand");
 }
 
-export async function updateBrand(brandId: string, formData: FormData) {
-    await requireAdmin("admin");
+// Form action bound to a brand id (via useFormAction): returns an error or redirects.
+export async function updateBrand(
+    brandId: string,
+    _prevState: ActionResult | null,
+    formData: FormData,
+): Promise<ActionResult> {
+    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
 
     const id = Number(brandId);
     if (!Number.isInteger(id)) {
-        throw new Error("Brand not found");
+        return { success: false, message: "Brand not found." };
     }
 
     const parsed = parseForm(brandSchema, formData);
     if (!parsed.success) {
-        throw new Error(parsed.message);
+        return { success: false, message: parsed.message };
     }
     const brand_name = parsed.data.brand;
 
@@ -62,7 +68,7 @@ export async function updateBrand(brandId: string, formData: FormData) {
 
     if (error) {
         console.error("Error updating brand:", error);
-        throw new Error(`Failed to update brand: ${error.message}`);
+        return { success: false, message: `Failed to update brand: ${error.message}` };
     }
 
     revalidatePath("/brand");

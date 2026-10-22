@@ -5,12 +5,16 @@ import { ProductImageUpload } from "@/components/ProductImageUpload";
 import Editor from "@/components/editor";
 import Link from "next/link";
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import type { ActionResult } from "@/lib/action-result";
+import { useFormAction } from "@/lib/use-form-action";
 
 interface ProductFormProps {
   categories: any[];
   brands: any[];
   product?: any;
-  action: (formData: FormData) => Promise<void>;
+  // Server action: returns an error to show, or redirects on success
+  action: (prevState: ActionResult | null, formData: FormData) => Promise<ActionResult>;
   title: string;
   page?: string | string[];
 }
@@ -24,12 +28,13 @@ export function ProductForm({
   page,
 }: ProductFormProps) {
   const [description, setDescription] = useState(product?.description || "");
+  const { state, isPending, onSubmit } = useFormAction(action);
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6 text-foreground">{title}</h1>
 
-      <form action={action} className="glass-card rounded-lg">
+      <form onSubmit={onSubmit} className="glass-card rounded-lg">
         <input
           type="hidden"
           name="page"
@@ -176,6 +181,12 @@ export function ProductForm({
           </div>
         </div>
 
+        {state && !state.success && (
+          <div role="alert" className="mt-6 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+            {state.message}
+          </div>
+        )}
+
         {/* Bottom Buttons */}
         <div className="flex gap-3 mt-8 pt-4 border-t border-gray-100 justify-end">
           <Link href="/product">
@@ -189,8 +200,10 @@ export function ProductForm({
           </Link>
           <Button
             type="submit"
+            disabled={isPending}
             className="px-8 h-11 bg-[#0B1DFF] text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20"
           >
+            {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             {product ? "Update Product" : "Save Product"}
           </Button>
         </div>
