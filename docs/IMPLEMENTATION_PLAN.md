@@ -733,7 +733,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Logged-in check:** sign in as a viewer and confirm the screens are read-only.
 
 ### P5-03 · Error and not-found pages
-- [ ] Done
+- [x] Done
 
 **Files:** new `app/error.tsx`, `app/(dashboard)/error.tsx`, `app/not-found.tsx`, `app/global-error.tsx`
 **Steps:**
@@ -741,6 +741,16 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Make pages with unknown IDs (order, product edit, brand edit) call `notFound()`.
 
 **Done when:** A thrown error or a bad URL shows the branded page instead of the Next.js default.
+
+**Notes (2026-10-22):**
+- **Files:**
+  - `components/error-state.tsx` is the shared body. It shows the error `digest` as "Error reference" (production hides the message) and offers Try again (`retry()`, stable since Next 16.3; it re-fetches) and Go to dashboard.
+  - `app/(dashboard)/error.tsx` (inside the layout, sidebar kept) and `app/error.tsx`.
+  - `app/not-found.tsx`: a branded 404.
+  - `app/global-error.tsx`: its own `<html>`/`<body>` with inline styles, since global CSS isn't loaded there.
+- **Unknown ids:** the order page and invoice already call `notFound()` (P3-05). For the product and brand pages, an unknown `?edit=` id just doesn't open the modal, which is kinder than 404-ing the whole list, so they were left as is.
+- **Browser check:** temporary pages that throw or call `notFound()`, 6/7 checks. The error page shows a digest and no internal message, and Try again works; the 404 renders with its dashboard link. The 7th "failure" is the HTTP status: `notFound()` responds 200, not 404, because the root `app/loading.tsx` makes the response stream before `notFound()` runs (standard Next.js behaviour; Next marks the page `noindex`). It's harmless here because the dashboard is never indexed. Screenshots reviewed; the test pages were deleted, and `/auth/confirm` was kept.
+- **Checks:** `typecheck`, lint (0 errors) and `build` pass.
 
 ### P5-04 · Order search by customer and date range
 - [ ] Done
