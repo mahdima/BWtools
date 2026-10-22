@@ -127,7 +127,10 @@ Several names are misspelled or unusually cased. Use them exactly as written:
 - `order_items`: `order_id`, `product_id`, `quantity`, `unit_price` (the price paid; not the product's current `unite_price`)
 - `profiles`: `id`, `username`, `full_name`, `avatar_url`, `website`. The `profiles_with_email` view adds `email` and `phone` from auth.
 - Order statuses: `New`, `processing` (lowercase), `Delivering`, `Delivered`, `Cancelled` (see `lib/orders.ts`)
-- Storage buckets: `products` (product images), `StaticAssests` (category images, misspelled)
+- Storage buckets: `products` (product images), `StaticAssests` (category images, misspelled; also holds files the mobile app uses). Upload with `uploadImage` and clean up with `removeUnusedImage` from [lib/image-storage.ts](lib/image-storage.ts), passing `PRODUCT_IMAGES` or `CATEGORY_IMAGES` from [lib/storage-path.ts](lib/storage-path.ts).
+  - **Cleanup timing:** call `removeUnusedImage` inside `after()`, once the row no longer points at the image.
+  - **What it may delete:** only files in the target's own folder (category images go under `categories/`, so `StaticAssests` root files are never deleted), and only when no product, category or brand row still uses the URL.
+  - **Old URL:** read it from the database. `existingImageUrl` from the form is only a keep/remove flag.
 - `addresses`, `favorites` and `saved_orders` belong to the mobile app; the dashboard doesn't use them yet.
 - `store_settings` (single row, `id = 1`): store name, contact details, address, `low_stock_threshold` and invoice footer. Created by `docs/sql/P6-01-store-settings.sql`. Until it exists, `getStoreSettings()` returns `DEFAULT_STORE_SETTINGS` from `lib/store-settings.ts`. Read it through `lib/data/settings.ts` and never hard-code store details.
 - SQL functions written for the owner but possibly not applied yet: `set_order_status` (P6-05) and `dashboard_stats` / `revenue_series` (P6-06). They aren't in the generated types, so they are called through `supabaseAdmin as unknown as SupabaseClient`. The code falls back to plain queries when PostgREST answers `PGRST202` (function missing); a missing table is `PGRST205`. Keep that fallback until the owner confirms the SQL is applied.

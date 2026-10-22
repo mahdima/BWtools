@@ -2,25 +2,17 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthorizedAdmin } from "@/lib/auth";
-import { imageExtension, parseForm } from "@/lib/validation/form";
+import { parseForm } from "@/lib/validation/form";
 import { categorySchema, categoryUpdateSchema } from "@/lib/validation/category";
 import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
+import { removeUnusedImage, uploadImage } from "@/lib/image-storage";
+import { CATEGORY_IMAGES } from "@/lib/storage-path";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
-// Uploads a validated image to the `StaticAssests` bucket (sic) and returns its public URL.
-async function uploadCategoryImage(imageFile: File): Promise<string> {
-  const filePath = `${Math.random().toString(36).substring(2)}.${imageExtension(imageFile)}`;
-
-  const { error } = await supabaseAdmin.storage
-    .from("StaticAssests")
-    .upload(filePath, imageFile, { contentType: imageFile.type });
-
-  if (error) {
-    console.error("Error uploading category image:", error);
-    throw new Error(`Failed to upload category image: ${error.message}`);
-  }
-
-  return supabaseAdmin.storage.from("StaticAssests").getPublicUrl(filePath).data.publicUrl;
+// Deletes a category image that's no longer used, after the response is sent.
+function cleanUpImage(url: string | null | undefined) {
+  after(() => removeUnusedImage(CATEGORY_IMAGES, url));
 }
 
 export async function addCategory(formData: FormData): Promise<ActionResult> {
@@ -35,7 +27,7 @@ export async function addCategory(formData: FormData): Promise<ActionResult> {
   let cat_image_url: string | null = null;
   if (categoryImage) {
     try {
-      cat_image_url = await uploadCategoryImage(categoryImage);
+      cat_image_url = await uploadImage(CATEGORY_IMAGES, categoryImage);
     } catch (error) {
       return { success: false, message: (error as Error).message };
     }
@@ -46,6 +38,7 @@ export async function addCategory(formData: FormData): Promise<ActionResult> {
     .insert([{ categorie_name: categoryName, cat_image_url }]);
 
   if (error) {
+    cleanUpImage(cat_image_url); // the upload belongs to no category
     return { success: false, message: error.message };
   }
 
@@ -62,11 +55,25 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
   }
   const { id, categoryName, categoryImage, existingImageUrl } = parsed.data;
 
-  // A new file replaces the image; otherwise keep the current URL (empty when removed)
-  let cat_image_url = existingImageUrl || null;
+  const { data: current, error: readError } = await supabaseAdmin
+    .from("categories")
+    .select("cat_image_url")
+    .eq("categorie_id", id)
+    .maybeSingle();
+
+  if (readError) {
+    return { success: false, message: readError.message };
+  }
+  if (!current) {
+    return { success: false, message: "Category not found." };
+  }
+
+  // A new file replaces the image. Otherwise the form's existingImageUrl says whether
+  // to keep the current one (empty = removed); the URL itself comes from the database.
+  let cat_image_url = existingImageUrl ? current.cat_image_url : null;
   if (categoryImage) {
     try {
-      cat_image_url = await uploadCategoryImage(categoryImage);
+      cat_image_url = await uploadImage(CATEGORY_IMAGES, categoryImage);
     } catch (error) {
       return { success: false, message: (error as Error).message };
     }
@@ -78,9 +85,11 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
     .eq("categorie_id", id);
 
   if (error) {
+    if (categoryImage) cleanUpImage(cat_image_url); // the new upload wasn't saved
     return { success: false, message: error.message };
   }
 
+  if (current.cat_image_url !== cat_image_url) cleanUpImage(current.cat_image_url);
   revalidatePath("/categories");
   return { success: true, message: "Category updated successfully" };
 }
@@ -93,7 +102,7 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
     .from("categories")
     .delete()
     .eq("categorie_id", Number(id))
-    .select("categorie_id");
+    .select("categorie_id, cat_image_url");
 
   if (error) {
     return {
@@ -108,6 +117,7 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
     return { success: false, message: "Category not found." };
   }
 
+  cleanUpImage(data[0].cat_image_url);
   revalidatePath("/categories");
   return { success: true, message: "Category deleted successfully" };
 }

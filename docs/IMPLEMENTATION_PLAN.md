@@ -925,7 +925,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Tick when:** the SQL is applied, then the dashboard totals and chart match the fallback's for each period.
 
 ### P6-07 · Image lifecycle
-- [ ] Done
+- [x] Done
 
 **Files:** product and category actions
 **Steps:**
@@ -933,6 +933,29 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Optional: resize images in the browser before upload.
 
 **Done when:** Replacing an image leaves no orphaned file in the bucket.
+
+**Notes (2026-10-22):**
+- **Real buckets** (read-only check, counts only):
+  - All 127 product images and all 5 category images point at this project, and no URL is used by two rows.
+  - `products` holds 247 files, so **120 are already orphaned**.
+  - `StaticAssests` holds 23 files, 18 of them used by no row. That bucket probably also holds the mobile app's own assets, so it needs a stricter rule.
+- **New helpers:**
+  - `lib/storage-path.ts` (pure) holds the targets: `PRODUCT_IMAGES` is the whole `products` bucket; `CATEGORY_IMAGES` is `StaticAssests/categories/`, a new folder for category uploads. `deletableImagePath` turns a public URL into an object path only for this project, this bucket and the target's folder. It undoes getPublicUrl's `encodeURI`, and rejects queries, empty segments and dot segments.
+  - `lib/image-storage.ts` (server-only) holds `uploadImage`, which replaces the two copied upload functions and uses UUID names, and `removeUnusedImage`. Before deleting, `removeUnusedImage` counts uses in `products.product_link`, `categories.cat_image_url` and `brands.brand_image_url`. It keeps the file if any row uses it or if the check fails. It never throws.
+- **Actions** (product and category):
+  - The old image is deleted after a successful replace, remove or delete. A fresh upload is deleted if its insert or update fails.
+  - Cleanup runs in `after()`, so it never delays or fails the save.
+  - `updateProduct` and `updateCategory` now read the current URL from the database, and return "not found" for a missing record instead of reporting success. `existingImageUrl` from the form is only a keep/remove flag, so a tampered form can no longer point a record at an arbitrary URL.
+- **Not done:**
+  - Category images uploaded to the bucket root before this task are kept when replaced, by design.
+  - The 120 existing product orphans are left alone; deleting them is the owner's call.
+  - Browser-side resizing (optional step 2) is not done.
+  - Brands have no image upload in the dashboard.
+- **Verified:**
+  - 14 new tests: URL parsing, plus the delete rules against a mocked client (in use, check failed, outside the folder, delete failed).
+  - On the real data, all 127 product URLs are deletable once unused, 0 of the 5 root category URLs are, and the reference query sees a product image as used (1/0/0).
+  - `typecheck`, lint (0 errors), 135 tests and `build` pass.
+- **Still to check when logged in:** replace and remove a product image and a category image, then confirm the old file is gone from the bucket.
 
 ### P6-08 · Soft delete for referenced records
 - [ ] Done

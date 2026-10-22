@@ -3,36 +3,22 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthorizedAdmin } from "@/lib/auth";
 import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
-import { imageExtension, parseForm } from "@/lib/validation/form";
+import { parseForm } from "@/lib/validation/form";
 import { productSchema } from "@/lib/validation/product";
+import { removeUnusedImage, uploadImage } from "@/lib/image-storage";
+import { PRODUCT_IMAGES } from "@/lib/storage-path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-// Uploads a validated image to the `products` bucket and returns its public URL.
-async function uploadProductImage(imageFile: File) {
-    const filePath = `${Math.random().toString(36).substring(2)}.${imageExtension(imageFile)}`;
-
-    const { error: uploadError } = await supabaseAdmin
-        .storage
-        .from('products')
-        .upload(filePath, imageFile, { contentType: imageFile.type });
-
-    if (uploadError) {
-        console.error("Error uploading product image to 'products':", uploadError);
-        throw new Error(`Failed to upload product image: ${uploadError.message}`);
-    }
-
-    const { data: { publicUrl } } = supabaseAdmin
-        .storage
-        .from('products')
-        .getPublicUrl(filePath);
-
-    return publicUrl;
-}
+import { after } from "next/server";
 
 function productListUrl(page: string | undefined) {
     const cursor = page ? `?page=${page}` : "";
     return `/product${cursor}${cursor ? "&" : "?"}toast=success`;
+}
+
+// Deletes a product image that's no longer used, after the response is sent.
+function cleanUpImage(url: string | null | undefined) {
+    after(() => removeUnusedImage(PRODUCT_IMAGES, url));
 }
 
 // Form action (via useFormAction): returns an error to show, or redirects on success.
@@ -48,7 +34,7 @@ export async function addProduct(_prevState: ActionResult | null, formData: Form
     let product_link: string | null = null;
     if (input.productImage) {
         try {
-            product_link = await uploadProductImage(input.productImage);
+            product_link = await uploadImage(PRODUCT_IMAGES, input.productImage);
         } catch (error) {
             return { success: false, message: (error as Error).message };
         }
@@ -70,6 +56,7 @@ export async function addProduct(_prevState: ActionResult | null, formData: Form
 
     if (error) {
         console.error("Error inserting product:", error);
+        cleanUpImage(product_link); // the upload belongs to no product
         return { success: false, message: `Failed to add product: ${error.message}` };
     }
 
@@ -89,7 +76,7 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
         .from('products')
         .delete()
         .eq('product_id', id)
-        .select('product_id');
+        .select('product_id, product_link');
 
     if (error) {
         console.error("Error deleting product:", error);
@@ -105,6 +92,7 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
         return { success: false, message: "Product not found." };
     }
 
+    cleanUpImage(data[0].product_link);
     revalidatePath("/product");
     return { success: true, message: "Product deleted." };
 }
@@ -128,11 +116,26 @@ export async function updateProduct(
     }
     const input = parsed.data;
 
-    // A new file replaces the image; otherwise keep the current URL (empty when removed)
-    let product_link = input.existingImageUrl || null;
+    const { data: current, error: readError } = await supabaseAdmin
+        .from('products')
+        .select('product_link')
+        .eq('product_id', id)
+        .maybeSingle();
+
+    if (readError) {
+        console.error("Error reading product:", readError);
+        return { success: false, message: `Failed to update product: ${readError.message}` };
+    }
+    if (!current) {
+        return { success: false, message: "Product not found." };
+    }
+
+    // A new file replaces the image. Otherwise the form's existingImageUrl says whether
+    // to keep the current one (empty = removed); the URL itself comes from the database.
+    let product_link = input.existingImageUrl ? current.product_link : null;
     if (input.productImage) {
         try {
-            product_link = await uploadProductImage(input.productImage);
+            product_link = await uploadImage(PRODUCT_IMAGES, input.productImage);
         } catch (error) {
             return { success: false, message: (error as Error).message };
         }
@@ -153,9 +156,11 @@ export async function updateProduct(
 
     if (error) {
         console.error("Error updating product:", error);
+        if (input.productImage) cleanUpImage(product_link); // the new upload wasn't saved
         return { success: false, message: `Failed to update product: ${error.message}` };
     }
 
+    if (current.product_link !== product_link) cleanUpImage(current.product_link);
     revalidatePath("/product");
     redirect(productListUrl(input.page));
 }
