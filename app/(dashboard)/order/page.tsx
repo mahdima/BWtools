@@ -4,6 +4,7 @@ import { columns, Order } from "./columns";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getOrders } from "../actions";
 import { CsvExporter } from "@/components/csv-exporter";
+import { exportOrders } from "./actions";
 
 interface OrderPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -45,7 +46,9 @@ const OrderPage = async ({ searchParams }: OrderPageProps) => {
           rowLinkPath="/order"
           pageCount={pageCount}
           isServerSide={true}
-          headerActions={<CsvExporter data={data} filename="orders.csv" />}
+          headerActions={
+            <CsvExporter action={exportOrders.bind(null, { search, status })} />
+          }
         />
       </Suspense>
     </div>

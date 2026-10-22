@@ -399,7 +399,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Checks:** `typecheck`, 74 tests, lint (0 errors) and `build` pass.
 
 ### P3-04 · Full CSV export
-- [ ] Done
+- [x] Done
 
 **Files:** new `lib/csv.ts` (+ test), new export server action, `components/csv-exporter.tsx`, `order/page.tsx`
 **Steps:**
@@ -408,6 +408,17 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 3. Have the exporter call that action instead of using the page's rows.
 
 **Done when:** The export contains every order for the current filter, and a value with a comma or quote survives a round trip through Excel.
+
+**Notes (2026-10-22):**
+- **`lib/csv.ts`:** `csvField` applies RFC 4180 quoting. It also neutralises CSV formula injection: text starting with `= + - @` is prefixed with `'`, numbers are left alone. `toCsv` adds a UTF-8 BOM and CRLF line endings. The `CsvExportResult` type is here too. 8 tests (82 total).
+- **`exportOrders({ search, status })`** in `order/actions.ts`, any active admin:
+  - Same filtering as the list: order-number search via `parseOrderNumber`, and status only when it is a real status.
+  - Fetches in batches of 1000, ordered by `created_at` then `id` so batches don't overlap, capped at 50,000 rows.
+  - Columns: Order #, Created at (UTC, `YYYY-MM-DD HH:mm:ss`), Status, Total (DZD). Filename `orders[-status]-YYYY-MM-DD.csv`.
+- **`CsvExporter`:** takes a bound server action instead of the page's 20 rows. It shows a spinner while exporting, toasts the row count or the error, and revokes the object URL, which the old code leaked.
+- **Browser check:** a temporary page with a fake action in headless Chrome, 7/7 checks and 0 page errors. Covered: the button is disabled while exporting, the filename, the BOM, the exact CSV bytes (escaping, CRLF, formula prefix), the success toast, and the error path with no download. The page was deleted afterwards.
+- **Checks:** `typecheck`, lint (0 errors), `build` and the guard audit pass.
+- **Still to check when logged in:** export real orders and open the file in Excel. Customer columns can be added once the order loader joins customers (P3-05, P5-04).
 
 ### P3-05 · Invoice matches the order page
 - [ ] Done
