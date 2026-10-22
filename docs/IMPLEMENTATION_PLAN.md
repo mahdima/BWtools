@@ -753,7 +753,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Checks:** `typecheck`, lint (0 errors) and `build` pass.
 
 ### P5-04 · Order search by customer and date range
-- [ ] Done
+- [x] Done
 
 **Depends on:** P2-03, P3-02
 **Files:** a migration (view `orders_with_customer` joining `profiles` and the auth email), `getOrders`, `order/page.tsx`, `components/data-table.tsx`
@@ -762,6 +762,23 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Search by order number, customer name, phone or email, and add `from`/`to` date inputs stored in the URL.
 
 **Done when:** You can find an order by customer phone, and filter by date range combined with status.
+
+**Notes (2026-10-22):**
+- **No migration needed (deviation from step 1):** customer search is done in two steps.
+  1. `profiles_with_email` is searched by username, email or phone with `ilike` (capped at 200 ids).
+  2. Orders are filtered with `user_id.in.(...)`.
+  - A numeric search matches the order number **or** a phone (`id.eq.N,user_id.in.(...)`), since phone numbers are numeric too.
+- **Shared resolver:** `resolveOrderFilters()` in `lib/data/orders.ts` returns the search clause, status, date bounds and `matchesNothing`. Both `getOrders` and `exportOrders` use it, so the CSV always matches the screen.
+- **Helpers:**
+  - `customerSearchPattern` in `lib/orders.ts` strips the characters that break PostgREST's `or()` syntax and escapes LIKE wildcards.
+  - `parseDateKey`, `localDayStartUtc` and `nextDateKey` in `lib/dates.ts` bound whole days in Algiers time.
+  - 19 new tests, 114 total.
+- **UI:** `components/order-date-filter.tsx` keeps from/to in the URL; `min` is set so "to" can't come before "from"; it has a Clear button and resets to page 1. The search placeholder now reads "Order #, customer, email or phone".
+- **Verified:**
+  - **Filter syntax:** count-only HEAD requests to Supabase (no rows read) accepted every filter string, including awkward input like `50%_off, (x)`. The date check also showed 4 orders so far in 2026.
+  - **Date picker:** 5/5 in the browser on a temporary page (deleted afterwards).
+  - **Checks:** `typecheck`, lint (0 errors) and `build` pass.
+- **Still to check when logged in:** search a real customer's name or phone on /order and combine it with dates and a status.
 
 ### P5-05 · Loading skeletons
 - [ ] Done

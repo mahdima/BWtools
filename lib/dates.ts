@@ -102,3 +102,40 @@ export function groupRevenue(
   }
   return result;
 }
+
+// A "YYYY-MM-DD" date from a URL parameter, or null if it isn't a real date.
+export function parseDateKey(value: string | null | undefined): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value ? value : null;
+}
+
+// The instant a local calendar day starts, e.g. "2026-10-01" in Algiers (UTC+1)
+// -> "2026-09-30T23:00:00.000Z". Use with .gte(); the next day's start with .lt().
+export function localDayStartUtc(dateKey: string, timeZone: string = STORE_TIME_ZONE): string {
+  const utcMidnight = new Date(`${dateKey}T00:00:00Z`);
+  // How far the zone is ahead of UTC at that moment (minutes)
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+      .formatToParts(utcMidnight)
+      .map((part) => [part.type, part.value]),
+  );
+  const asLocal = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+  const offsetMs = asLocal - utcMidnight.getTime();
+  return new Date(utcMidnight.getTime() - offsetMs).toISOString();
+}
+
+// "YYYY-MM-DD" of the day after `dateKey`.
+export function nextDateKey(dateKey: string): string {
+  const date = new Date(`${dateKey}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}

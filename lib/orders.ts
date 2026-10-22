@@ -15,3 +15,12 @@ export function parseOrderNumber(input: string): number | null {
   const id = Number(digits);
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
+
+// A search term made safe for a PostgREST `or=(col.ilike."...")` filter: characters
+// that would break the filter syntax are dropped and LIKE wildcards are escaped.
+// Returns the ilike pattern, or null when fewer than 2 useful characters remain.
+export function customerSearchPattern(term: string): string | null {
+  const cleaned = term.replace(/[,()"\\]/g, " ").replace(/\s+/g, " ").trim();
+  if (cleaned.length < 2) return null;
+  return `%${cleaned.replace(/[%_]/g, (c) => `\\${c}`)}%`;
+}

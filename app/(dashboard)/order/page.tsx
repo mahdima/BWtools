@@ -3,6 +3,7 @@ import { DataTable } from "@/components/data-table";
 import { columns, Order } from "./columns";
 import { getOrders } from "@/lib/data/orders";
 import { CsvExporter } from "@/components/csv-exporter";
+import { OrderDateFilter } from "@/components/order-date-filter";
 import { exportOrders } from "./actions";
 
 interface OrderPageProps {
@@ -14,9 +15,12 @@ const OrderPage = async ({ searchParams }: OrderPageProps) => {
   const page = typeof params.page === "string" ? parseInt(params.page) : 1;
   const search = typeof params.search === "string" ? params.search : "";
   const status = typeof params.status === "string" ? params.status : "";
+  const from = typeof params.from === "string" ? params.from : undefined;
+  const to = typeof params.to === "string" ? params.to : undefined;
+  const filters = { search, status, from, to };
   const limit = 20;
 
-  const { data, count } = await getOrders({ page, limit, search, status });
+  const { data, count } = await getOrders({ page, limit, ...filters });
   const pageCount = Math.ceil(count / limit);
 
   return (
@@ -26,7 +30,7 @@ const OrderPage = async ({ searchParams }: OrderPageProps) => {
           columns={columns}
           data={data}
           searchKey="status"
-          searchPlaceholder="Search by order #"
+          searchPlaceholder="Order #, customer, email or phone"
           title="Orders"
           description="Manage and track customer orders"
           filterTabs={[
@@ -46,7 +50,10 @@ const OrderPage = async ({ searchParams }: OrderPageProps) => {
           pageCount={pageCount}
           isServerSide={true}
           headerActions={
-            <CsvExporter action={exportOrders.bind(null, { search, status })} />
+            <>
+              <OrderDateFilter />
+              <CsvExporter action={exportOrders.bind(null, filters)} />
+            </>
           }
         />
       </Suspense>

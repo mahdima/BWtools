@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPeriodStart, groupRevenue, localDateKey } from "@/lib/dates";
+import { getPeriodStart, groupRevenue, localDateKey, localDayStartUtc, nextDateKey, parseDateKey } from "@/lib/dates";
 
 // Wednesday 22 Oct 2026, 10:00 UTC (11:00 in Algiers)
 const now = new Date("2026-10-22T10:00:00Z");
@@ -97,5 +97,31 @@ describe("groupRevenue", () => {
       name: "Oct 22",
       total: 0,
     });
+  });
+});
+
+describe("parseDateKey", () => {
+  it("accepts real dates only", () => {
+    expect(parseDateKey("2026-10-01")).toBe("2026-10-01");
+    expect(parseDateKey("2026-02-30")).toBeNull();
+    expect(parseDateKey("2026-10-1")).toBeNull();
+    expect(parseDateKey("yesterday")).toBeNull();
+    expect(parseDateKey(null)).toBeNull();
+  });
+});
+
+describe("localDayStartUtc / nextDateKey", () => {
+  it("starts an Algiers day one hour before UTC midnight", () => {
+    expect(localDayStartUtc("2026-10-01")).toBe("2026-09-30T23:00:00.000Z");
+  });
+
+  it("handles other zones", () => {
+    expect(localDayStartUtc("2026-10-01", "UTC")).toBe("2026-10-01T00:00:00.000Z");
+    expect(localDayStartUtc("2026-07-01", "Europe/Paris")).toBe("2026-06-30T22:00:00.000Z");
+  });
+
+  it("steps to the next day across month and year ends", () => {
+    expect(nextDateKey("2026-10-31")).toBe("2026-11-01");
+    expect(nextDateKey("2026-12-31")).toBe("2027-01-01");
   });
 });

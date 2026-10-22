@@ -4,7 +4,8 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { revalidatePath } from "next/cache";
 import { getAuthorizedAdmin } from "@/lib/auth";
 import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
-import { isOrderStatus, parseOrderNumber } from "@/lib/orders";
+import { isOrderStatus } from "@/lib/orders";
+import { resolveOrderFilters, type OrderFilterInput } from "@/lib/data/orders";
 import { toCsv, type CsvExportResult } from "@/lib/csv";
 import { parseForm } from "@/lib/validation/form";
 import { orderNoteSchema } from "@/lib/validation/order";
@@ -91,21 +92,14 @@ function formatUtc(timestamp: string) {
 }
 
 // Every order matching the list's search and status filter, as a CSV file.
-export async function exportOrders({
-    search = "",
-    status = "",
-}: {
-    search?: string;
-    status?: string;
-}): Promise<CsvExportResult> {
+export async function exportOrders(filterInput: OrderFilterInput): Promise<CsvExportResult> {
     if (!(await getAuthorizedAdmin("viewer"))) return NOT_AUTHORIZED;
 
-    const orderId = search.trim() ? parseOrderNumber(search) : null;
-    const statusFilter = isOrderStatus(status) ? status : null;
+    // Same filters as the list (search, status, date range)
+    const filters = await resolveOrderFilters(filterInput);
     const rows: unknown[][] = [];
 
-    // As in the list, search text that isn't an order number matches nothing
-    if (!search.trim() || orderId !== null) {
+    if (!filters.matchesNothing) {
         for (let from = 0; from < EXPORT_MAX_ROWS; from += EXPORT_BATCH) {
             // Sorting by id as well keeps the batches from overlapping
             let query = supabaseAdmin
@@ -115,8 +109,10 @@ export async function exportOrders({
                 .order('id', { ascending: false })
                 .range(from, from + EXPORT_BATCH - 1);
 
-            if (orderId !== null) query = query.eq('id', orderId);
-            if (statusFilter) query = query.eq('status', statusFilter);
+            if (filters.searchClause) query = query.or(filters.searchClause);
+            if (filters.status) query = query.eq('status', filters.status);
+            if (filters.createdFrom) query = query.gte('created_at', filters.createdFrom);
+            if (filters.createdBefore) query = query.lt('created_at', filters.createdBefore);
 
             const { data, error } = await query;
 
@@ -142,6 +138,6 @@ export async function exportOrders({
             ? `Exported the first ${rows.length} orders.`
             : `Exported ${rows.length} order${rows.length === 1 ? "" : "s"}.`,
         csv: toCsv(["Order #", "Created at (UTC)", "Status", "Total (DZD)"], rows),
-        filename: `orders${statusFilter ? `-${statusFilter.toLowerCase()}` : ""}-${date}.csv`,
+        filename: `orders${filters.status ? `-${filters.status.toLowerCase()}` : ""}-${date}.csv`,
     };
 }

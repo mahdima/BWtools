@@ -1,7 +1,8 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import type { ShippingAddress } from "@/lib/address";
-import { parseOrderNumber } from "@/lib/orders";
+import { customerSearchPattern, isOrderStatus, parseOrderNumber, type OrderStatus } from "@/lib/orders";
+import { localDayStartUtc, nextDateKey, parseDateKey } from "@/lib/dates";
 
 export type OrderLine = {
   id: number;
@@ -113,20 +114,85 @@ export async function getOrderWithDetails(orderId: number): Promise<OrderDetails
   };
 }
 
-// One page of the orders table, newest first, filtered by order number and status.
+export type OrderFilterInput = {
+  search?: string; // order number, or customer name / email / phone
+  status?: string;
+  from?: string; // YYYY-MM-DD, inclusive (store time zone)
+  to?: string; // YYYY-MM-DD, inclusive
+};
+
+export type OrderFilters = {
+  // PostgREST `or` clause for the search, e.g. "id.eq.12,user_id.in.(uuid,...)"
+  searchClause: string | null;
+  status: OrderStatus | null;
+  createdFrom: string | null; // ISO instant for .gte()
+  createdBefore: string | null; // ISO instant for .lt()
+  // The search can't match anything, so there is no need to query
+  matchesNothing: boolean;
+};
+
+// Customers whose username, email or phone contains the search text (capped, for
+// an IN filter on orders.user_id).
+async function findCustomerIds(search: string): Promise<string[]> {
+  const pattern = customerSearchPattern(search);
+  if (!pattern) return [];
+
+  const { data, error } = await supabaseAdmin
+    .from("profiles_with_email")
+    .select("id")
+    .or(`username.ilike."${pattern}",email.ilike."${pattern}",phone.ilike."${pattern}"`)
+    .limit(200);
+
+  if (error) {
+    console.error("Error searching customers:", error);
+    return [];
+  }
+  return (data ?? []).flatMap((row) => (row.id ? [row.id] : []));
+}
+
+// Turns the order list's URL filters into query clauses, shared by the list and the
+// CSV export so both always agree. A number matches the order number or a phone.
+export async function resolveOrderFilters({ search = "", status = "", from, to }: OrderFilterInput): Promise<OrderFilters> {
+  const term = search.trim();
+  let searchClause: string | null = null;
+  let matchesNothing = false;
+
+  if (term) {
+    const orderId = parseOrderNumber(term);
+    const customerIds = await findCustomerIds(term);
+    const clauses = [
+      ...(orderId !== null ? [`id.eq.${orderId}`] : []),
+      ...(customerIds.length ? [`user_id.in.(${customerIds.join(",")})`] : []),
+    ];
+    if (clauses.length) searchClause = clauses.join(",");
+    else matchesNothing = true;
+  }
+
+  const fromKey = parseDateKey(from);
+  const toKey = parseDateKey(to);
+
+  return {
+    searchClause,
+    status: isOrderStatus(status) ? status : null,
+    createdFrom: fromKey ? localDayStartUtc(fromKey) : null,
+    createdBefore: toKey ? localDayStartUtc(nextDateKey(toKey)) : null,
+    matchesNothing,
+  };
+}
+
+// One page of the orders table, newest first, with the list's filters.
 export async function getOrders({
   page = 1,
   limit = 20,
-  search = "",
-  status = "",
-}: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-}) {
+  ...filterInput
+}: OrderFilterInput & { page?: number; limit?: number }) {
   const from = (page - 1) * limit;
   const to = from + limit - 1;
+
+  const filters = await resolveOrderFilters(filterInput);
+  if (filters.matchesNothing) {
+    return { data: [], count: 0 };
+  }
 
   let query = supabaseAdmin
     .from("orders")
@@ -134,19 +200,10 @@ export async function getOrders({
     .order("created_at", { ascending: false })
     .range(from, to);
 
-  // Search is by order number only for now (customer name/phone: P5-04).
-  // Text that isn't an order number matches nothing rather than every order.
-  if (search.trim()) {
-    const orderId = parseOrderNumber(search);
-    if (orderId === null) {
-      return { data: [], count: 0 };
-    }
-    query = query.eq("id", orderId);
-  }
-
-  if (status && status !== "All") {
-    query = query.eq("status", status);
-  }
+  if (filters.searchClause) query = query.or(filters.searchClause);
+  if (filters.status) query = query.eq("status", filters.status);
+  if (filters.createdFrom) query = query.gte("created_at", filters.createdFrom);
+  if (filters.createdBefore) query = query.lt("created_at", filters.createdBefore);
 
   const { data, error, count } = await query;
 
