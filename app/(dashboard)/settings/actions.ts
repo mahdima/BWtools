@@ -2,6 +2,8 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { getAuthorizedAdmin } from "@/lib/auth";
+import { parseForm } from "@/lib/validation/form";
+import { passwordChangeSchema } from "@/lib/validation/admin";
 
 export async function updatePassword(formData: FormData) {
   // Any active admin may change their own password.
@@ -9,17 +11,12 @@ export async function updatePassword(formData: FormData) {
     return { success: false, message: "Not authorized" };
   }
 
-  const password = formData.get("password") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
-
-  if (password !== confirmPassword) {
-    return { success: false, message: "Passwords do not match" };
+  // Same rules as new admin accounts: 8 to 72 characters, and both fields must match
+  const parsed = parseForm(passwordChangeSchema, formData);
+  if (!parsed.success) {
+    return { success: false, message: parsed.message };
   }
-
-  // Same minimum as new admin accounts (team/new)
-  if (!password || password.length < 8) {
-    return { success: false, message: "Password must be at least 8 characters" };
-  }
+  const { password } = parsed.data;
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });

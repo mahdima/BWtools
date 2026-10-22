@@ -2,78 +2,70 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/auth";
+import { imageExtension, parseForm } from "@/lib/validation/form";
+import { productSchema } from "@/lib/validation/product";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
+// Uploads a validated image to the `products` bucket and returns its public URL.
+async function uploadProductImage(imageFile: File) {
+    const filePath = `${Math.random().toString(36).substring(2)}.${imageExtension(imageFile)}`;
+
+    const { error: uploadError } = await supabaseAdmin
+        .storage
+        .from('products')
+        .upload(filePath, imageFile, { contentType: imageFile.type });
+
+    if (uploadError) {
+        console.error("Error uploading product image to 'products':", uploadError);
+        throw new Error(`Failed to upload product image: ${uploadError.message}`);
+    }
+
+    const { data: { publicUrl } } = supabaseAdmin
+        .storage
+        .from('products')
+        .getPublicUrl(filePath);
+
+    return publicUrl;
+}
+
+function productListUrl(page: string | undefined) {
+    const cursor = page ? `?page=${page}` : "";
+    return `/product${cursor}${cursor ? "&" : "?"}toast=success`;
+}
 
 export async function addProduct(formData: FormData) {
     await requireAdmin("admin");
 
-    const product_name = formData.get("product")?.toString();
-    const Category_id = formData.get("category")?.toString();
-    const unite_price = formData.get("price")?.toString();
-    const brand_id = formData.get("brand")?.toString();
-    const description = formData.get("description")?.toString();
-    const quantity = formData.get("quantity")?.toString();
-
-    if (!product_name || !Category_id || !unite_price || !brand_id || !quantity) {
-        throw new Error("Missing required fields");
+    const parsed = parseForm(productSchema, formData);
+    if (!parsed.success) {
+        throw new Error(parsed.message);
     }
+    const input = parsed.data;
 
-    const imageFile = formData.get("productImage") as File | null;
-    let product_link = null;
+    const product_link = input.productImage ? await uploadProductImage(input.productImage) : null;
 
-    if (imageFile && imageFile.size > 0) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        console.log(`Uploading product image ${imageFile.name} to 'products' bucket...`);
-
-        const { data: uploadData, error: uploadError } = await supabaseAdmin
-            .storage
-            .from('products')
-            .upload(filePath, imageFile);
-
-        if (uploadError) {
-            console.error("Error uploading product image to 'products':", uploadError);
-            throw new Error(`Failed to upload product image: ${uploadError.message}`);
-        }
-
-        const { data: { publicUrl } } = supabaseAdmin
-            .storage
-            .from('products')
-            .getPublicUrl(filePath);
-
-        product_link = publicUrl;
-        console.log("Product image uploaded successfully, URL:", product_link);
-    }
-
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
         .from('products')
         .insert([
             {
-                product_name,
-                Category_id: parseInt(Category_id),
-                unite_price: parseFloat(unite_price),
-                brand_id: parseInt(brand_id),
-                description,
+                product_name: input.product,
+                Category_id: input.category,
+                unite_price: input.price,
+                brand_id: input.brand,
+                description: input.description,
                 product_link,
-                in_stock_vailable: parseInt(quantity)
+                in_stock_vailable: input.quantity,
             }
-        ])
-        .select();
+        ]);
 
     if (error) {
         console.error("Error inserting product:", error);
         throw new Error(`Failed to add product: ${error.message}`);
     }
 
-    const page = formData.get("page")?.toString();
-    const cursor = page ? `?page=${page}` : "";
-    const redirectPath = `/product${cursor}${cursor ? "&" : "?"}toast=success`;
-
     revalidatePath("/product");
-    redirect(redirectPath);
+    redirect(productListUrl(input.page));
 }
 
 export async function deleteProduct(productId: string) {
@@ -99,72 +91,40 @@ export async function deleteProduct(productId: string) {
 export async function updateProduct(productId: string, formData: FormData) {
     await requireAdmin("admin");
 
-    const product_name = formData.get("product")?.toString();
-    const Category_id = formData.get("category")?.toString();
-    const unite_price = formData.get("price")?.toString();
-    const brand_id = formData.get("brand")?.toString();
-    const description = formData.get("description")?.toString();
-    const quantity = formData.get("quantity")?.toString();
-
-    if (!productId || !product_name || !Category_id || !unite_price || !brand_id || !quantity) {
-        throw new Error("Missing required fields");
+    const id = Number(productId);
+    if (!Number.isInteger(id)) {
+        throw new Error("Product not found");
     }
 
-    const imageFile = formData.get("productImage") as File | null;
-    let product_link = formData.get("existingImageUrl")?.toString() || null;
-
-    if (imageFile && imageFile.size > 0) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        console.log(`Updating product image for product ${productId}...`);
-
-        const { error: uploadError } = await supabaseAdmin
-            .storage
-            .from('products')
-            .upload(filePath, imageFile);
-
-        if (uploadError) {
-            console.error("Error uploading product image to 'products':", uploadError);
-            throw new Error(`Failed to upload product image: ${uploadError.message}`);
-        }
-
-        const { data: { publicUrl } } = supabaseAdmin
-            .storage
-            .from('products')
-            .getPublicUrl(filePath);
-
-        product_link = publicUrl;
-        console.log("Product image updated successfully, URL:", product_link);
-    } else {
-        console.log("No new image file provided, using product_link:", product_link);
+    const parsed = parseForm(productSchema, formData);
+    if (!parsed.success) {
+        throw new Error(parsed.message);
     }
+    const input = parsed.data;
+
+    // A new file replaces the image; otherwise keep the current URL (empty when removed)
+    const product_link = input.productImage
+        ? await uploadProductImage(input.productImage)
+        : input.existingImageUrl || null;
 
     const { error } = await supabaseAdmin
         .from('products')
         .update({
-            product_name,
-            Category_id: parseInt(Category_id),
-            unite_price: parseFloat(unite_price),
-            brand_id: parseInt(brand_id),
-            description,
+            product_name: input.product,
+            Category_id: input.category,
+            unite_price: input.price,
+            brand_id: input.brand,
+            description: input.description,
             product_link,
-            in_stock_vailable: parseInt(quantity)
+            in_stock_vailable: input.quantity,
         })
-        .eq('product_id', parseInt(productId));
-
-    console.log("Update query executed for ID:", productId, "with product_link:", product_link);
+        .eq('product_id', id);
 
     if (error) {
         console.error("Error updating product:", error);
         throw new Error(`Failed to update product: ${error.message}`);
     }
 
-    const page = formData.get("page")?.toString();
-    const cursor = page ? `?page=${page}` : "";
-    const redirectPath = `/product${cursor}${cursor ? "&" : "?"}toast=success`;
-
     revalidatePath("/product");
-    redirect(redirectPath);
+    redirect(productListUrl(input.page));
 }

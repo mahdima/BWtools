@@ -3,6 +3,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getCurrentAdmin } from "@/lib/auth";
+import { parseForm } from "@/lib/validation/form";
+import { profileSchema } from "@/lib/validation/admin";
 import { revalidatePath } from "next/cache";
 
 export async function updateAdminProfile(prevState: any, formData: FormData) {
@@ -12,12 +14,11 @@ export async function updateAdminProfile(prevState: any, formData: FormData) {
     return { success: false, message: "Unauthorized" };
   }
 
-  const fullName = (formData.get("fullName") as string | null)?.trim();
-  const email = formData.get("email") as string; // Standard auth update
-
-  if (!fullName) {
-    return { success: false, message: "Full name is required." };
+  const parsed = parseForm(profileSchema, formData);
+  if (!parsed.success) {
+    return { success: false, message: parsed.message };
   }
+  const { fullName, email } = parsed.data;
 
   // 1. Update the admin's own row. The id comes from the session, never from the form,
   // and role / active status are only changed by super admins on the Team page.

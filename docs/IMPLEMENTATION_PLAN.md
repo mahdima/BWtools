@@ -281,7 +281,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Schema facts that change other tasks:** see the notes on P3-05 (invoice and order page), P3-09 (team emails) and P4-01 (brand images). The confirmed columns are now in CLAUDE.md under "Database schema".
 
 ### P2-04 · Input validation with zod
-- [ ] Done
+- [x] Done
 
 **Depends on:** P1-05
 **Files:** new `lib/validation/*.ts`, all mutating actions
@@ -292,6 +292,21 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 4. Add tests for the schemas.
 
 **Done when:** Bad input returns a readable error instead of a database error or a crash.
+
+**Notes (2026-10-22):**
+- **Library:** `zod` 4.6.7, a production dependency; the production audit is still 0.
+- **Helpers in `lib/validation/form.ts`:**
+  - `parseForm(schema, formData)` returns the data, or the first problem as a sentence.
+  - `optionalImage` accepts JPEG, PNG or WebP up to 5 MB, and treats an empty file input as no image.
+  - `imageExtension()` names uploads by MIME type instead of the client's file name.
+- **Schemas:** `product`, `brand`, `category`, `customer`, `admin` (new member, profile, password change) and `order` (note).
+- **Wired into every action that reads form input:**
+  - Products: add/update. The duplicated upload code became `uploadProductImage`, which also sets `contentType`.
+  - Brands, live categories, legacy categories (including the image check), customer update, profile, password change, order note and `createAdmin` (password checked on the server now, closing the P1-08 gap).
+  - Each action keeps its error style: throwing actions throw the message, result-style actions return it.
+  - The only raw `formData.get` left: login (Supabase checks the credentials) and the legacy category `existingImageUrl` (P4-02).
+- **Checks:** 30 new tests (55 total), `typecheck` clean, lint 0 errors (warnings down from 58 to 55), `build` passes, guard audit 24/24.
+- **Limitation:** in production, Next.js hides the message of an error thrown from a server action. For the throwing actions (product, brand, note, new admin), users only see the readable message once P3-01 switches them to `{ success, message }` results with a toast. The browser's `required` attributes still catch most mistakes before submit.
 
 ### P2-05 · Continuous integration
 - [ ] Done

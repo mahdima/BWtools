@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { isOrderStatus } from "@/lib/orders";
+import { parseForm } from "@/lib/validation/form";
+import { orderNoteSchema } from "@/lib/validation/order";
 
 export async function updateOrderStatus(orderId: number, newStatus: string) {
     const admin = await requireAdmin("admin");
@@ -71,10 +73,15 @@ export async function addOrderNote(orderId: number, note: string) {
         throw new Error("Order ID is required");
     }
 
+    const parsed = parseForm(orderNoteSchema, { note });
+    if (!parsed.success) {
+        throw new Error(parsed.message);
+    }
+
     const { error } = await supabaseAdmin.from('order_notes').insert({
         order_id: orderId,
         admin_id: admin.id,
-        note,
+        note: parsed.data.note,
     });
 
     if (error) {

@@ -66,6 +66,8 @@ There is no plain anon client any more. Don't add one: the anon key is public (i
 
 Minimum roles: catalogue, orders and customers need `admin`; team management needs `super_admin`; own profile, password and notifications need `viewer`. Order statuses are listed in [lib/orders.ts](lib/orders.ts).
 
+After the role check, validate input before touching the database. Add a zod schema in [lib/validation/](lib/validation/) (one file per entity, with user-facing messages) and call `parseForm(schema, formData)`. It returns `{ success, data }` or `{ success: false, message }` with the first problem as a sentence. For image uploads, use `optionalImage` (JPEG/PNG/WebP, 5 MB max) and name the stored file with `imageExtension(file)`, never the client's file name. Don't read raw `formData.get(...)` values into queries.
+
 **Known gap:** production still runs the old code until Phase 1 of the plan is deployed. In the old code, any Supabase account can sign in, and any signed-in user can make themselves `super_admin`.
 
 ### Auth and roles

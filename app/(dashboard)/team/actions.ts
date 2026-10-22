@@ -3,6 +3,8 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getCurrentAdmin, requireAdmin } from "@/lib/auth";
 import { isRole } from "@/lib/roles";
+import { parseForm } from "@/lib/validation/form";
+import { adminCreateSchema } from "@/lib/validation/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -43,18 +45,11 @@ export async function getCurrentUserRole() {
 export async function createAdmin(formData: FormData) {
   await requireAdmin('super_admin');
 
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
-  const fullName = formData.get('fullName') as string;
-  const role = formData.get('role') as string;
-
-  if (!email || !password || !fullName || !role) {
-    throw new Error("All fields are required");
+  const parsed = parseForm(adminCreateSchema, formData);
+  if (!parsed.success) {
+    throw new Error(parsed.message);
   }
-
-  if (!isRole(role)) {
-    throw new Error(`Invalid role: ${role}`);
-  }
+  const { email, password, fullName, role } = parsed.data;
 
   // Create auth user
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({

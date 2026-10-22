@@ -2,17 +2,19 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/auth";
+import { parseForm } from "@/lib/validation/form";
+import { brandSchema } from "@/lib/validation/brand";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function addBrand(formData: FormData) {
     await requireAdmin("admin");
 
-    const brand_name = formData.get("brand")?.toString();
-
-    if (!brand_name) {
-        throw new Error("Brand name is required");
+    const parsed = parseForm(brandSchema, formData);
+    if (!parsed.success) {
+        throw new Error(parsed.message);
     }
+    const brand_name = parsed.data.brand;
 
     // Fetch the current max brand_id
     const { data: maxBrand } = await supabaseAdmin
@@ -41,16 +43,21 @@ export async function addBrand(formData: FormData) {
 export async function updateBrand(brandId: string, formData: FormData) {
     await requireAdmin("admin");
 
-    const brand_name = formData.get("brand")?.toString();
-
-    if (!brandId || !brand_name) {
-        throw new Error("Missing required fields");
+    const id = Number(brandId);
+    if (!Number.isInteger(id)) {
+        throw new Error("Brand not found");
     }
+
+    const parsed = parseForm(brandSchema, formData);
+    if (!parsed.success) {
+        throw new Error(parsed.message);
+    }
+    const brand_name = parsed.data.brand;
 
     const { error } = await supabaseAdmin
         .from('brands')
         .update({ brand_name })
-        .eq('brand_id', parseInt(brandId));
+        .eq('brand_id', id);
 
     if (error) {
         console.error("Error updating brand:", error);

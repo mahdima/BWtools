@@ -2,6 +2,8 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { getAuthorizedAdmin } from "@/lib/auth";
+import { parseForm } from "@/lib/validation/form";
+import { categorySchema, categoryUpdateSchema } from "@/lib/validation/category";
 import { revalidatePath } from "next/cache";
 
 const NOT_AUTHORIZED = { success: false, message: "Not authorized" };
@@ -9,12 +11,13 @@ const NOT_AUTHORIZED = { success: false, message: "Not authorized" };
 export async function addCategory(formData: FormData) {
   if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
 
-  const supabase = await createClient();
-  const name = formData.get("categoryName") as string;
-
-  if (!name) {
-    return { success: false, message: "Category name is required" };
+  const parsed = parseForm(categorySchema, formData);
+  if (!parsed.success) {
+    return { success: false, message: parsed.message };
   }
+  const name = parsed.data.categoryName;
+
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from("categories")
@@ -31,18 +34,18 @@ export async function addCategory(formData: FormData) {
 export async function updateCategory(formData: FormData) {
   if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
 
-  const supabase = await createClient();
-  const id = formData.get("id") as string;
-  const name = formData.get("categoryName") as string;
-
-  if (!id || !name) {
-    return { success: false, message: "ID and Name are required" };
+  const parsed = parseForm(categoryUpdateSchema, formData);
+  if (!parsed.success) {
+    return { success: false, message: parsed.message };
   }
+  const { id, categoryName: name } = parsed.data;
+
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from("categories")
     .update({ categorie_name: name })
-    .eq("categorie_id", Number(id));
+    .eq("categorie_id", id);
 
   if (error) {
     return { success: false, message: error.message };

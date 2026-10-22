@@ -2,6 +2,8 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireAdmin } from "@/lib/auth";
+import { imageExtension, parseForm } from "@/lib/validation/form";
+import { categorySchema } from "@/lib/validation/category";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -9,17 +11,16 @@ export async function addCategory(formData: FormData) {
     await requireAdmin("admin");
 
     try {
-        const categorie_name = formData.get("categoryName")?.toString();
-
-        if (!categorie_name) {
-            throw new Error("Missing required fields: categoryName");
+        const parsed = parseForm(categorySchema, formData);
+        if (!parsed.success) {
+            throw new Error(parsed.message);
         }
-
-        const imageFile = formData.get("categoryImage") as File | null;
+        const categorie_name = parsed.data.categoryName;
+        const imageFile = parsed.data.categoryImage;
         let cat_image_url = null;
 
-        if (imageFile && imageFile.size > 0) {
-            const fileExt = imageFile.name.split('.').pop();
+        if (imageFile) {
+            const fileExt = imageExtension(imageFile);
             const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
             const filePath = `${fileName}`;
 
@@ -109,17 +110,16 @@ export async function updateCategory(categoryId: string, formData: FormData) {
     await requireAdmin("admin");
 
     try {
-        const categorie_name = formData.get("categoryName")?.toString();
-
-        if (!categoryId || !categorie_name) {
-            throw new Error(`Missing required fields: categoryId=${categoryId}, categoryName=${categorie_name}`);
+        const parsed = parseForm(categorySchema, formData);
+        if (!categoryId || !parsed.success) {
+            throw new Error(parsed.success ? "Category not found" : parsed.message);
         }
-
-        const imageFile = formData.get("categoryImage") as File | null;
+        const categorie_name = parsed.data.categoryName;
+        const imageFile = parsed.data.categoryImage;
         let cat_image_url = formData.get("existingImageUrl")?.toString() || null;
 
-        if (imageFile && imageFile.size > 0) {
-            const fileExt = imageFile.name.split('.').pop();
+        if (imageFile) {
+            const fileExt = imageExtension(imageFile);
             const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
             const filePath = `${fileName}`;
 
