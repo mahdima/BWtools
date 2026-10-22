@@ -4,7 +4,7 @@ import { columns, Product } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { Modal } from "@/components/Modal";
 import { ProductForm } from "@/components/ProductForm";
 import { addProduct, updateProduct } from "../addproduct/actions";
@@ -13,7 +13,7 @@ import { getProducts } from "../actions";
 export const revalidate = 0;
 
 async function getProduct(id: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("products")
     .select("*")
     .eq("product_id", parseInt(id))
@@ -24,7 +24,7 @@ async function getProduct(id: string) {
 }
 
 async function getCategories() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("categories")
     .select("categorie_id, categorie_name")
     .order("categorie_name");
@@ -33,7 +33,7 @@ async function getCategories() {
 }
 
 async function getBrands() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("brands")
     .select("brand_id, brand_name")
     .order("brand_name");

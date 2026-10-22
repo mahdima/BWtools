@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createClient } from "@/utils/supabase/server";
+import { getAuthorizedAdmin, requireAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 // Get notifications for current user
@@ -27,10 +28,14 @@ export async function getNotifications() {
 
 // Mark a notification as read
 export async function markNotificationAsRead(notificationId: number) {
+  const admin = await requireAdmin("viewer");
+
+  // Only the owner's notification: another admin's id simply matches no row
   const { error } = await supabaseAdmin
     .from('notifications')
     .update({ is_read: true })
-    .eq('id', notificationId);
+    .eq('id', notificationId)
+    .eq('admin_id', admin.id);
 
   if (error) {
     console.error("Error marking notification as read:", error);
@@ -42,15 +47,14 @@ export async function markNotificationAsRead(notificationId: number) {
 
 // Mark all notifications as read
 export async function markAllNotificationsAsRead() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const admin = await getAuthorizedAdmin("viewer");
 
-  if (!user) return;
+  if (!admin) return;
 
   const { error } = await supabaseAdmin
     .from('notifications')
     .update({ is_read: true })
-    .eq('admin_id', user.id)
+    .eq('admin_id', admin.id)
     .eq('is_read', false);
 
   if (error) {
@@ -75,6 +79,9 @@ export async function createNotification({
   message: string;
   link?: string;
 }) {
+  // Exported from a 'use server' file, so this is a public endpoint: only admins may call it.
+  await requireAdmin("admin");
+
   const { error } = await supabaseAdmin.from('notifications').insert({
     admin_id: adminId,
     type,
@@ -90,6 +97,8 @@ export async function createNotification({
 
 // Notify all admins about a new order
 export async function notifyNewOrder(orderId: number, orderTotal: number) {
+  await requireAdmin("admin");
+
   // Get all admins
   const { data: admins } = await supabaseAdmin
     .from('admins')

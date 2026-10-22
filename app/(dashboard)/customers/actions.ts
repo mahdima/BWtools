@@ -2,9 +2,14 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getAuthorizedAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 export async function updateCustomer(formData: FormData) {
+  if (!(await getAuthorizedAdmin("admin"))) {
+    return { success: false, message: "Not authorized" };
+  }
+
   const supabase = await createClient();
   const id = formData.get("id") as string;
   const username = formData.get("username") as string;

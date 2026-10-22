@@ -1,7 +1,8 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { createClient } from "@/utils/supabase/server";
+import { getCurrentAdmin, requireAdmin } from "@/lib/auth";
+import { isRole } from "@/lib/roles";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -17,52 +18,28 @@ export async function getTeamMembers() {
     return [];
   }
   
-  // Add default role if column doesn't exist yet
+  // A missing or unknown role is shown as viewer, matching what lib/auth enforces
   return (data || []).map(member => ({
     ...member,
-    role: member.role || 'admin',
+    role: isRole(member.role) ? member.role : 'viewer',
   }));
 }
 
 // Check if current user is super admin
 export async function isSuperAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return false;
-
-  const { data } = await supabaseAdmin
-    .from('admins')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  return data?.role === 'super_admin';
+  const admin = await getCurrentAdmin();
+  return admin?.role === 'super_admin';
 }
 
 // Get current user's role
 export async function getCurrentUserRole() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
-  const { data } = await supabaseAdmin
-    .from('admins')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  return data?.role || 'viewer';
+  const admin = await getCurrentAdmin();
+  return admin?.role ?? null;
 }
 
 // Create new admin (super admin only)
 export async function createAdmin(formData: FormData) {
-  // Verify current user is super admin
-  const isSuper = await isSuperAdmin();
-  if (!isSuper) {
-    throw new Error("Only super admins can create new accounts");
-  }
+  await requireAdmin('super_admin');
 
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -71,6 +48,10 @@ export async function createAdmin(formData: FormData) {
 
   if (!email || !password || !fullName || !role) {
     throw new Error("All fields are required");
+  }
+
+  if (!isRole(role)) {
+    throw new Error(`Invalid role: ${role}`);
   }
 
   // Create auth user
@@ -107,9 +88,15 @@ export async function createAdmin(formData: FormData) {
 
 // Update admin role (super admin only)
 export async function updateAdminRole(adminId: string, newRole: string) {
-  const isSuper = await isSuperAdmin();
-  if (!isSuper) {
-    throw new Error("Only super admins can change roles");
+  const admin = await requireAdmin('super_admin');
+
+  if (!isRole(newRole)) {
+    throw new Error(`Invalid role: ${newRole}`);
+  }
+
+  // Prevent a super admin from demoting themselves (and leaving no super admin)
+  if (admin.id === adminId) {
+    throw new Error("You cannot change your own role");
   }
 
   const { error } = await supabaseAdmin
@@ -127,15 +114,10 @@ export async function updateAdminRole(adminId: string, newRole: string) {
 
 // Deactivate admin (super admin only)
 export async function deactivateAdmin(adminId: string) {
-  const isSuper = await isSuperAdmin();
-  if (!isSuper) {
-    throw new Error("Only super admins can deactivate accounts");
-  }
+  const admin = await requireAdmin('super_admin');
 
   // Prevent deactivating yourself
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user?.id === adminId) {
+  if (admin.id === adminId) {
     throw new Error("You cannot deactivate your own account");
   }
 
@@ -149,14 +131,33 @@ export async function deactivateAdmin(adminId: string) {
     throw new Error(`Failed to deactivate: ${error.message}`);
   }
 
+  // Also block the account from signing in anywhere (~100 years; undone on reactivate).
+  // If this fails the admin is still locked out of the dashboard by `is_active`.
+  const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(adminId, {
+    ban_duration: '876000h',
+  });
+
+  if (banError) {
+    console.error("Error banning deactivated admin:", banError);
+    revalidatePath('/team');
+    throw new Error(`Deactivated, but failed to block sign-in: ${banError.message}`);
+  }
+
   revalidatePath('/team');
 }
 
 // Reactivate admin (super admin only)
 export async function reactivateAdmin(adminId: string) {
-  const isSuper = await isSuperAdmin();
-  if (!isSuper) {
-    throw new Error("Only super admins can reactivate accounts");
+  await requireAdmin('super_admin');
+
+  // Lift the sign-in ban first, so a failure leaves the account fully deactivated
+  const { error: unbanError } = await supabaseAdmin.auth.admin.updateUserById(adminId, {
+    ban_duration: 'none',
+  });
+
+  if (unbanError) {
+    console.error("Error lifting ban on admin:", unbanError);
+    throw new Error(`Failed to reactivate: ${unbanError.message}`);
   }
 
   const { error } = await supabaseAdmin

@@ -1,12 +1,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { updateProduct } from "@/app/(dashboard)/addproduct/actions";
 import { notFound } from "next/navigation";
 import { ProductImageUpload } from "@/components/ProductImageUpload";
 
 async function getProduct(id: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("products")
     .select("*")
     .eq("product_id", parseInt(id))
@@ -19,7 +19,7 @@ async function getProduct(id: string) {
 }
 
 async function getCategories() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("categories")
     .select("categorie_id, categorie_name")
     .order("categorie_name");
@@ -29,7 +29,7 @@ async function getCategories() {
 }
 
 async function getBrands() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("brands")
     .select("brand_id, brand_name")
     .order("brand_name");

@@ -2,51 +2,42 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getCurrentAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 export async function updateAdminProfile(prevState: any, formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const admin = await getCurrentAdmin();
 
-  if (!user) {
+  if (!admin) {
     return { success: false, message: "Unauthorized" };
   }
 
-  const id = formData.get("id") as string;
-  const fullName = formData.get("fullName") as string;
-  const role = formData.get("role") as string;
+  const fullName = (formData.get("fullName") as string | null)?.trim();
   const email = formData.get("email") as string; // Standard auth update
-  // const isActive = formData.get("isActive") === "on"; // You generally don't edit your own active status to false, but let's leave it for now or omit.
 
-  if (id !== user.id) {
-    return { success: false, message: "You can only edit your own profile." };
+  if (!fullName) {
+    return { success: false, message: "Full name is required." };
   }
 
-  // 1. Update/Create Admins Table
-  // Using supabaseAdmin to bypass RLS recursion issues
-  // Using upsert to handle cases where the admin row hasn't been created yet (e.g. manual SQL users)
+  // 1. Update the admin's own row. The id comes from the session, never from the form,
+  // and role / active status are only changed by super admins on the Team page.
   const { error: profileError } = await supabaseAdmin
     .from("admins")
-    .upsert({
-      id: id,
-      full_name: fullName,
-      role: role,
-      // is_active: true, // Ensuring active if creating
-    }, { onConflict: 'id' });
+    .update({ full_name: fullName })
+    .eq("id", admin.id);
 
   if (profileError) {
     return { success: false, message: "Failed to update profile details: " + profileError.message };
   }
 
   // 2. Sync to Auth Metadata for extra redundancy
+  const supabase = await createClient();
   await supabase.auth.updateUser({
     data: { full_name: fullName }
   });
 
   // 3. Update Auth Email if changed
-  if (email && email !== user.email) {
+  if (email && email !== admin.email) {
     const { error: authError } = await supabase.auth.updateUser({ email });
     if (authError) {
       revalidatePath("/", "layout"); // Ensure layout updates

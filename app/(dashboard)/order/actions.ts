@@ -2,16 +2,19 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/utils/supabase/server";
+import { requireAdmin } from "@/lib/auth";
+import { isOrderStatus } from "@/lib/orders";
 
 export async function updateOrderStatus(orderId: string, newStatus: string) {
+    const admin = await requireAdmin("admin");
+
     if (!orderId || !newStatus) {
         throw new Error("Order ID and status are required");
     }
 
-    // Get current user for logging
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!isOrderStatus(newStatus)) {
+        throw new Error(`Invalid order status: ${newStatus}`);
+    }
 
     // Get current status before update
     const { data: order } = await supabaseAdmin
@@ -38,7 +41,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
         order_id: parseInt(orderId),
         old_status: oldStatus,
         new_status: newStatus,
-        changed_by: user?.id,
+        changed_by: admin.id,
     });
 
     revalidatePath("/order");
@@ -62,16 +65,11 @@ export async function getOrderTimeline(orderId: string) {
 
 // Add internal note to order
 export async function addOrderNote(orderId: string, note: string) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        throw new Error("You must be logged in to add notes");
-    }
+    const admin = await requireAdmin("admin");
 
     const { error } = await supabaseAdmin.from('order_notes').insert({
         order_id: parseInt(orderId),
-        admin_id: user.id,
+        admin_id: admin.id,
         note,
     });
 

@@ -1,12 +1,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { addProduct } from "./actions";
 import { ProductImageUpload } from "@/components/ProductImageUpload";
 
 async function getCategories() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from('categories')
         .select('categorie_id, categorie_name')
         .order('categorie_name');
@@ -18,7 +18,7 @@ async function getCategories() {
     return data || [];
 }
 async function getBrands() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from('brands')
         .select('brand_id, brand_name')
         .order('brand_name');

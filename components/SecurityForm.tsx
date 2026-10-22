@@ -65,7 +65,7 @@ export function SecurityForm() {
             name="password"
             type="password"
             required
-            minLength={6}
+            minLength={8}
           />
         </div>
         <div className="space-y-2">
@@ -75,7 +75,7 @@ export function SecurityForm() {
             name="confirmPassword"
             type="password"
             required
-            minLength={6}
+            minLength={8}
           />
         </div>
         <Button

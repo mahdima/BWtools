@@ -4,13 +4,13 @@ import { columns, Brand } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { Modal } from "@/components/Modal";
 import { BrandForm } from "@/components/BrandForm";
 import { addBrand, updateBrand } from "./actions";
 
 async function getData(): Promise<Brand[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("brands")
     .select("*")
     .order("brand_id");
@@ -27,7 +27,7 @@ async function getData(): Promise<Brand[]> {
 }
 
 async function getBrand(id: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("brands")
     .select("*")
     .eq("brand_id", parseInt(id))

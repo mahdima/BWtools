@@ -2,13 +2,13 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
 import material from "@/img/material.jpg"
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { updateCategory } from "@/app/(dashboard)/addcategory/actions";
 import { notFound } from "next/navigation";
 import { CategoryImageUpload } from "@/components/CategoryImageUpload";
 
 async function getCategory(id: string) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from('categories')
         .select('*')
         .eq('categorie_id', parseInt(id))

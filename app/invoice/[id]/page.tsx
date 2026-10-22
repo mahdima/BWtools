@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireAdminPage } from "@/lib/auth";
 import { InvoicePrintable } from "@/components/invoice-printable";
 import { notFound } from "next/navigation";
 
@@ -9,6 +10,7 @@ interface InvoicePageProps {
 }
 
 export default async function InvoicePage({ params }: InvoicePageProps) {
+  await requireAdminPage();
   const { id } = await params;
 
   // Fetch Order

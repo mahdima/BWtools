@@ -3,13 +3,12 @@
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
+import { toast } from "sonner";
 import { updateAdminProfile } from "@/app/(dashboard)/profile/update-actions";
 
 interface ProfileEditDialogProps {
   admin: {
-    id: string;
     full_name: string | null;
-    role: string | null;
     email: string | undefined;
   };
   className?: string;
@@ -41,8 +40,7 @@ export function ProfileEditDialog({
     const result = await updateAdminProfile(null, formData);
     if (result.success) {
       setIsOpen(false);
-      // Optional: Toast usually goes here
-      alert(result.message);
+      toast.success(result.message);
     } else {
       setMessage(result.message);
     }
@@ -70,8 +68,6 @@ export function ProfileEditDialog({
         </div>
 
         <form action={clientAction} className="p-6 space-y-4">
-          <input type="hidden" name="id" value={admin.id} />
-
           {message && (
             <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
               {message}
@@ -103,38 +99,6 @@ export function ProfileEditDialog({
             <p className="text-xs text-muted-foreground text-gray-400">
               Changing email will require confirmation.
             </p>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Role</label>
-            <div className="relative">
-              <select
-                name="role"
-                defaultValue={admin.role || "viewer"}
-                className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-sm appearance-none"
-              >
-                <option value="viewer">Viewer</option>
-                <option value="editor">Editor</option>
-                <option value="admin">Admin</option>
-                <option value="super_admin">Super Admin</option>
-              </select>
-              {/* Simple arrow for select */}
-              <div className="absolute right-3 top-3 pointer-events-none">
-                <svg
-                  className="h-4 w-4 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
           </div>
 
           <div className="pt-4 flex justify-end gap-3">

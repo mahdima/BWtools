@@ -4,9 +4,9 @@ import { columns, Category } from "./columns";
 import { CategoryForm } from "@/components/CategoryForm";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 async function getData(): Promise<Category[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("categories")
     .select("*")
     .order("categorie_id");

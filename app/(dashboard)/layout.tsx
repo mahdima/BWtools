@@ -1,5 +1,5 @@
 import Sidebar from "@/components/Sidebar";
-import { getAdminProfile } from "./profile/actions";
+import { requireAdminPage } from "@/lib/auth";
 import { getNotifications } from "./notifications/actions";
 import { MobileSidebarWrapper } from "@/components/mobile-sidebar-wrapper";
 
@@ -8,7 +8,7 @@ export default async function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const profile = await getAdminProfile();
+  const admin = await requireAdminPage();
   const notifications = await getNotifications();
 
   return (
@@ -16,8 +16,8 @@ export default async function DashboardLayout({
       <div className="flex flex-1 overflow-hidden">
         <MobileSidebarWrapper>
           <Sidebar
-            userEmail={profile?.email || "Guest"}
-            userName={profile?.full_name}
+            userEmail={admin.email}
+            userName={admin.full_name ?? undefined}
             notifications={notifications}
           />
         </MobileSidebarWrapper>

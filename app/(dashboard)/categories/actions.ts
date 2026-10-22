@@ -1,9 +1,14 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { getAuthorizedAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
+const NOT_AUTHORIZED = { success: false, message: "Not authorized" };
+
 export async function addCategory(formData: FormData) {
+  if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+
   const supabase = await createClient();
   const name = formData.get("categoryName") as string;
 
@@ -24,6 +29,8 @@ export async function addCategory(formData: FormData) {
 }
 
 export async function updateCategory(formData: FormData) {
+  if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+
   const supabase = await createClient();
   const id = formData.get("id") as string;
   const name = formData.get("categoryName") as string;
@@ -46,6 +53,8 @@ export async function updateCategory(formData: FormData) {
 }
 
 export async function deleteCategory(id: string) {
+  if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+
   const supabase = await createClient();
 
   const { error } = await supabase

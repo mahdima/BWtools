@@ -1,10 +1,13 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { revalidatePath } from "next/cache"; 
+import { requireAdmin } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function addBrand(formData: FormData) {
+    await requireAdmin("admin");
+
     const brand_name = formData.get("brand")?.toString();
 
     if (!brand_name) {
@@ -36,6 +39,8 @@ export async function addBrand(formData: FormData) {
 }
 
 export async function updateBrand(brandId: string, formData: FormData) {
+    await requireAdmin("admin");
+
     const brand_name = formData.get("brand")?.toString();
 
     if (!brandId || !brand_name) {
@@ -57,6 +62,8 @@ export async function updateBrand(brandId: string, formData: FormData) {
 }
 
 export async function deleteBrand(brandId: string) {
+    await requireAdmin("admin");
+
     if (!brandId) {
         throw new Error("Brand ID is required for deletion");
     }

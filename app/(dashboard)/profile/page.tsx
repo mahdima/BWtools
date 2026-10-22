@@ -1,15 +1,11 @@
-import { getAdminProfile } from "./actions";
+import { requireAdminPage } from "@/lib/auth";
 import { User, Mail, Shield, Calendar } from "lucide-react";
 import Image from "next/image";
 import man from "../../../img/man.png";
 import { ProfileEditDialog } from "@/components/profile-edit-dialog";
 
 export default async function ProfilePage() {
-  const admin = await getAdminProfile();
-
-  if (!admin) {
-    return <div>Please log in.</div>;
-  }
+  const admin = await requireAdminPage();
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -43,14 +39,9 @@ export default async function ProfilePage() {
                   <p className="text-gray-500 font-medium capitalize">
                     {admin.role}
                   </p>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                      admin.is_active
-                        ? "bg-green-50 text-green-700 border-green-200"
-                        : "bg-red-50 text-red-700 border-red-200"
-                    }`}
-                  >
-                    {admin.is_active ? "ACTIVE" : "INACTIVE"}
+                  {/* Only active admins can reach this page */}
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-50 text-green-700 border-green-200">
+                    ACTIVE
                   </span>
                 </div>
               </div>
@@ -58,9 +49,7 @@ export default async function ProfilePage() {
             {/* Action Buttons */}
             <ProfileEditDialog
               admin={{
-                id: admin.id,
                 full_name: admin.full_name,
-                role: admin.role,
                 email: admin.email,
               }}
               className="mb-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium shadow-sm hover:bg-gray-50 transition-all"
@@ -108,7 +97,9 @@ export default async function ProfilePage() {
                   Joined
                 </p>
                 <p className="font-semibold text-gray-900 mt-1">
-                  {new Date(admin.created_at).toLocaleDateString()}
+                  {admin.created_at
+                    ? new Date(admin.created_at).toLocaleDateString()
+                    : "—"}
                 </p>
               </div>
             </div>

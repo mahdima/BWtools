@@ -1,10 +1,10 @@
 import React, { Suspense } from "react";
 import { DataTable } from "@/components/data-table";
 import { columns, Customer } from "./columns";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 async function getData(): Promise<Customer[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("profiles_with_email")
     .select("*");
 

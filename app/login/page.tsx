@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { use, useActionState } from "react";
 import { login } from "./actions";
 import material from "../../img/material.jpg";
 import logo from "../../img/Asset 3.png";
@@ -10,8 +10,18 @@ const initialState = {
   error: "",
 };
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const [state, formAction, isPending] = useActionState(login, initialState);
+  const { error: redirectError } = use(searchParams);
+  const errorMessage =
+    state?.error ||
+    (redirectError === "unauthorized"
+      ? "This account does not have dashboard access."
+      : "");
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -75,9 +85,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {state?.error && (
+            {errorMessage && (
               <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md border border-red-200">
-                {state.error}
+                {errorMessage}
               </div>
             )}
 

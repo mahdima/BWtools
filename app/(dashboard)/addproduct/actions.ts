@@ -1,10 +1,13 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function addProduct(formData: FormData) {
+    await requireAdmin("admin");
+
     const product_name = formData.get("product")?.toString();
     const Category_id = formData.get("category")?.toString();
     const unite_price = formData.get("price")?.toString();
@@ -74,6 +77,8 @@ export async function addProduct(formData: FormData) {
 }
 
 export async function deleteProduct(productId: string) {
+    await requireAdmin("admin");
+
     if (!productId) {
         throw new Error("Product ID is required for deletion");
     }
@@ -92,6 +97,8 @@ export async function deleteProduct(productId: string) {
 }
 
 export async function updateProduct(productId: string, formData: FormData) {
+    await requireAdmin("admin");
+
     const product_name = formData.get("product")?.toString();
     const Category_id = formData.get("category")?.toString();
     const unite_price = formData.get("price")?.toString();

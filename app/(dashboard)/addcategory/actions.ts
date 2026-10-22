@@ -1,10 +1,13 @@
 'use server'
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function addCategory(formData: FormData) {
+    await requireAdmin("admin");
+
     try {
         const categorie_name = formData.get("categoryName")?.toString();
 
@@ -83,6 +86,8 @@ export async function addCategory(formData: FormData) {
 }
 
 export async function deleteCategory(categoryId: string) {
+    await requireAdmin("admin");
+
     if (!categoryId) {
         throw new Error("Category ID is required for deletion");
     }
@@ -101,6 +106,8 @@ export async function deleteCategory(categoryId: string) {
 }
 
 export async function updateCategory(categoryId: string, formData: FormData) {
+    await requireAdmin("admin");
+
     try {
         const categorie_name = formData.get("categoryName")?.toString();
 
