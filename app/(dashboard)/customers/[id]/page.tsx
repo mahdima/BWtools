@@ -21,12 +21,12 @@ export default async function CustomerPage({ params }: CustomerPageProps) {
   const title = customer.name || customer.username || customer.email || "Customer";
 
   return (
-    <div className="p-4 pl-16 lg:pl-6 max-w-5xl mx-auto w-full overflow-auto">
+    <div className="p-4 ps-16 lg:ps-6 max-w-5xl mx-auto w-full overflow-auto">
       <Link
         href="/customers"
         className="inline-flex items-center text-sm text-gray-500 hover:text-primary mb-4 transition-colors"
       >
-        <ArrowLeft className="h-4 w-4 mr-1" /> Back to Customers
+        <ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" /> Back to Customers
       </Link>
       <h1 className="text-3xl font-bold text-gray-900 mb-1">{title}</h1>
       {customer.username && customer.username !== title && (
@@ -49,18 +49,18 @@ export default async function CustomerPage({ params }: CustomerPageProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <h2 className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 font-semibold text-gray-900 flex items-center">
-            <ShoppingBag className="h-5 w-5 mr-2 text-primary" aria-hidden /> Orders
+            <ShoppingBag className="h-5 w-5 me-2 text-primary" aria-hidden /> Orders
           </h2>
           {customer.orders.length === 0 ? (
             <p className="p-6 text-sm text-gray-500">No orders yet.</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase text-gray-500">
+                <tr className="text-start text-xs uppercase text-gray-500">
                   <th className="px-6 py-3 font-medium">Order</th>
                   <th className="px-6 py-3 font-medium">Date</th>
                   <th className="px-6 py-3 font-medium">Status</th>
-                  <th className="px-6 py-3 font-medium text-right">Total</th>
+                  <th className="px-6 py-3 font-medium text-end">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -73,7 +73,7 @@ export default async function CustomerPage({ params }: CustomerPageProps) {
                     </td>
                     <td className="px-6 py-3 text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-3 text-gray-600">{order.status ?? "—"}</td>
-                    <td className="px-6 py-3 text-right font-medium">{dzd.format(order.total)}</td>
+                    <td className="px-6 py-3 text-end font-medium">{dzd.format(order.total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -96,7 +96,7 @@ export default async function CustomerPage({ params }: CustomerPageProps) {
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
             <h2 className="font-semibold text-gray-900 flex items-center">
-              <MapPin className="h-4 w-4 mr-2 text-gray-400" aria-hidden /> Addresses
+              <MapPin className="h-4 w-4 me-2 text-gray-400" aria-hidden /> Addresses
             </h2>
             {customer.addresses.length === 0 ? (
               <p className="text-sm text-gray-500">No saved addresses.</p>

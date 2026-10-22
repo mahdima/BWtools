@@ -38,7 +38,7 @@ export function OrderStatusActions({ orderId, currentStatus }: OrderStatusAction
                 : () => startTransition(async () => void (await runWithToast(() => updateOrderStatus(orderId, status))))
             }
           >
-            <Icon className="h-4 w-4 mr-2" /> {label}
+            <Icon className="h-4 w-4 me-2" /> {label}
           </Button>
         );
 

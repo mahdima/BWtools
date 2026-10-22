@@ -37,7 +37,7 @@ export function OrderNotes({ orderId, notes }: OrderNotesProps) {
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
         <h2 className="font-semibold text-gray-900 flex items-center">
-          <MessageSquare className="h-5 w-5 mr-2 text-primary" />
+          <MessageSquare className="h-5 w-5 me-2 text-primary" />
           Internal Notes
         </h2>
       </div>

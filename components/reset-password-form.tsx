@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { updatePassword } from "@/app/(dashboard)/settings/actions";
 import { useFormAction } from "@/lib/use-form-action";
+import { useTranslations } from "next-intl";
 
 const inputClass =
   "mt-1 appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm";
@@ -12,10 +13,11 @@ const inputClass =
 // New password after a reset link; same rules as Settings (8-72 characters, must match).
 export function ResetPasswordForm() {
   const router = useRouter();
+  const t = useTranslations("auth");
   const { state, isPending, onSubmit } = useFormAction(async (_prev, formData) => {
     const result = await updatePassword(formData);
     if (result.success) {
-      toast.success("Password updated. You're signed in.");
+      toast.success(t("passwordUpdated"));
       router.push("/");
     }
     return result;
@@ -25,7 +27,7 @@ export function ResetPasswordForm() {
     <form onSubmit={onSubmit} className="space-y-5">
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          New password
+          {t("newPassword")}
         </label>
         <input
           id="password"
@@ -40,7 +42,7 @@ export function ResetPasswordForm() {
       </div>
       <div>
         <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-          Confirm new password
+          {t("confirmNewPassword")}
         </label>
         <input
           id="confirmPassword"
@@ -66,7 +68,7 @@ export function ResetPasswordForm() {
         className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-strong disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Update password
+        {t("updatePassword")}
       </button>
     </form>
   );

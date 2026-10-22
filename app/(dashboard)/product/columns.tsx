@@ -41,10 +41,10 @@ export const columns: ColumnDef<Product>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="w-64 justify-start pl-0 hover:bg-transparent h-8"
+          className="w-64 justify-start ps-0 hover:bg-transparent h-8"
         >
           Product
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ms-2 h-4 w-4" />
         </Button>
       );
     },
@@ -64,10 +64,10 @@ export const columns: ColumnDef<Product>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="w-40 justify-start pl-0 hover:bg-transparent h-8"
+          className="w-40 justify-start ps-0 hover:bg-transparent h-8"
         >
           Category
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ms-2 h-4 w-4" />
         </Button>
       );
     },
@@ -84,10 +84,10 @@ export const columns: ColumnDef<Product>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="w-32 justify-start pl-0 hover:bg-transparent h-8"
+          className="w-32 justify-start ps-0 hover:bg-transparent h-8"
         >
           Brand
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ms-2 h-4 w-4" />
         </Button>
       );
     },
@@ -104,10 +104,10 @@ export const columns: ColumnDef<Product>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="w-32 justify-start pl-0 hover:bg-transparent h-8"
+          className="w-32 justify-start ps-0 hover:bg-transparent h-8"
         >
           Price
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ms-2 h-4 w-4" />
         </Button>
       );
     },

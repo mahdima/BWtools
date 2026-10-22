@@ -6,7 +6,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-outfit);
+  /* Outfit has no Arabic letters; those fall through to Noto Sans Arabic (P7-04) */
+  --font-sans: var(--font-outfit), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
 
   /* Sidebar */
   --color-sidebar: var(--sidebar);

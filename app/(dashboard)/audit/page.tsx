@@ -29,7 +29,7 @@ export default async function AuditPage({
   const pageCount = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
   return (
-    <div className="flex h-full w-full flex-col overflow-auto p-4 pl-16 lg:pl-4">
+    <div className="flex h-full w-full flex-col overflow-auto p-4 ps-16 lg:ps-4">
       <div className="py-4">
         <h1 className="text-2xl font-bold text-gray-900">Audit log</h1>
         <p className="text-sm text-gray-500">Who changed what in the dashboard, newest first</p>

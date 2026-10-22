@@ -11,7 +11,7 @@ export default async function TeamPage() {
   const isSuper = admin.role === "super_admin";
 
   return (
-    <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">
+    <div className="flex flex-col h-full p-4 ps-16 lg:ps-4 w-full overflow-auto">
       {/* Header */}
       <div className="flex items-center justify-between py-4 mb-4">
         <div>
@@ -23,7 +23,7 @@ export default async function TeamPage() {
         {isSuper && (
           <Link href="/team/new">
             <Button className="bg-primary text-white hover:bg-primary-strong">
-              <UserPlus className="mr-2 h-4 w-4" /> Add Admin
+              <UserPlus className="me-2 h-4 w-4" /> Add Admin
             </Button>
           </Link>
         )}

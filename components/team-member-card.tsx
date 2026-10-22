@@ -120,33 +120,33 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
                 onClick={() => handleRoleChange("super_admin")}
                 disabled={member.role === "super_admin"}
               >
-                <Shield className="h-4 w-4 mr-2 text-purple-600" />
+                <Shield className="h-4 w-4 me-2 text-purple-600" />
                 Super Admin
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleRoleChange("admin")}
                 disabled={member.role === "admin"}
               >
-                <UserCog className="h-4 w-4 mr-2 text-blue-600" />
+                <UserCog className="h-4 w-4 me-2 text-blue-600" />
                 Admin
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleRoleChange("viewer")}
                 disabled={member.role === "viewer"}
               >
-                <Eye className="h-4 w-4 mr-2 text-gray-600" />
+                <Eye className="h-4 w-4 me-2 text-gray-600" />
                 Viewer
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleToggleActive}>
                 {member.is_active ? (
                   <>
-                    <UserX className="h-4 w-4 mr-2 text-red-600" />
+                    <UserX className="h-4 w-4 me-2 text-red-600" />
                     Deactivate
                   </>
                 ) : (
                   <>
-                    <UserCheck className="h-4 w-4 mr-2 text-green-600" />
+                    <UserCheck className="h-4 w-4 me-2 text-green-600" />
                     Reactivate
                   </>
                 )}

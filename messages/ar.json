@@ -1,0 +1,68 @@
+{
+  "common": {
+    "language": "اللغة",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "goToDashboard": "الذهاب إلى لوحة التحكم",
+    "emailAddress": "البريد الإلكتروني",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "products": "المنتجات",
+    "brands": "العلامات التجارية",
+    "customers": "العملاء",
+    "categories": "الفئات",
+    "orders": "الطلبات",
+    "reports": "التقارير",
+    "team": "الفريق",
+    "auditLog": "سجل التدقيق",
+    "myAccount": "حسابي",
+    "myProfile": "ملفي الشخصي",
+    "settings": "الإعدادات",
+    "logout": "تسجيل الخروج",
+    "adminAccount": "حساب مسؤول",
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة"
+  },
+  "table": {
+    "filterPlaceholder": "تصفية...",
+    "noResults": "لا توجد نتائج.",
+    "firstPage": "الانتقال إلى الصفحة الأولى",
+    "previousPage": "الانتقال إلى الصفحة السابقة",
+    "nextPage": "الانتقال إلى الصفحة التالية",
+    "lastPage": "الانتقال إلى الصفحة الأخيرة",
+    "pageOf": "الصفحة {page} من {count}",
+    "bulkActions": "إجراءات جماعية",
+    "selected": "{count, plural, zero {لم يُحدَّد شيء} one {عنصر واحد محدد} two {عنصران محددان} few {# عناصر محددة} many {# عنصرًا محددًا} other {# عنصر محدد}}",
+    "clearSelection": "إلغاء التحديد",
+    "selectAll": "تحديد كل صفوف هذه الصفحة",
+    "selectRow": "تحديد الصف {id}"
+  },
+  "auth": {
+    "welcome": "مرحبًا بعودتك إلى BW Tools",
+    "password": "كلمة المرور",
+    "signIn": "تسجيل الدخول",
+    "signingIn": "جارٍ تسجيل الدخول...",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccess": "هذا الحساب لا يملك صلاحية الدخول إلى لوحة التحكم.",
+    "resetLinkInvalid": "رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. اطلب رابطًا جديدًا.",
+    "forgotIntro": "أدخل بريدك الإلكتروني كمسؤول وسنرسل إليك رابطًا لاختيار كلمة مرور جديدة.",
+    "sendResetLink": "إرسال الرابط",
+    "backToSignIn": "العودة إلى تسجيل الدخول",
+    "resetTitle": "اختر كلمة مرور جديدة",
+    "resetFor": "للحساب {email}",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+    "updatePassword": "تحديث كلمة المرور",
+    "passwordUpdated": "تم تحديث كلمة المرور. أنت الآن متصل."
+  },
+  "errors": {
+    "title": "حدث خطأ ما",
+    "pageNotLoaded": "تعذّر تحميل الصفحة. حاول مرة أخرى؛ وإذا تكرر الأمر فشارك المرجع أدناه.",
+    "reference": "مرجع الخطأ: {digest}",
+    "tryAgain": "إعادة المحاولة",
+    "notFoundTitle": "الصفحة غير موجودة",
+    "notFoundText": "الصفحة أو العنصر الذي تبحث عنه غير موجود، أو تم حذفه."
+  }
+}

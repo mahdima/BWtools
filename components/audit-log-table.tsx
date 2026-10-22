@@ -84,7 +84,7 @@ function EntryRow({ entry }: { entry: AuditEntry }) {
 export function AuditLogTable({ entries }: { entries: AuditEntry[] }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-      <table className="w-full min-w-[720px] text-left text-sm">
+      <table className="w-full min-w-[720px] text-start text-sm">
         <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
           <tr>
             <th scope="col" className="px-4 py-3 font-medium">When</th>

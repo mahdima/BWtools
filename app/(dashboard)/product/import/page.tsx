@@ -11,10 +11,10 @@ export default async function ProductImportPage() {
   const { categories, brands } = await getProductFormOptions();
 
   return (
-    <div className="flex h-full w-full flex-col space-y-4 overflow-auto p-4 pl-16 lg:pl-4">
+    <div className="flex h-full w-full flex-col space-y-4 overflow-auto p-4 ps-16 lg:ps-4">
       <div className="py-2">
         <Link href="/product" className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary">
-          <ArrowLeft className="h-4 w-4" /> Products
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" /> Products
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Import products</h1>
         <div className="mt-2 max-w-3xl space-y-1 text-sm text-gray-600">

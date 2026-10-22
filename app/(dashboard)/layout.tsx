@@ -23,7 +23,7 @@ export default async function DashboardLayout({
             notifications={notifications}
           />
         </MobileSidebarWrapper>
-        <main className="flex-1 w-0 bg-accent overflow-hidden flex flex-col lg:ml-0">
+        <main className="flex-1 w-0 bg-accent overflow-hidden flex flex-col lg:ms-0">
           {children}
         </main>
       </div>

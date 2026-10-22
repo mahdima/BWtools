@@ -16,7 +16,7 @@ export default async function ReportsPage({ searchParams }: ReportsProps) {
   const sales = await getSalesReport(period);
 
   return (
-    <div className="flex h-full w-full flex-col space-y-4 overflow-auto p-4 pl-16 lg:pl-4">
+    <div className="flex h-full w-full flex-col space-y-4 overflow-auto p-4 ps-16 lg:ps-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reports</h1>

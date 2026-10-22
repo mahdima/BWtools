@@ -34,7 +34,9 @@ export function RevenueChart({ data }: RevenueChartProps) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 h-full min-h-[300px] flex flex-col">
       <h3 className="text-lg font-bold text-gray-900 mb-4">Revenue Overview</h3>
+      {/* Time runs left to right in every language */}
       <div
+        dir="ltr"
         className="flex-1 w-full min-h-0"
         style={{ position: "relative", width: "100%", height: "100%" }}
       >

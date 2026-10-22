@@ -25,7 +25,7 @@ export function OrderTimeline({ events }: OrderTimelineProps) {
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
         <h2 className="font-semibold text-gray-900 flex items-center">
-          <Clock className="h-5 w-5 mr-2 text-primary" />
+          <Clock className="h-5 w-5 me-2 text-primary" />
           Status History
         </h2>
       </div>
@@ -40,7 +40,7 @@ export function OrderTimeline({ events }: OrderTimelineProps) {
               <div key={event.id} className="flex items-start gap-3 relative">
                 {/* Timeline Line */}
                 {index < events.length - 1 && (
-                  <div className="absolute left-[11px] top-6 w-0.5 h-full bg-gray-200" />
+                  <div className="absolute start-[11px] top-6 w-0.5 h-full bg-gray-200" />
                 )}
 
                 {/* Timeline Dot */}
@@ -61,7 +61,7 @@ export function OrderTimeline({ events }: OrderTimelineProps) {
                         >
                           {event.old_status}
                         </span>
-                        <ArrowRight className="h-3 w-3 text-gray-400" />
+                        <ArrowRight className="h-3 w-3 text-gray-400 rtl:rotate-180" />
                       </>
                     )}
                     <span

@@ -51,7 +51,7 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
       : { categories: [], brands: [] };
 
   return (
-    <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">
+    <div className="flex flex-col h-full p-4 ps-16 lg:ps-4 w-full overflow-auto">
       <Suspense fallback={<div>Loading...</div>}>
         <DataTable
           columns={columns}
@@ -90,7 +90,7 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
                 }`}
               >
                 <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
-                  <Plus className="mr-2 h-4 w-4" /> Add Product
+                  <Plus className="me-2 h-4 w-4" /> Add Product
                 </Button>
               </Link>
             </Can>

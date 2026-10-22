@@ -37,7 +37,7 @@ export default async function Home({ searchParams }: DashboardProps) {
   };
 
   return (
-    <div className="p-4 pl-16 lg:pl-4 w-full lg:w-[98%] mx-auto h-[calc(100vh-2rem)] flex flex-col space-y-4 overflow-auto">
+    <div className="p-4 ps-16 lg:ps-4 w-full lg:w-[98%] mx-auto h-[calc(100vh-2rem)] flex flex-col space-y-4 overflow-auto">
       <div className="flex-none flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>

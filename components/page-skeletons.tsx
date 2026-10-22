@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function Loading({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div role="status" aria-label="Loading" className={`p-4 pl-16 lg:pl-4 w-full ${className}`}>
+    <div role="status" aria-label="Loading" className={`p-4 ps-16 lg:ps-4 w-full ${className}`}>
       {children}
       <span className="sr-only">Loading…</span>
     </div>

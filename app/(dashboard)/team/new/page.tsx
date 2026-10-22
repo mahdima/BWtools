@@ -19,7 +19,7 @@ export default async function NewAdminPage() {
         href="/team"
         className="inline-flex items-center text-sm text-gray-500 hover:text-primary mb-4 transition-colors"
       >
-        <ArrowLeft className="h-4 w-4 mr-1" /> Back to Team
+        <ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" /> Back to Team
       </Link>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">

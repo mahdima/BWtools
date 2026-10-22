@@ -23,7 +23,8 @@ export function InvoicePrintable({ order, store }: InvoiceProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-8 bg-white text-black min-h-screen">
+    // The invoice is an English, left-to-right document whatever the admin's language
+    <div dir="ltr" className="max-w-4xl mx-auto p-8 bg-white text-black min-h-screen">
       {/* Header / Actions (Hidden on Print) */}
       <div className="flex justify-end mb-8 print:hidden">
         <Button onClick={handlePrint} className="flex gap-2">

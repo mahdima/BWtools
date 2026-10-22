@@ -17,7 +17,7 @@ const CustomersPage = async ({ searchParams }: CustomersPageProps) => {
   const pageCount = Math.ceil(count / limit);
 
   return (
-    <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">
+    <div className="flex flex-col h-full p-4 ps-16 lg:ps-4 w-full overflow-auto">
       <Suspense fallback={<div>Loading...</div>}>
         <DataTable
           columns={columns}

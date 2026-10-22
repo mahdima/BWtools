@@ -33,6 +33,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "./ui/input";
 import { SelectCheckbox, TableSelectionContext } from "./table-selection";
+import { useTranslations } from "next-intl";
 import {
   Pagination,
   PaginationContent,
@@ -68,7 +69,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
-  searchPlaceholder = "Filter...",
+  searchPlaceholder,
   headerActions,
   filterTabs,
   rowLinkPath,
@@ -81,6 +82,7 @@ export function DataTable<TData, TValue>({
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations("table");
 
   const page = searchParams.get("page");
   const initialPageIndex = page ? parseInt(page) - 1 : 0;
@@ -163,7 +165,7 @@ export function DataTable<TData, TValue>({
     id: "select",
     header: ({ table }) => (
       <SelectCheckbox
-        label="Select all rows on this page"
+        label={t("selectAll")}
         checked={table.getIsAllPageRowsSelected()}
         indeterminate={table.getIsSomePageRowsSelected()}
         onChange={(checked) => table.toggleAllPageRowsSelected(checked)}
@@ -171,7 +173,7 @@ export function DataTable<TData, TValue>({
     ),
     cell: ({ row }) => (
       <SelectCheckbox
-        label={`Select row ${row.id}`}
+        label={t("selectRow", { id: row.id })}
         checked={row.getIsSelected()}
         onChange={(checked) => row.toggleSelected(checked)}
       />
@@ -242,7 +244,7 @@ export function DataTable<TData, TValue>({
         {/* Title & Filter Tabs (Left Side) */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           {(title || description) && (
-            <div className="lg:mr-8">
+            <div className="lg:me-8">
               {title && (
                 <h1 className="text-2xl font-bold text-gray-900 leading-none">
                   {title}
@@ -297,7 +299,7 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center gap-2">
           {searchKey && (
             <Input
-              placeholder={searchPlaceholder}
+              placeholder={searchPlaceholder ?? t("filterPlaceholder")}
               value={
                 isServerSide
                   ? searchValue
@@ -325,13 +327,13 @@ export function DataTable<TData, TValue>({
         <TableSelectionContext.Provider value={{ selectedIds, clear: () => setRowSelection({}) }}>
           <div
             role="region"
-            aria-label="Bulk actions"
+            aria-label={t("bulkActions")}
             className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm"
           >
-            <span className="font-medium text-gray-900">{selectedIds.length} selected</span>
+            <span className="font-medium text-gray-900">{t("selected", { count: selectedIds.length })}</span>
             {bulkActions}
-            <Button variant="ghost" size="sm" className="ml-auto h-8" onClick={() => setRowSelection({})}>
-              Clear selection
+            <Button variant="ghost" size="sm" className="ms-auto h-8" onClick={() => setRowSelection({})}>
+              {t("clearSelection")}
             </Button>
           </div>
         </TableSelectionContext.Provider>
@@ -393,7 +395,7 @@ export function DataTable<TData, TValue>({
                   colSpan={allColumns.length}
                   className="h-18 text-center"
                 >
-                  No results.
+                  {t("noResults")}
                 </TableCell>
               </TableRow>
             )}
@@ -411,8 +413,8 @@ export function DataTable<TData, TValue>({
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to first page</span>
-                <ChevronsLeft className="h-4 w-4" />
+                <span className="sr-only">{t("firstPage")}</span>
+                <ChevronsLeft className="h-4 w-4 rtl:rotate-180" />
               </Button>
             </PaginationItem>
             <PaginationItem>
@@ -422,15 +424,17 @@ export function DataTable<TData, TValue>({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to previous page</span>
-                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">{t("previousPage")}</span>
+                <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
               </Button>
             </PaginationItem>
 
             <PaginationItem>
               <div className="flex items-center justify-center text-sm font-medium w-[100px]">
-                Page {table.getState().pagination.pageIndex + 1} of{" "}
-                {table.getPageCount()}
+                {t("pageOf", {
+                  page: table.getState().pagination.pageIndex + 1,
+                  count: table.getPageCount(),
+                })}
               </div>
             </PaginationItem>
 
@@ -441,8 +445,8 @@ export function DataTable<TData, TValue>({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to next page</span>
-                <ChevronRight className="h-4 w-4" />
+                <span className="sr-only">{t("nextPage")}</span>
+                <ChevronRight className="h-4 w-4 rtl:rotate-180" />
               </Button>
             </PaginationItem>
             <PaginationItem>
@@ -452,8 +456,8 @@ export function DataTable<TData, TValue>({
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to last page</span>
-                <ChevronsRight className="h-4 w-4" />
+                <span className="sr-only">{t("lastPage")}</span>
+                <ChevronsRight className="h-4 w-4 rtl:rotate-180" />
               </Button>
             </PaginationItem>
           </PaginationContent>

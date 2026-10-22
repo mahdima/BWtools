@@ -36,10 +36,10 @@ export const columns: ColumnDef<Brand>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="justify-start pl-0 hover:bg-transparent h-8"
+          className="justify-start ps-0 hover:bg-transparent h-8"
         >
           Brand Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ms-2 h-4 w-4" />
         </Button>
       );
     },

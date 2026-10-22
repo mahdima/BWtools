@@ -1,0 +1,68 @@
+{
+  "common": {
+    "language": "Language",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "goToDashboard": "Go to dashboard",
+    "emailAddress": "Email address",
+    "emailPlaceholder": "Enter your email"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "brands": "Brands",
+    "customers": "Customers",
+    "categories": "Categories",
+    "orders": "Orders",
+    "reports": "Reports",
+    "team": "Team",
+    "auditLog": "Audit log",
+    "myAccount": "My Account",
+    "myProfile": "My Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "adminAccount": "Admin Account",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "table": {
+    "filterPlaceholder": "Filter...",
+    "noResults": "No results.",
+    "firstPage": "Go to first page",
+    "previousPage": "Go to previous page",
+    "nextPage": "Go to next page",
+    "lastPage": "Go to last page",
+    "pageOf": "Page {page} of {count}",
+    "bulkActions": "Bulk actions",
+    "selected": "{count} selected",
+    "clearSelection": "Clear selection",
+    "selectAll": "Select all rows on this page",
+    "selectRow": "Select row {id}"
+  },
+  "auth": {
+    "welcome": "Welcome back to BW Tools",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "forgotPassword": "Forgot your password?",
+    "noAccess": "This account does not have dashboard access.",
+    "resetLinkInvalid": "That password reset link is invalid or has expired. Request a new one.",
+    "forgotIntro": "Enter your admin email and we'll send you a link to choose a new password.",
+    "sendResetLink": "Send reset link",
+    "backToSignIn": "Back to sign in",
+    "resetTitle": "Choose a new password",
+    "resetFor": "For {email}",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "updatePassword": "Update password",
+    "passwordUpdated": "Password updated. You're signed in."
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "pageNotLoaded": "The page couldn't be loaded. Try again; if it keeps happening, share the reference below.",
+    "reference": "Error reference: {digest}",
+    "tryAgain": "Try again",
+    "notFoundTitle": "Page not found",
+    "notFoundText": "The page or record you're looking for doesn't exist, or it was deleted."
+  }
+}

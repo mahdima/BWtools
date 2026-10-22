@@ -16,6 +16,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import type { ActionResult } from "@/lib/action-result";
 import { runWithToast } from "@/lib/toast-action";
+import { useTranslations } from "next-intl";
 
 interface ConfirmDialogProps {
   title: string;
@@ -34,13 +35,14 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({
   title,
   description,
-  confirmLabel = "Confirm",
+  confirmLabel,
   destructive = false,
   action,
   trigger,
   open: controlledOpen,
   onOpenChange,
 }: ConfirmDialogProps) {
+  const t = useTranslations("common");
   const [internalOpen, setInternalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const open = controlledOpen ?? internalOpen;
@@ -61,7 +63,7 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             disabled={isPending}
             className={destructive ? buttonVariants({ variant: "destructive" }) : undefined}
@@ -75,7 +77,7 @@ export function ConfirmDialog({
             }}
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {confirmLabel}
+            {confirmLabel ?? t("confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

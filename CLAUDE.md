@@ -81,11 +81,27 @@ After the role check, validate input before touching the database. Add a zod sch
 
 ### Routing layout
 
-- `app/(dashboard)/` is a route group. Its [layout.tsx](app/(dashboard)/layout.tsx) fetches the admin profile and notifications on the server and renders the `Sidebar` (wrapped for mobile). Pages use `pl-16 lg:pl-4` to leave room for the mobile sidebar toggle.
+- `app/(dashboard)/` is a route group. Its [layout.tsx](app/(dashboard)/layout.tsx) fetches the admin profile and notifications on the server and renders the `Sidebar` (wrapped for mobile). Pages use `ps-16 lg:ps-4` to leave room for the mobile sidebar toggle.
 - `app/login`, `app/logout` and `app/invoice/[id]` (printable invoice) sit outside the dashboard layout.
 - **Reads** live in [lib/data/](lib/data/), one module per entity (`import "server-only"`, typed by the generated `Database` types): `dashboard` (stats cached 60s with `unstable_cache`, revenue, recent orders, low stock), `products`, `orders` (list, `getOrderWithDetails` for the order page and invoice, timeline, notes), `brands`, `categories`, `customers`, `admins`, `notifications`. Pages and layouts call these; no page imports `supabaseAdmin`. Don't put reads in `'use server'` files: every export there is a public endpoint. They need no guard of their own because only server components behind the layout and proxy call them.
 - **Writes** are server actions in each feature folder's `actions.ts` (see Auth and roles).
 - **Audit log (P7-01):** after a successful change, call `logAudit(admin.id, action, entity, id, changes)` from [lib/audit.ts](lib/audit.ts). Build `changes` with `diffChanges(before, after)` from [lib/audit-changes.ts](lib/audit-changes.ts), so keep the guard's `admin` and read the "before" row when needed. It writes after the response and does nothing until `audit_log` exists (`docs/sql/P7-01-audit-log.sql`). Log which customer fields changed, never their values. Super admins read it at `/audit`.
+
+### Languages and right-to-left (P7-04)
+
+- [next-intl](https://next-intl.dev) 4 without locale URLs. [i18n/request.ts](i18n/request.ts) picks the language: the `NEXT_LOCALE` cookie (set by `setLocale` in [app/locale/actions.ts](app/locale/actions.ts), a deliberately public action like login), then `Accept-Language`, then English.
+  - The root layout sets `<html lang dir>` and wraps everything in `NextIntlClientProvider`.
+  - Locales and helpers live in [lib/i18n.ts](lib/i18n.ts). `LanguagePicker` sits in the sidebar and on the sign-in pages.
+- Strings live in [messages/en.json](messages/en.json), `fr.json` and `ar.json`, by namespace (`common`, `nav`, `table`, `auth`, `errors`, …).
+  - Keys are typed from `en.json` ([global.d.ts](global.d.ts)), so a missing English key fails `typecheck`.
+  - [lib/messages.test.ts](lib/messages.test.ts) fails when `fr` or `ar` lacks a key or a placeholder, or a message doesn't format.
+  - Add every new string to all three files, and use ICU plurals (Arabic has zero/one/two/few/many/other).
+  - Use `useTranslations("ns")` in client components and `await getTranslations("ns")` in async server code.
+- Arabic is laid out right to left. In class names, use logical utilities only: `ps-`/`pe-`, `ms-`/`me-`, `start-`/`end-`, `text-start`/`text-end`, `border-s`/`border-e`, `rounded-s`/`rounded-e`. Never use `pl-`, `ml-`, `left-` or `text-left`.
+  - Give arrows and chevrons that point "forward" or "back" `rtl:rotate-180`.
+  - Keep the centring of dialogs (`left-[50%] translate-x-[-50%]`) physical.
+  - The revenue chart and the printed invoice are `dir="ltr"` on purpose.
+  - Fonts: Outfit for Latin, with Noto Sans Arabic as the fallback for Arabic letters (`--font-sans` in `globals.css`).
 
 ### Feature module pattern
 

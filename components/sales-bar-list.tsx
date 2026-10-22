@@ -31,12 +31,12 @@ export function SalesBarList({ title, description, rows }: { title: string; desc
                   <span className="truncate text-gray-700">{row.label}</span>
                   <span className="shrink-0 font-medium tabular-nums text-gray-900">
                     {formatDA(row.revenue)}
-                    <span className="ml-2 text-xs font-normal text-gray-500">{units}</span>
+                    <span className="ms-2 text-xs font-normal text-gray-500">{units}</span>
                   </span>
                 </div>
                 {/* Track in a light step of the bar's own hue; square at the baseline, 4px rounded at the data end */}
-                <div className="h-2 w-full rounded-r bg-primary/10" aria-hidden>
-                  <div className="h-2 rounded-r bg-primary" style={{ width: `${Math.max(share, 1)}%` }} />
+                <div className="h-2 w-full rounded-e bg-primary/10" aria-hidden>
+                  <div className="h-2 rounded-e bg-primary" style={{ width: `${Math.max(share, 1)}%` }} />
                 </div>
               </li>
             );

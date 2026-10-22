@@ -1,0 +1,68 @@
+{
+  "common": {
+    "language": "Langue",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "goToDashboard": "Aller au tableau de bord",
+    "emailAddress": "Adresse e-mail",
+    "emailPlaceholder": "Saisissez votre e-mail"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "products": "Produits",
+    "brands": "Marques",
+    "customers": "Clients",
+    "categories": "Catégories",
+    "orders": "Commandes",
+    "reports": "Rapports",
+    "team": "Équipe",
+    "auditLog": "Journal d'audit",
+    "myAccount": "Mon compte",
+    "myProfile": "Mon profil",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter",
+    "adminAccount": "Compte administrateur",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "table": {
+    "filterPlaceholder": "Filtrer...",
+    "noResults": "Aucun résultat.",
+    "firstPage": "Aller à la première page",
+    "previousPage": "Aller à la page précédente",
+    "nextPage": "Aller à la page suivante",
+    "lastPage": "Aller à la dernière page",
+    "pageOf": "Page {page} sur {count}",
+    "bulkActions": "Actions groupées",
+    "selected": "{count, plural, one {# sélectionné} other {# sélectionnés}}",
+    "clearSelection": "Effacer la sélection",
+    "selectAll": "Sélectionner toutes les lignes de cette page",
+    "selectRow": "Sélectionner la ligne {id}"
+  },
+  "auth": {
+    "welcome": "Bon retour sur BW Tools",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion...",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccess": "Ce compte n'a pas accès au tableau de bord.",
+    "resetLinkInvalid": "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau.",
+    "forgotIntro": "Saisissez votre e-mail d'administrateur et nous vous enverrons un lien pour choisir un nouveau mot de passe.",
+    "sendResetLink": "Envoyer le lien",
+    "backToSignIn": "Retour à la connexion",
+    "resetTitle": "Choisissez un nouveau mot de passe",
+    "resetFor": "Pour {email}",
+    "newPassword": "Nouveau mot de passe",
+    "confirmNewPassword": "Confirmez le nouveau mot de passe",
+    "updatePassword": "Mettre à jour le mot de passe",
+    "passwordUpdated": "Mot de passe mis à jour. Vous êtes connecté."
+  },
+  "errors": {
+    "title": "Une erreur s'est produite",
+    "pageNotLoaded": "La page n'a pas pu être chargée. Réessayez ; si le problème persiste, communiquez la référence ci-dessous.",
+    "reference": "Référence de l'erreur : {digest}",
+    "tryAgain": "Réessayer",
+    "notFoundTitle": "Page introuvable",
+    "notFoundText": "La page ou l'élément que vous cherchez n'existe pas, ou a été supprimé."
+  }
+}

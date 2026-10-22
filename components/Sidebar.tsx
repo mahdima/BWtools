@@ -30,9 +30,12 @@ import {
 import { NotificationsPanel } from "@/components/notifications-panel";
 import { useAdmin } from "@/components/admin-provider";
 import { hasRole, type Role } from "@/lib/roles";
+import { useTranslations } from "next-intl";
+import { LanguagePicker } from "@/components/language-picker";
 
 interface ISidebarItem {
-  name: string;
+  // Key in messages/*.json "nav"
+  name: "dashboard" | "products" | "brands" | "customers" | "categories" | "orders" | "reports" | "team" | "auditLog";
   path: string;
   icon: LucideIcon;
   // Shown only to admins with at least this role (the page checks it too)
@@ -41,47 +44,47 @@ interface ISidebarItem {
 
 const items: ISidebarItem[] = [
   {
-    name: "Dashboard",
+    name: "dashboard",
     path: "/",
     icon: LayoutDashboard,
   },
   {
-    name: "Product",
+    name: "products",
     path: "/product",
     icon: ShoppingCart,
   },
   {
-    name: "Branding",
+    name: "brands",
     path: "/brand",
     icon: Tag,
   },
   {
-    name: "Customers",
+    name: "customers",
     path: "/customers",
     icon: ShieldUser,
   },
   {
-    name: "Categories",
+    name: "categories",
     path: "/categories",
     icon: Layers,
   },
   {
-    name: "Order",
+    name: "orders",
     path: "/order",
     icon: ShoppingBag,
   },
   {
-    name: "Reports",
+    name: "reports",
     path: "/reports",
     icon: BarChart3,
   },
   {
-    name: "Team",
+    name: "team",
     path: "/team",
     icon: ShieldUser,
   },
   {
-    name: "Audit log",
+    name: "auditLog",
     path: "/audit",
     icon: History,
     minRole: "super_admin",
@@ -111,10 +114,11 @@ const Sidebar = ({
 }: SidebarProps) => {
   const displayName = userName || userEmail.split("@")[0];
   const admin = useAdmin();
+  const t = useTranslations("nav");
   const visibleItems = items.filter((item) => !item.minRole || (admin && hasRole(admin.role, item.minRole)));
 
   return (
-    <div className="w-64 border-r border-sidebar-border bg-sidebar/50 backdrop-blur-xl flex flex-col justify-between h-full py-6 transition-all duration-300 relative z-20">
+    <div className="w-64 border-e border-sidebar-border bg-sidebar/50 backdrop-blur-xl flex flex-col justify-between h-full py-6 transition-all duration-300 relative z-20">
       {/* Top: Logo & Notifications */}
       <div className="flex justify-between items-center mb-10 px-6">
         <Image
@@ -128,12 +132,13 @@ const Sidebar = ({
       {/* Middle: Navigation */}
       <div className="flex flex-col space-y-1.5 w-[88%] mx-auto flex-1">
         {visibleItems.map((item) => (
-          <Sidebaritem key={item.path} item={item} />
+          <Sidebaritem key={item.path} item={{ ...item, name: t(item.name) }} />
         ))}
       </div>
 
-      {/* Bottom: User Profile Dropdown */}
+      {/* Bottom: language, then the user profile dropdown */}
       <div className="px-4 pt-4 border-t border-sidebar-border mt-auto">
+        <LanguagePicker className="mb-3 px-2.5" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-sidebar-accent cursor-pointer transition-colors group border border-transparent hover:border-sidebar-border/50">
@@ -152,7 +157,7 @@ const Sidebar = ({
                   {displayName}
                 </p>
                 <p className="text-[11px] text-sidebar-foreground/60 font-medium">
-                  Admin Account
+                  {t("adminAccount")}
                 </p>
               </div>
               <ChevronUp className="h-4 w-4 text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70 transition-colors" />
@@ -163,7 +168,7 @@ const Sidebar = ({
             className="w-56 mb-2 bg-popover/80 backdrop-blur-md border-border p-1 shadow-lg shadow-black/5"
           >
             <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1.5">
-              My Account
+              {t("myAccount")}
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-border/50" />
             <DropdownMenuItem
@@ -171,8 +176,8 @@ const Sidebar = ({
               asChild
             >
               <Link href="/profile" className="flex items-center w-full">
-                <User className="mr-2 h-4 w-4" />
-                <span>My Profile</span>
+                <User className="me-2 h-4 w-4" />
+                <span>{t("myProfile")}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -180,15 +185,15 @@ const Sidebar = ({
               asChild
             >
               <Link href="/settings" className="flex items-center w-full">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
+                <Settings className="me-2 h-4 w-4" />
+                <span>{t("settings")}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-border/50" />
             <DropdownMenuItem className="cursor-pointer rounded-md text-destructive focus:text-destructive focus:bg-destructive/10 my-0.5">
               <Link href="/logout" className="flex items-center w-full">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Logout</span>
+                <LogOut className="me-2 h-4 w-4" />
+                <span>{t("logout")}</span>
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

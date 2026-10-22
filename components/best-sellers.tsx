@@ -22,10 +22,10 @@ export function BestSellers({ rows }: { rows: SalesRow[] }) {
         <Table>
           <TableHeader>
             <TableRow className="border-gray-50 hover:bg-transparent">
-              <TableHead className="h-10 w-12 pl-6 text-xs font-medium uppercase tracking-wider text-gray-500">#</TableHead>
+              <TableHead className="h-10 w-12 ps-6 text-xs font-medium uppercase tracking-wider text-gray-500">#</TableHead>
               <TableHead className="h-10 text-xs font-medium uppercase tracking-wider text-gray-500">Product</TableHead>
-              <TableHead className="h-10 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Units</TableHead>
-              <TableHead className="h-10 pr-6 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Sales</TableHead>
+              <TableHead className="h-10 text-end text-xs font-medium uppercase tracking-wider text-gray-500">Units</TableHead>
+              <TableHead className="h-10 pe-6 text-end text-xs font-medium uppercase tracking-wider text-gray-500">Sales</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -38,7 +38,7 @@ export function BestSellers({ rows }: { rows: SalesRow[] }) {
             ) : (
               rows.map((row, index) => (
                 <TableRow key={`${row.id}-${row.label}`} className="border-gray-50 hover:bg-gray-50/50">
-                  <TableCell className="pl-6 tabular-nums text-gray-500">{index + 1}</TableCell>
+                  <TableCell className="ps-6 tabular-nums text-gray-500">{index + 1}</TableCell>
                   <TableCell className="font-medium text-gray-900">
                     {row.id !== null ? (
                       <Link href={`/product?search=${encodeURIComponent(row.label)}`} className="hover:text-primary">
@@ -48,8 +48,8 @@ export function BestSellers({ rows }: { rows: SalesRow[] }) {
                       row.label
                     )}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums text-gray-700">{row.quantity}</TableCell>
-                  <TableCell className="pr-6 text-right font-medium tabular-nums text-gray-900">{formatDA(row.revenue)}</TableCell>
+                  <TableCell className="text-end tabular-nums text-gray-700">{row.quantity}</TableCell>
+                  <TableCell className="pe-6 text-end font-medium tabular-nums text-gray-900">{formatDA(row.revenue)}</TableCell>
                 </TableRow>
               ))
             )}

@@ -35,10 +35,10 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-gray-50">
-              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 pl-6 h-10">
+              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 ps-6 h-10">
                 Product
               </TableHead>
-              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 text-right pr-6 h-10">
+              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 text-end pe-6 h-10">
                 Stock
               </TableHead>
             </TableRow>
@@ -53,12 +53,12 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
             ) : (
               products.map((product) => (
                 <TableRow key={product.product_id} className="border-gray-50 hover:bg-gray-50/50">
-                  <TableCell className="font-medium text-gray-900 pl-6 py-4">
+                  <TableCell className="font-medium text-gray-900 ps-6 py-4">
                     <Link href={`/product?edit=${product.product_id}`} className="hover:text-primary">
                       {product.product_name}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-right pr-6 py-4">
+                  <TableCell className="text-end pe-6 py-4">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-600">
                       {(product.in_stock_vailable ?? 0) === 0 ? "Out of stock" : `${product.in_stock_vailable} left`}
                     </span>
@@ -70,7 +70,7 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
         </Table>
       </div>
       {total > 0 && (
-        <div className="px-6 py-3 border-t border-gray-50 text-right">
+        <div className="px-6 py-3 border-t border-gray-50 text-end">
           <Link href="/product?stock=low" className="text-sm font-medium text-primary hover:text-primary-strong">
             View all low-stock products
           </Link>

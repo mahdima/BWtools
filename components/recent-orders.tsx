@@ -47,13 +47,13 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-gray-50">
-              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 pl-6 h-10">
+              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 ps-6 h-10">
                 Order ID
               </TableHead>
               <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 h-10">
                 Status
               </TableHead>
-              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 text-right pr-6 h-10">
+              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 text-end pe-6 h-10">
                 Amount
               </TableHead>
             </TableRow>
@@ -64,7 +64,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                 key={order.id}
                 className="border-gray-50 hover:bg-gray-50/50 cursor-default"
               >
-                <TableCell className="font-medium text-gray-900 pl-6 py-4">
+                <TableCell className="font-medium text-gray-900 ps-6 py-4">
                   #{order.id}
                 </TableCell>
                 <TableCell className="py-4">
@@ -76,7 +76,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                     {order.status}
                   </span>
                 </TableCell>
-                <TableCell className="text-right font-medium text-gray-900 pr-6 py-4">
+                <TableCell className="text-end font-medium text-gray-900 pe-6 py-4">
                   {new Intl.NumberFormat("fr-DZ", {
                     style: "currency",
                     currency: "DZD",

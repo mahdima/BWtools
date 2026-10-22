@@ -1110,6 +1110,38 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Add right-to-left layout for Arabic.
 3. Add a language picker in the profile.
 
+**Split into sub-tasks (2026-10-22)**, one commit each. There are several hundred strings, and every screen should keep working between commits:
+- [x] **P7-04a · Foundation and shell.**
+  - `next-intl` 4 without locale URLs: the locale comes from a `NEXT_LOCALE` cookie, then `Accept-Language`, then English.
+  - `messages/{en,fr,ar}.json`, with typed keys (`AppConfig`) and a test that all three files have the same keys and placeholders.
+  - `<html lang dir>`, and an Arabic font fallback (Outfit has no Arabic glyphs).
+  - A language picker in the sidebar's profile menu and on the login page.
+  - **RTL:** physical Tailwind classes (`pl-`, `ml-`, `left-`, `text-left`, `border-r` …) become logical ones (`ps-`, `ms-`, `start-`, `text-start`, `border-e` …) across the app, and direction arrows flip.
+  - **Translated:** sidebar and mobile menu, `DataTable` chrome (filter, pagination, selection bar), confirm dialog, login, forgot and reset password, and the error and not-found pages.
+- [ ] **P7-04b · Dashboard and admin screens:** dashboard widgets, reports, settings (password and store forms), profile dialog, team, audit log, notifications panel.
+- [ ] **P7-04c · Catalogue and orders:** products (columns, form, import, bulk), brands, categories, orders (list, detail, notes, timeline, status, bulk) and customers.
+- [ ] **P7-04d · Messages from the server:** server-action results (toasts) and validation messages through `getTranslations`.
+
+The printed invoice stays as it is: its language is a store decision, not an admin preference.
+
+**P7-04a notes (2026-10-22):**
+- **Built as planned.** One deliberate English change: the sidebar's "Branding" is now "Brands", and "Order" is now "Orders", matching the page titles.
+- **RTL sweep:** a token-aware script converted 37 files to logical utilities. It left alone dialog centring and the printed invoice, which is `dir="ltr"`, as is the revenue chart.
+  - The mobile drawer gets `rtl:max-lg:translate-x-full`.
+  - Back arrows, pagination and submenu chevrons, and the timeline arrow get `rtl:rotate-180`.
+  - `global-error.tsx` stays English: it renders outside the layout, without translations.
+- **Verified:**
+  - Tests for `lib/i18n.ts`, and `lib/messages.test.ts`: same keys, same placeholders, every message formats in its language. A deliberately broken message was confirmed to fail the check.
+  - Playwright against the real `/login` (15 checks, 0 page errors besides the intentional 404 request):
+    - lang, dir and the heading in en, fr and ar;
+    - Accept-Language picks Arabic when there's no cookie;
+    - the picker switches to French without a reload, stores the cookie, and keeps it after a reload;
+    - an unknown cookie value falls back to English;
+    - the 404 page in French.
+  - A temporary preview (deleted) of the sidebar and table in Arabic: the sidebar on the right, the Arabic plural "عنصر واحد محدد", the mobile button and drawer on the right, and the pagination chevrons rotated with "first page" on the right. Screenshots were reviewed.
+  - `typecheck`, lint (0 errors, 26 warnings), 187 tests, `build` and `npm audit --omit=dev` (0) pass.
+- **For P7-04c:** in RTL, an amount like "12500,00 DA" is reordered by the bidi algorithm to "DA 12500,00". Wrap amounts and other mixed number-and-Latin values in `dir="ltr"` when those columns are translated.
+
 ### P7-05 · Full dark mode
 - [ ] Done
 

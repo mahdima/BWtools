@@ -6,6 +6,8 @@ import material from "../../img/material.jpg";
 import logo from "../../img/Asset 3.png";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { LanguagePicker } from "@/components/language-picker";
 
 const initialState = {
   error: "",
@@ -16,18 +18,21 @@ export default function LoginPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const [state, formAction, isPending] = useActionState(login, initialState);
   const { error: redirectError } = use(searchParams);
   const errorMessage =
     state?.error ||
     (redirectError === "unauthorized"
-      ? "This account does not have dashboard access."
+      ? t("noAccess")
       : redirectError === "reset_link"
-        ? "That password reset link is invalid or has expired. Request a new one."
+        ? t("resetLinkInvalid")
         : "");
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="relative flex min-h-screen bg-white">
+      <LanguagePicker className="absolute top-4 end-4 z-10" />
       {/* Left Side - Login Form */}
       <div className="w-full mt-20 lg:w-1/2 flex  justify-center p-8 lg:p-16">
         <div className="w-full max-w-md space-y-8">
@@ -41,7 +46,7 @@ export default function LoginPage({
               />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 tracking-tight text-center">
-              Welcome back to WBtools
+              {t("welcome")}
             </h2>
           </div>
 
@@ -52,7 +57,7 @@ export default function LoginPage({
                   htmlFor="email"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Email address
+                  {tc("emailAddress")}
                 </label>
                 <div className="mt-1">
                   <input
@@ -62,7 +67,7 @@ export default function LoginPage({
                     autoComplete="email"
                     required
                     className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-200"
-                    placeholder="Enter your email"
+                    placeholder={tc("emailPlaceholder")}
                   />
                 </div>
               </div>
@@ -72,7 +77,7 @@ export default function LoginPage({
                   htmlFor="password"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Password
+                  {t("password")}
                 </label>
                 <div className="mt-1">
                   <input
@@ -100,7 +105,7 @@ export default function LoginPage({
                 disabled={isPending}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-strong focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-200 transform hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isPending ? "Signing in..." : "Sign in"}
+                {isPending ? t("signingIn") : t("signIn")}
               </button>
             </div>
 
@@ -109,7 +114,7 @@ export default function LoginPage({
                 href="/forgot-password"
                 className="font-medium text-primary hover:text-primary-strong text-sm"
               >
-                Forgot your password?
+                {t("forgotPassword")}
               </Link>
             </div>
           </form>

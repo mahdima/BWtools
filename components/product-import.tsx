@@ -131,15 +131,15 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
 export function ImportPreviewTable({ rows }: { rows: ImportPreviewRow[] }) {
   return (
     <div className="max-h-[60vh] overflow-auto">
-      <table className="w-full min-w-[760px] text-left text-sm">
+      <table className="w-full min-w-[760px] text-start text-sm">
         <thead className="sticky top-0 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
           <tr>
             <th scope="col" className="px-4 py-2 font-medium">Row</th>
             <th scope="col" className="px-4 py-2 font-medium">Name</th>
             <th scope="col" className="px-4 py-2 font-medium">Category</th>
             <th scope="col" className="px-4 py-2 font-medium">Brand</th>
-            <th scope="col" className="px-4 py-2 text-right font-medium">Price</th>
-            <th scope="col" className="px-4 py-2 text-right font-medium">Stock</th>
+            <th scope="col" className="px-4 py-2 text-end font-medium">Price</th>
+            <th scope="col" className="px-4 py-2 text-end font-medium">Stock</th>
             <th scope="col" className="px-4 py-2 font-medium">Status</th>
           </tr>
         </thead>
@@ -150,8 +150,8 @@ export function ImportPreviewTable({ rows }: { rows: ImportPreviewRow[] }) {
               <td className="px-4 py-2 font-medium text-gray-900">{row.name || "—"}</td>
               <td className="px-4 py-2 text-gray-700">{row.category || "—"}</td>
               <td className="px-4 py-2 text-gray-700">{row.brand || "—"}</td>
-              <td className="px-4 py-2 text-right tabular-nums text-gray-700">{row.price || "—"}</td>
-              <td className="px-4 py-2 text-right tabular-nums text-gray-700">{row.quantity || "0"}</td>
+              <td className="px-4 py-2 text-end tabular-nums text-gray-700">{row.price || "—"}</td>
+              <td className="px-4 py-2 text-end tabular-nums text-gray-700">{row.quantity || "0"}</td>
               <td className="px-4 py-2">
                 {row.errors.length === 0 ? (
                   <span className="inline-flex items-center gap-1 text-emerald-700">
