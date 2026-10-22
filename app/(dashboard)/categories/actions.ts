@@ -7,6 +7,7 @@ import { categorySchema, categoryUpdateSchema } from "@/lib/validation/category"
 import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
 import { removeUnusedImage, uploadImage } from "@/lib/image-storage";
 import { CATEGORY_IMAGES } from "@/lib/storage-path";
+import { archiveResult, hasActiveProducts, setArchived } from "@/lib/archive";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 
@@ -94,23 +95,36 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
   return { success: true, message: "Category updated successfully" };
 }
 
-export async function deleteCategory(id: string): Promise<ActionResult> {
+export async function deleteCategory(categoryId: string): Promise<ActionResult> {
   if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+
+  const id = Number(categoryId);
+  if (!Number.isInteger(id)) {
+    return { success: false, message: "Category not found." };
+  }
 
   // Ask for the deleted rows back, so "nothing was deleted" is reported, not hidden
   const { data, error } = await supabaseAdmin
     .from("categories")
     .delete()
-    .eq("categorie_id", Number(id))
+    .eq("categorie_id", id)
     .select("categorie_id, cat_image_url");
 
   if (error) {
-    return {
-      success: false,
-      message: isForeignKeyViolation(error)
-        ? "This category still has products. Move or delete them first."
-        : error.message,
-    };
+    if (!isForeignKeyViolation(error)) return { success: false, message: error.message };
+
+    // Products still point to it. If they're all archived, archive the category too (P6-08)
+    const stillHasProducts = "This category still has products. Move or delete them first.";
+    if ((await hasActiveProducts("Category_id", id)) !== false) return { success: false, message: stillHasProducts };
+
+    const result = archiveResult(await setArchived("categories", id, true), {
+      done: "This category is used by archived products, so it was archived instead of deleted.",
+      notFound: "Category not found.",
+      unavailable: stillHasProducts,
+      failed: "Failed to archive category",
+    });
+    if (result.success) revalidatePath("/categories");
+    return result;
   }
 
   if (!data?.length) {
@@ -120,4 +134,22 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   cleanUpImage(data[0].cat_image_url);
   revalidatePath("/categories");
   return { success: true, message: "Category deleted successfully" };
+}
+
+export async function restoreCategory(categoryId: string): Promise<ActionResult> {
+  if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+
+  const id = Number(categoryId);
+  if (!Number.isInteger(id)) {
+    return { success: false, message: "Category not found." };
+  }
+
+  const result = archiveResult(await setArchived("categories", id, false), {
+    done: "Category restored.",
+    notFound: "Category not found.",
+    unavailable: "Archiving isn't set up yet.",
+    failed: "Failed to restore category",
+  });
+  if (result.success) revalidatePath("/categories");
+  return result;
 }

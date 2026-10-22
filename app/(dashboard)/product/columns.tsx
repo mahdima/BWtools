@@ -5,9 +5,10 @@ import { Can } from "@/components/admin-provider";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 
-import { deleteProduct } from "./actions";
+import { deleteProduct, restoreProduct } from "./actions";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { RestoreButton } from "@/components/restore-button";
 
 export type Product = {
   id: number;
@@ -16,6 +17,8 @@ export type Product = {
   price: number;
   brand: string;
   in_stock_vailable: number | null;
+  // Listed under "Archived" (P6-08)
+  archived: boolean;
 };
 
 export const columns: ColumnDef<Product>[] = [
@@ -148,6 +151,16 @@ export const columns: ColumnDef<Product>[] = [
       const product = row.original;
 
       // Viewers are read-only; the server actions check the role too
+      if (product.archived) {
+        return (
+          <Can minRole="admin">
+            <div className="flex justify-center">
+              <RestoreButton name={product.product} action={() => restoreProduct(String(product.id))} />
+            </div>
+          </Can>
+        );
+      }
+
       return (
         <Can minRole="admin">
         <div className="flex justify-center items-center gap-1">
@@ -163,7 +176,7 @@ export const columns: ColumnDef<Product>[] = [
           </Button>
           <ConfirmDialog
             title={`Delete "${product.product}"?`}
-            description="This permanently removes the product from the catalogue. This can't be undone."
+            description="This permanently removes the product from the catalogue. A product used by orders or favorites is archived instead, and can be restored from Archived."
             confirmLabel="Delete"
             destructive
             action={() => deleteProduct(String(product.id))}

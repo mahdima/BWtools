@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { Modal } from "@/components/Modal";
 import { Can } from "@/components/admin-provider";
+import { ArchiveViewLink } from "@/components/archive-view-link";
 import { getCurrentAdmin } from "@/lib/auth";
 import { getStoreSettings } from "@/lib/data/settings";
 import { hasRole } from "@/lib/roles";
@@ -26,9 +27,11 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
   // ?stock=low lists only products at or below the store's low-stock threshold
   const lowStockOnly = params.stock === "low";
   const lowStockAtOrBelow = lowStockOnly ? (await getStoreSettings()).low_stock_threshold : undefined;
+  // ?view=archived lists archived products (P6-08)
+  const archived = params.view === "archived";
   const limit = 20;
 
-  const { data, count } = await getProducts({ page, limit, search, lowStockAtOrBelow });
+  const { data, count, archiving } = await getProducts({ page, limit, search, lowStockAtOrBelow, archived });
   const pageCount = Math.ceil(count / limit);
 
   // The add/edit modal is only for admins (viewers are read-only)
@@ -36,12 +39,15 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
   const showAddModal = canEdit && params.add === "true";
   const editId = canEdit ? (params.edit as string | undefined) : undefined;
 
-  // Only load what the add/edit modal needs when it is open
-  const [productToEdit, formOptions] = await Promise.all([
-    editId ? getProductById(Number(editId)) : null,
-    showAddModal || editId ? getProductFormOptions() : { categories: [], brands: [] },
-  ]);
-  const { categories, brands } = formOptions;
+  // Only load what the add/edit modal needs when it is open. The pickers keep the edited
+  // product's own category and brand even if those were archived.
+  const productToEdit = editId ? await getProductById(Number(editId)) : null;
+  const { categories, brands } =
+    showAddModal || editId
+      ? await getProductFormOptions(
+          productToEdit ? { categoryId: productToEdit.Category_id, brandId: productToEdit.brand_id } : undefined,
+        )
+      : { categories: [], brands: [] };
 
   return (
     <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">
@@ -50,11 +56,18 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
           columns={columns}
           data={data}
           searchKey="product"
-          title="Products"
-          description="Manage your product catalog"
+          title={archived ? "Archived products" : "Products"}
+          description={
+            archived
+              ? "Hidden from the catalogue, kept for past orders"
+              : "Manage your product catalog"
+          }
           pageCount={pageCount}
           isServerSide={true}
           headerActions={
+            <>
+            {archiving && <ArchiveViewLink href="/product" archived={archived} />}
+            {!archived && (
             <>
             <Link
               href={lowStockOnly ? "/product" : "/product?stock=low"}
@@ -73,6 +86,8 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
                 </Button>
               </Link>
             </Can>
+            </>
+            )}
             </>
           }
         />

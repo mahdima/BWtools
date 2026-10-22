@@ -5,6 +5,7 @@ import { getAuthorizedAdmin } from "@/lib/auth";
 import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
 import { parseForm } from "@/lib/validation/form";
 import { brandSchema } from "@/lib/validation/brand";
+import { archiveResult, hasActiveProducts, setArchived } from "@/lib/archive";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -90,13 +91,23 @@ export async function deleteBrand(brandId: string): Promise<ActionResult> {
         .select('brand_id');
 
     if (error) {
-        console.error("Error deleting brand:", error);
-        return {
-            success: false,
-            message: isForeignKeyViolation(error)
-                ? "This brand still has products. Move or delete them first."
-                : `Failed to delete brand: ${error.message}`,
-        };
+        if (!isForeignKeyViolation(error)) {
+            console.error("Error deleting brand:", error);
+            return { success: false, message: `Failed to delete brand: ${error.message}` };
+        }
+
+        // Products still point to it. If they're all archived, archive the brand too (P6-08)
+        const stillHasProducts = "This brand still has products. Move or delete them first.";
+        if ((await hasActiveProducts("brand_id", id)) !== false) return { success: false, message: stillHasProducts };
+
+        const result = archiveResult(await setArchived("brands", id, true), {
+            done: "This brand is used by archived products, so it was archived instead of deleted.",
+            notFound: "Brand not found.",
+            unavailable: stillHasProducts,
+            failed: "Failed to archive brand",
+        });
+        if (result.success) revalidatePath("/brand");
+        return result;
     }
 
     if (!data?.length) {
@@ -105,4 +116,22 @@ export async function deleteBrand(brandId: string): Promise<ActionResult> {
 
     revalidatePath("/brand");
     return { success: true, message: "Brand deleted." };
+}
+
+export async function restoreBrand(brandId: string): Promise<ActionResult> {
+    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+
+    const id = Number(brandId);
+    if (!Number.isInteger(id)) {
+        return { success: false, message: "Brand not found." };
+    }
+
+    const result = archiveResult(await setArchived("brands", id, false), {
+        done: "Brand restored.",
+        notFound: "Brand not found.",
+        unavailable: "Archiving isn't set up yet.",
+        failed: "Failed to restore brand",
+    });
+    if (result.success) revalidatePath("/brand");
+    return result;
 }

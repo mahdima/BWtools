@@ -9,6 +9,7 @@ import {
   getPeriodStart,
   groupRevenue,
 } from "@/lib/dates";
+import { queryByArchived } from "@/lib/archive";
 
 // The aggregate functions from docs/sql/P6-06-dashboard-aggregates.sql aren't in the
 // generated types until the owner applies them, hence the untyped client for rpc().
@@ -62,10 +63,17 @@ export const getDashboardStats = unstable_cache(
     let ordersQuery = supabaseAdmin.from("orders").select("*", { count: "exact", head: true });
     if (startDate) ordersQuery = ordersQuery.gte("created_at", startDate.toISOString());
 
+    // Archived products and brands aren't counted (not head: true, see queryByArchived)
     const [products, orders, brands, revenueRows] = await Promise.all([
-      supabaseAdmin.from("products").select("*", { count: "exact", head: true }),
+      queryByArchived(false, (archived) => {
+        const query = supabaseAdmin.from("products").select("product_id", { count: "exact" }).limit(1);
+        return archived === null ? query : query.eq("is_archived", archived);
+      }),
       ordersQuery,
-      supabaseAdmin.from("brands").select("*", { count: "exact", head: true }),
+      queryByArchived(false, (archived) => {
+        const query = supabaseAdmin.from("brands").select("brand_id", { count: "exact" }).limit(1);
+        return archived === null ? query : query.eq("is_archived", archived);
+      }),
       fetchRevenueRows(startDate).catch((e) => {
         console.error("Error fetching revenue:", e);
         return [];
@@ -73,9 +81,9 @@ export const getDashboardStats = unstable_cache(
     ]);
 
     return {
-      totalProducts: products.count || 0,
+      totalProducts: products.result?.count || 0,
       totalOrders: orders.count || 0,
-      totalBrands: brands.count || 0,
+      totalBrands: brands.result?.count || 0,
       totalRevenue: revenueRows.reduce((sum, order) => sum + (order.total || 0), 0),
     };
   },
@@ -98,22 +106,25 @@ export async function getRecentOrders() {
   return data;
 }
 
-// The products closest to running out (stock at or below `threshold`, the store's
-// low-stock setting), plus how many there are in total.
+// The active products closest to running out (stock at or below `threshold`, the
+// store's low-stock setting), plus how many there are in total.
 export async function getLowStockProducts(threshold: number, limit = 5) {
-  const { data, error, count } = await supabaseAdmin
-    .from('products')
-    .select('product_id, product_name, in_stock_vailable', { count: 'exact' })
-    .lte('in_stock_vailable', threshold)
-    .order('in_stock_vailable', { ascending: true })
-    .limit(limit);
+  const { result } = await queryByArchived(false, (archived) => {
+    const query = supabaseAdmin
+      .from('products')
+      .select('product_id, product_name, in_stock_vailable', { count: 'exact' })
+      .lte('in_stock_vailable', threshold)
+      .order('in_stock_vailable', { ascending: true })
+      .limit(limit);
+    return archived === null ? query : query.eq('is_archived', archived);
+  });
 
-  if (error) {
-    console.error("Error fetching low stock products:", error);
+  if (!result || result.error) {
+    if (result?.error) console.error("Error fetching low stock products:", result.error);
     return { products: [], total: 0 };
   }
 
-  return { products: data ?? [], total: count ?? 0 };
+  return { products: result.data ?? [], total: result.count ?? 0 };
 }
 
 // Revenue per day/week/month for the dashboard chart. Uses the revenue_series SQL

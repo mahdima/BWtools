@@ -7,6 +7,7 @@ import { parseForm } from "@/lib/validation/form";
 import { productSchema } from "@/lib/validation/product";
 import { removeUnusedImage, uploadImage } from "@/lib/image-storage";
 import { PRODUCT_IMAGES } from "@/lib/storage-path";
+import { archiveResult, setArchived } from "@/lib/archive";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
@@ -79,13 +80,19 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
         .select('product_id, product_link');
 
     if (error) {
+        if (isForeignKeyViolation(error)) {
+            // Orders, favorites or saved orders still use it: archive it instead (P6-08)
+            const result = archiveResult(await setArchived("products", id, true), {
+                done: "This product is used by orders or favorites, so it was archived instead of deleted.",
+                notFound: "Product not found.",
+                unavailable: "This product appears in existing orders or favorites, so it can't be deleted.",
+                failed: "Failed to archive product",
+            });
+            if (result.success) revalidatePath("/product");
+            return result;
+        }
         console.error("Error deleting product:", error);
-        return {
-            success: false,
-            message: isForeignKeyViolation(error)
-                ? "This product appears in existing orders or favorites, so it can't be deleted."
-                : `Failed to delete product: ${error.message}`,
-        };
+        return { success: false, message: `Failed to delete product: ${error.message}` };
     }
 
     if (!data?.length) {
@@ -95,6 +102,24 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
     cleanUpImage(data[0].product_link);
     revalidatePath("/product");
     return { success: true, message: "Product deleted." };
+}
+
+export async function restoreProduct(productId: string): Promise<ActionResult> {
+    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
+
+    const id = Number(productId);
+    if (!Number.isInteger(id)) {
+        return { success: false, message: "Product not found." };
+    }
+
+    const result = archiveResult(await setArchived("products", id, false), {
+        done: "Product restored.",
+        notFound: "Product not found.",
+        unavailable: "Archiving isn't set up yet.",
+        failed: "Failed to restore product",
+    });
+    if (result.success) revalidatePath("/product");
+    return result;
 }
 
 // Form action bound to a product id (via useFormAction): returns an error or redirects.

@@ -133,4 +133,8 @@ Several names are misspelled or unusually cased. Use them exactly as written:
   - **Old URL:** read it from the database. `existingImageUrl` from the form is only a keep/remove flag.
 - `addresses`, `favorites` and `saved_orders` belong to the mobile app; the dashboard doesn't use them yet.
 - `store_settings` (single row, `id = 1`): store name, contact details, address, `low_stock_threshold` and invoice footer. Created by `docs/sql/P6-01-store-settings.sql`. Until it exists, `getStoreSettings()` returns `DEFAULT_STORE_SETTINGS` from `lib/store-settings.ts`. Read it through `lib/data/settings.ts` and never hard-code store details.
+- Soft delete (P6-08, `docs/sql/P6-08-soft-delete.sql`): `products`, `brands` and `categories` get `is_archived`, which may not exist yet.
+  - **Lists:** query through `queryByArchived` in [lib/archive.ts](lib/archive.ts), which re-runs without the filter while the column is missing (`42703`). Don't combine the filter with `head: true`.
+  - **Writes:** archive and restore with `setArchived`.
+  - **Past orders:** keep showing archived products; filter only catalogue lists, pickers and counts.
 - SQL functions written for the owner but possibly not applied yet: `set_order_status` (P6-05) and `dashboard_stats` / `revenue_series` (P6-06). They aren't in the generated types, so they are called through `supabaseAdmin as unknown as SupabaseClient`. The code falls back to plain queries when PostgREST answers `PGRST202` (function missing); a missing table is `PGRST205`. Keep that fallback until the owner confirms the SQL is applied.

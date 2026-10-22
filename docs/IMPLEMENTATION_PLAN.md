@@ -968,6 +968,32 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 
 **Done when:** Deleting a product that appears in past orders no longer fails, and doesn't break those orders.
 
+**Notes (2026-10-22):**
+- **Blocked on the owner (SQL plus one decision).** `docs/sql/P6-08-soft-delete.sql` runs in one transaction. It:
+  - adds `is_archived boolean not null default false` to products, brands and categories;
+  - adds a partial index for active products;
+  - replaces P6-06's `dashboard_stats` so archived products and brands aren't counted. So run it after P6-06.
+- **Mobile app decision (step 2):** the app reads these tables directly, so it keeps showing archived rows until it filters `is_archived = false`. The SQL file explains both options: change the app's queries (recommended), or an RLS policy (commented out, because order-history joins would then return NULL).
+- **Why it's needed** (real data): 44 order lines, 9 favorites and 1 saved order reference products, which is why deleting those products fails today.
+- **Code: done, safe to deploy before the SQL.** `lib/archive.ts`:
+  - `queryByArchived(archived, run)` runs a list query with the `is_archived` filter. If that fails with `42703` (column missing), it re-runs active lists without the filter and returns no archived list. It also reports `archiving`, so the UI shows the Archived link only once the column exists.
+  - `setArchived` (untyped update) returns done / not_found / unavailable (`PGRST204`/`42703`) / failed.
+  - `archiveResult` maps that to an `ActionResult`, and `hasActiveProducts` checks a brand or category.
+  - Don't use `head: true` with the filter: a failed HEAD request has no error code (checked), so the dashboard counts now use `count: "exact"` with `limit(1)`.
+- **Behaviour once the SQL is applied:**
+  - **Deleting a product** that hits a foreign-key error archives it instead ("used by orders or favorites, so it was archived instead of deleted"). Deleting a **brand or category** archives it only when every product using it is archived; with active products the old "move or delete them first" message stays. Before the SQL, every message is unchanged.
+  - **`?view=archived`** on Products, Brands and Categories lists archived rows (title "Archived …", the Add button hidden), each with a `RestoreButton` for admins. `restoreProduct`, `restoreBrand` and `restoreCategory` guard with `getAuthorizedAdmin("admin")`. The header link (`ArchiveViewLink`) appears only when `archiving` is true.
+  - **Hidden when archived:** product list (including the low-stock filter), brand and category lists, the product form's pickers (an edited product's own archived category or brand still shows, via `or(is_archived.eq.false,<id>.eq.<current>)`), the dashboard's low-stock widget, and the product and brand counts in the fallback.
+  - **Kept:** order pages still join archived products, so past orders show them.
+  - The delete confirmations now say a referenced record is archived instead.
+- **Verified:**
+  - 10 unit tests for `lib/archive.ts` with a mocked client, covering both fallbacks.
+  - Every loader against the real project **before** the SQL (read-only, counts only): 128 products, 10 brands, 5 categories, 0 archived, `archiving: false`, pickers 5/10, dashboard fallback 128 / 21 / 10.
+  - The stricter guard check: all 28 exported server actions guard first, except login, logout and forgot-password.
+  - `typecheck`, lint (0 errors, back to 27 warnings), 145 tests and `build` pass.
+- **Not verified:** the path after the SQL is applied (there's no local database, see P2-06), and the archived view in a logged-in browser.
+- **Tick when:** the SQL is applied and `npm run db:types` run; then deleting a product that's in an order archives it, it shows under Products → Archived, Restore brings it back, and its order still shows it.
+
 ---
 
 ## Phase 7 — Nice-to-have

@@ -4,13 +4,16 @@ import { ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import { Can } from "@/components/admin-provider";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { deleteBrand } from "./actions";
+import { deleteBrand, restoreBrand } from "./actions";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { RestoreButton } from "@/components/restore-button";
 
 export type Brand = {
   id: number;
   brand: string;
+  // Listed under "Archived" (P6-08)
+  archived: boolean;
 };
 
 export const columns: ColumnDef<Brand>[] = [
@@ -56,6 +59,16 @@ export const columns: ColumnDef<Brand>[] = [
       const brand = row.original;
 
       // Viewers are read-only; the server actions check the role too
+      if (brand.archived) {
+        return (
+          <Can minRole="admin">
+            <div className="flex justify-center">
+              <RestoreButton name={brand.brand} action={() => restoreBrand(String(brand.id))} />
+            </div>
+          </Can>
+        );
+      }
+
       return (
         <Can minRole="admin">
         <div className="flex justify-center items-center gap-1">
@@ -71,7 +84,7 @@ export const columns: ColumnDef<Brand>[] = [
           </Button>
           <ConfirmDialog
             title={`Delete brand "${brand.brand}"?`}
-            description="This permanently removes the brand. Brands that still have products can't be deleted."
+            description="This permanently removes the brand. A brand that still has products can't be deleted; one used only by archived products is archived instead."
             confirmLabel="Delete"
             destructive
             action={() => deleteBrand(String(brand.id))}

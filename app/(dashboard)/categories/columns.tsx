@@ -7,12 +7,15 @@ import { Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryForm } from "@/components/CategoryForm";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { deleteCategory } from "./actions";
+import { RestoreButton } from "@/components/restore-button";
+import { deleteCategory, restoreCategory } from "./actions";
 
 export type Category = {
   id: number;
   category: string;
   image: string | null;
+  // Listed under "Archived" (P6-08)
+  archived: boolean;
 };
 
 export const columns: ColumnDef<Category>[] = [
@@ -53,6 +56,14 @@ export const columns: ColumnDef<Category>[] = [
       const category = row.original;
 
       // Viewers are read-only; the server actions check the role too
+      if (category.archived) {
+        return (
+          <Can minRole="admin">
+            <RestoreButton name={category.category} action={() => restoreCategory(String(category.id))} />
+          </Can>
+        );
+      }
+
       return (
         <Can minRole="admin">
         <div className="flex items-center gap-1">
@@ -72,7 +83,7 @@ export const columns: ColumnDef<Category>[] = [
 
           <ConfirmDialog
             title={`Delete category "${category.category}"?`}
-            description="This permanently removes the category. Categories that still have products can't be deleted."
+            description="This permanently removes the category. A category that still has products can't be deleted; one used only by archived products is archived instead."
             confirmLabel="Delete"
             destructive
             action={() => deleteCategory(String(category.id))}

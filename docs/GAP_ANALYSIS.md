@@ -108,7 +108,7 @@ Performance is fine at today's volume, but two things will break as orders grow:
 | Performance | Customers and brands load every row and page in the browser. | Server-side paging, as Products and Orders already do. |
 | Data | Replaced or deleted product images are never removed from storage. Files get random names and upload with no size or type limit beyond the 10 MB request limit. **Confirmed 2026-10-22:** 120 of the 247 files in the `products` bucket are used by no row. In `StaticAssests`, 18 of 23 are used by no row, but that bucket may also hold the mobile app's own files. | Delete the old file on replace or delete (P6-07); validate on upload (P3-01). Clearing the existing orphans is for the owner to decide. |
 | Data | Order status change is three separate calls (read, update, insert history), and a failed history insert is ignored. | One Postgres function (RPC) that runs the whole change in a single transaction. |
-| Data | What happens on product, brand or category delete depends on foreign keys that are not visible in the repo. Deletes may fail or cascade into order lines. | Use soft delete (`is_archived`) for anything referenced by orders. |
+| Data | What happens on product, brand or category delete depends on foreign keys that are not visible in the repo. Deletes may fail or cascade into order lines. **Confirmed 2026-10-22:** 44 order lines, 9 favorites and 1 saved order reference products, so deleting those products fails. | Use soft delete (`is_archived`) for anything referenced by orders. The code is ready (P6-08); the owner must apply `docs/sql/P6-08-soft-delete.sql` and make the mobile app hide archived rows. |
 
 ## Recommendations and next steps
 

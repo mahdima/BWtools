@@ -1,54 +1,66 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { queryByArchived } from "@/lib/archive";
 
-// One page of the products table, newest first, optionally filtered by name.
+// One page of the products table, newest first, optionally filtered by name. Active
+// products by default, or the archived ones. `archiving` is false until the
+// is_archived column exists (see lib/archive.ts).
 export async function getProducts({
   page = 1,
   limit = 20,
   search = "",
   lowStockAtOrBelow,
+  archived = false,
 }: {
   page?: number;
   limit?: number;
   search?: string;
   // Only products whose stock is at or below this (the "Low stock" filter)
   lowStockAtOrBelow?: number;
+  archived?: boolean;
 }) {
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  let query = supabaseAdmin
-    .from("products")
-    .select("*, categories(categorie_name), brands(brand_name)", { count: "exact" })
-    .order("product_id", { ascending: false })
-    .range(from, to);
+  const { result, archiving } = await queryByArchived(archived, (isArchived) => {
+    let query = supabaseAdmin
+      .from("products")
+      .select("*, categories(categorie_name), brands(brand_name)", { count: "exact" })
+      .order("product_id", { ascending: false })
+      .range(from, to);
 
-  if (search) {
-    query = query.ilike("product_name", `%${search}%`);
-  }
+    if (isArchived !== null) {
+      query = query.eq("is_archived", isArchived);
+    }
 
-  if (lowStockAtOrBelow !== undefined) {
-    query = query.lte("in_stock_vailable", lowStockAtOrBelow);
-  }
+    if (search) {
+      query = query.ilike("product_name", `%${search}%`);
+    }
 
-  const { data, error, count } = await query;
+    if (lowStockAtOrBelow !== undefined) {
+      query = query.lte("in_stock_vailable", lowStockAtOrBelow);
+    }
 
-  if (error) {
-    console.error("Error fetching products:", error);
-    return { data: [], count: 0 };
+    return query;
+  });
+
+  if (!result || result.error) {
+    if (result?.error) console.error("Error fetching products:", result.error);
+    return { data: [], count: 0, archiving };
   }
 
   // Table fields, plus the raw columns
-  const formattedData = (data || []).map((item) => ({
+  const formattedData = (result.data || []).map((item) => ({
     ...item,
     id: item.product_id,
     product: item.product_name,
     category: item.categories?.categorie_name || "",
     price: item.unite_price,
     brand: item.brands?.brand_name || "",
+    archived,
   }));
 
-  return { data: formattedData, count: count || 0 };
+  return { data: formattedData, count: result.count || 0, archiving };
 }
 
 // A single product for the edit modal, or null.
@@ -63,12 +75,23 @@ export async function getProductById(productId: number) {
   return data ?? null;
 }
 
-// Options for the category and brand pickers in the product form.
-export async function getProductFormOptions() {
+// Options for the category and brand pickers in the product form: the active ones,
+// plus the edited product's own category and brand even if they were archived.
+export async function getProductFormOptions(current?: { categoryId: number | null; brandId: number | null }) {
+  // "active, or this id", so an archived current value still shows as selected
+  const activeOr = (idColumn: string, id: number | null | undefined) =>
+    id ? `is_archived.eq.false,${idColumn}.eq.${id}` : "is_archived.eq.false";
+
   const [categories, brands] = await Promise.all([
-    supabaseAdmin.from("categories").select("categorie_id, categorie_name").order("categorie_name"),
-    supabaseAdmin.from("brands").select("brand_id, brand_name").order("brand_name"),
+    queryByArchived(false, (isArchived) => {
+      const query = supabaseAdmin.from("categories").select("categorie_id, categorie_name").order("categorie_name");
+      return isArchived === null ? query : query.or(activeOr("categorie_id", current?.categoryId));
+    }),
+    queryByArchived(false, (isArchived) => {
+      const query = supabaseAdmin.from("brands").select("brand_id, brand_name").order("brand_name");
+      return isArchived === null ? query : query.or(activeOr("brand_id", current?.brandId));
+    }),
   ]);
 
-  return { categories: categories.data ?? [], brands: brands.data ?? [] };
+  return { categories: categories.result?.data ?? [], brands: brands.result?.data ?? [] };
 }
