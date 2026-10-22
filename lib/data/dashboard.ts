@@ -57,20 +57,22 @@ export async function getRecentOrders() {
   return data;
 }
 
-export async function getLowStockProducts() {
-  const { data, error } = await supabaseAdmin
+// The products closest to running out (stock at or below `threshold`, the store's
+// low-stock setting), plus how many there are in total.
+export async function getLowStockProducts(threshold: number, limit = 5) {
+  const { data, error, count } = await supabaseAdmin
     .from('products')
-    .select('*')
-    .lt('in_stock_vailable', 10)
+    .select('product_id, product_name, in_stock_vailable', { count: 'exact' })
+    .lte('in_stock_vailable', threshold)
     .order('in_stock_vailable', { ascending: true })
-    .limit(5);
+    .limit(limit);
 
   if (error) {
     console.error("Error fetching low stock products:", error);
-    return [];
+    return { products: [], total: 0 };
   }
 
-  return data;
+  return { products: data ?? [], total: count ?? 0 };
 }
 
 // Revenue per day/week/month for the dashboard chart (see groupRevenue in lib/dates.ts).

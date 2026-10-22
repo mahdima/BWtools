@@ -6,10 +6,13 @@ export async function getProducts({
   page = 1,
   limit = 20,
   search = "",
+  lowStockAtOrBelow,
 }: {
   page?: number;
   limit?: number;
   search?: string;
+  // Only products whose stock is at or below this (the "Low stock" filter)
+  lowStockAtOrBelow?: number;
 }) {
   const from = (page - 1) * limit;
   const to = from + limit - 1;
@@ -22,6 +25,10 @@ export async function getProducts({
 
   if (search) {
     query = query.ilike("product_name", `%${search}%`);
+  }
+
+  if (lowStockAtOrBelow !== undefined) {
+    query = query.lte("in_stock_vailable", lowStockAtOrBelow);
   }
 
   const { data, error, count } = await query;

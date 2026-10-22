@@ -843,7 +843,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - The SQL itself hasn't been executed, since DDL against production is the owner's call. Tick the box once a new mobile order shows up in the bell.
 
 ### P6-03 · Low-stock widget
-- [ ] Done
+- [x] Done
 
 **Depends on:** P6-01
 **Files:** `app/(dashboard)/page.tsx`, `components/low-stock.tsx`, `getLowStockProducts`, `product/page.tsx`
@@ -852,6 +852,15 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Add a "Low stock" filter to the products list, and link the widget to it.
 
 **Done when:** The dashboard lists products below the threshold.
+
+**Notes (2026-10-22):**
+- **Query:** `getLowStockProducts(threshold)` uses `lte` (at or below), the same rule as the P6-02 trigger and the Settings help text. It returns the first 5 plus the total count, and the threshold comes from `store_settings` (default 10 until P6-01's SQL runs).
+- **Dashboard:** the `LowStock` widget is back in a third column on wide screens (wrapping to two columns below `xl`). Its badge shows the total, rows link to `/product?edit=<id>`, and "View all" goes to `/product?stock=low`.
+- **Products page:** `?stock=low` filters to products at or below the threshold. A "Low stock only" / "Show all products" toggle is visible to viewers too.
+- **Verified:**
+  - The real catalogue query works: a count-only request shows **0 of 128** products at or below 10 today.
+  - The widget was rendered with sample data on a temporary page and the screenshot reviewed (page deleted afterwards).
+  - `typecheck`, lint (0 errors, warnings down to 28), 118 tests and `build` pass.
 
 ### P6-04 · Customer detail page and server-side paging
 - [ ] Done

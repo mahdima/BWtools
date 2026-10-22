@@ -3,7 +3,8 @@ import { RecentOrders } from "@/components/recent-orders";
 import { LowStock } from "@/components/low-stock";
 import { DashboardFilter } from "@/components/dashboard-filter";
 import { RevenueChart } from "@/components/revenue-chart";
-import { getDashboardStats, getRecentOrders, getRevenueData } from "@/lib/data/dashboard";
+import { getDashboardStats, getLowStockProducts, getRecentOrders, getRevenueData } from "@/lib/data/dashboard";
+import { getStoreSettings } from "@/lib/data/settings";
 
 export const revalidate = 0; // Ensure fresh data on every request
 
@@ -15,10 +16,14 @@ export default async function Home({ searchParams }: DashboardProps) {
   const params = await searchParams;
   const period = typeof params.period === "string" ? params.period : "all";
 
-  const [stats, recentOrders, revenueData] = await Promise.all([
+  const [stats, recentOrders, revenueData, lowStock] = await Promise.all([
     getDashboardStats(period),
     getRecentOrders(),
     getRevenueData(period),
+    getStoreSettings().then(async ({ low_stock_threshold }) => ({
+      threshold: low_stock_threshold,
+      ...(await getLowStockProducts(low_stock_threshold)),
+    })),
   ]);
 
   return (
@@ -37,13 +42,16 @@ export default async function Home({ searchParams }: DashboardProps) {
         <StatsCards stats={stats} />
       </div>
 
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 pb-4">
-        {/* Split: Left Chart, Right Recents */}
-        <div className="h-full min-h-0">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
+        {/* Chart, recent orders and low stock; wraps to two columns on smaller screens */}
+        <div className="h-full min-h-[320px]">
           <RevenueChart data={revenueData} />
         </div>
-        <div className="h-full min-h-0">
+        <div className="h-full min-h-[320px]">
           <RecentOrders orders={recentOrders} />
+        </div>
+        <div className="h-full min-h-[320px]">
+          <LowStock products={lowStock.products} total={lowStock.total} threshold={lowStock.threshold} />
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Modal } from "@/components/Modal";
 import { Can } from "@/components/admin-provider";
 import { getCurrentAdmin } from "@/lib/auth";
+import { getStoreSettings } from "@/lib/data/settings";
 import { hasRole } from "@/lib/roles";
 import { ProductForm } from "@/components/ProductForm";
 import { addProduct, updateProduct } from "./actions";
@@ -22,9 +23,12 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
   const params = await searchParams;
   const page = typeof params.page === "string" ? parseInt(params.page) : 1;
   const search = typeof params.search === "string" ? params.search : "";
+  // ?stock=low lists only products at or below the store's low-stock threshold
+  const lowStockOnly = params.stock === "low";
+  const lowStockAtOrBelow = lowStockOnly ? (await getStoreSettings()).low_stock_threshold : undefined;
   const limit = 20;
 
-  const { data, count } = await getProducts({ page, limit, search });
+  const { data, count } = await getProducts({ page, limit, search, lowStockAtOrBelow });
   const pageCount = Math.ceil(count / limit);
 
   // The add/edit modal is only for admins (viewers are read-only)
@@ -51,6 +55,13 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
           pageCount={pageCount}
           isServerSide={true}
           headerActions={
+            <>
+            <Link
+              href={lowStockOnly ? "/product" : "/product?stock=low"}
+              className="text-sm font-medium text-primary hover:text-primary-strong whitespace-nowrap"
+            >
+              {lowStockOnly ? "Show all products" : "Low stock only"}
+            </Link>
             <Can minRole="admin">
               <Link
                 href={`/product?add=true${
@@ -62,6 +73,7 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
                 </Button>
               </Link>
             </Can>
+            </>
           }
         />
       </Suspense>
