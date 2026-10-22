@@ -9,6 +9,13 @@ const ROLE_RANK: Record<Role, number> = {
   super_admin: 2,
 };
 
+// How each role is shown in the UI.
+export const ROLE_LABELS: Record<Role, string> = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  viewer: "Viewer",
+};
+
 export function isRole(value: unknown): value is Role {
   return typeof value === "string" && (ROLES as readonly string[]).includes(value);
 }

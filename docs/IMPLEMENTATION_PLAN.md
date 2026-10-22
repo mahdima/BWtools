@@ -476,7 +476,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Found:** the revenue figures are capped at 1000 orders per period by Supabase's row limit; noted on P6-06.
 
 ### P3-07 · Small fixes
-- [ ] Done
+- [x] Done
 
 **Files:** `components/ProductForm.tsx`, `order/[id]/page.tsx`, `settings/page.tsx`
 **Steps:**
@@ -486,7 +486,12 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 
 **Done when:** All three behave correctly, as checked manually.
 
-**Notes (2026-10-22):** Step 2 was done in P3-05. The order page calls `notFound()`, and the schema shows `orders.total` is `NOT NULL`, so no guard is needed. Steps 1 and 3 remain.
+**Notes (2026-10-22):**
+- **Step 2:** done in P3-05. The order page calls `notFound()`, and `orders.total` is `NOT NULL`, so no guard is needed.
+- **Step 1:** `ProductForm` uses `??` for `unite_price` and `in_stock_vailable`, so 0 shows as 0.
+- **Step 3:** the Settings page uses `requireAdminPage()`, which replaces its own `getUser()` call, and shows the real email and role. The new shared `ROLE_LABELS` in `lib/roles.ts` (with a test, 95 total) is also used by the Profile page, which showed the raw role ("Super_admin").
+- **Checks:** `typecheck`, lint (0 errors) and `build` pass.
+- **Not browser-checked:** all three screens are behind the login. Logged-in check: edit an out-of-stock product (Quantity shows 0), and look at the role on Settings and Profile.
 
 ### P3-08 · Database-generated brand IDs (needs owner)
 - [ ] Done

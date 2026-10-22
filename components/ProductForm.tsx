@@ -96,7 +96,7 @@ export function ProductForm({
                   type="number"
                   id="price"
                   name="price"
-                  defaultValue={product?.unite_price || ""}
+                  defaultValue={product?.unite_price ?? ""}
                   className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
                   placeholder="0.00"
                   step="0.01"
@@ -115,7 +115,7 @@ export function ProductForm({
                   type="number"
                   id="quantity"
                   name="quantity"
-                  defaultValue={product?.in_stock_vailable || ""}
+                  defaultValue={product?.in_stock_vailable ?? ""}
                   className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
                   placeholder="0"
                   required

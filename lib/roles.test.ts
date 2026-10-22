@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ROLES, hasRole, isRole } from "@/lib/roles";
+import { ROLES, ROLE_LABELS, hasRole, isRole } from "@/lib/roles";
 
 describe("isRole", () => {
   it.each(ROLES)("accepts %s", (role) => {
@@ -38,5 +38,13 @@ describe("hasRole", () => {
     expect(hasRole(null, "viewer")).toBe(false);
     expect(hasRole(undefined, "viewer")).toBe(false);
     expect(hasRole("", "viewer")).toBe(false);
+  });
+});
+
+describe("ROLE_LABELS", () => {
+  it("has a readable label for every role", () => {
+    expect(Object.keys(ROLE_LABELS).sort()).toEqual([...ROLES].sort());
+    expect(ROLE_LABELS.super_admin).toBe("Super Admin");
+    for (const role of ROLES) expect(ROLE_LABELS[role]).not.toContain("_");
   });
 });

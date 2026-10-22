@@ -1,13 +1,11 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SecurityForm } from "@/components/SecurityForm";
-import { createClient } from "@/utils/supabase/server";
+import { requireAdminPage } from "@/lib/auth";
+import { ROLE_LABELS } from "@/lib/roles";
 
 const SettingsPage = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const admin = await requireAdminPage();
 
   return (
     <div className="p-4 w-[98%] mx-auto">
@@ -41,7 +39,7 @@ const SettingsPage = async () => {
                   Admin Email
                 </label>
                 <div className="col-span-2 font-medium text-gray-900">
-                  {user?.email}
+                  {admin.email}
                 </div>
               </div>
               <div className="grid grid-cols-3 items-center gap-4">
@@ -50,7 +48,7 @@ const SettingsPage = async () => {
                 </label>
                 <div className="col-span-2 flex">
                   <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">
-                    Admin
+                    {ROLE_LABELS[admin.role]}
                   </span>
                 </div>
               </div>
