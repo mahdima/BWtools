@@ -504,6 +504,8 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 
 **Done when:** Adding a brand no longer computes the ID in app code.
 
+**Notes (2026-10-22):** **Blocked on the owner.** The SQL is ready in `docs/sql/P3-08-brand-id-identity.sql`: inspect, then convert to an identity column that continues after the current max id, then verify. The code change (removing max + 1 from `addBrand`) must only be deployed after the SQL is applied, so it is not done yet.
+
 ### P3-09 · Adding a team member fails
 - [ ] Done
 
