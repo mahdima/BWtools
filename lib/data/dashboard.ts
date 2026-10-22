@@ -16,14 +16,14 @@ import { queryByArchived } from "@/lib/archive";
 const untyped = () => supabaseAdmin as unknown as SupabaseClient;
 
 // PostgREST error when a function doesn't exist (yet): use the fallback path.
-const isMissingFunction = (error: { code?: string } | null) => error?.code === "PGRST202";
+export const isMissingFunction = (error: { code?: string } | null) => error?.code === "PGRST202";
 
 // "Revenue" counts orders that are not cancelled; a missing status is not cancelled.
-const NOT_CANCELLED = "status.is.null,status.neq.Cancelled";
+export const NOT_CANCELLED = "status.is.null,status.neq.Cancelled";
 
-// Fallback: every non-cancelled order (created_at, total) since `start`, fetched in
-// pages because Supabase returns at most 1000 rows per request.
-async function fetchRevenueRows(start: Date | null) {
+// Fallback: every non-cancelled order (created_at, total) from `start` (and before
+// `end`), fetched in pages because Supabase returns at most 1000 rows per request.
+export async function fetchRevenueRows(start: Date | null, end?: Date) {
   const rows: { created_at: string; total: number }[] = [];
   for (let from = 0; ; from += 1000) {
     let query = supabaseAdmin
@@ -34,6 +34,7 @@ async function fetchRevenueRows(start: Date | null) {
       .order("id", { ascending: true })
       .range(from, from + 999);
     if (start) query = query.gte("created_at", start.toISOString());
+    if (end) query = query.lt("created_at", end.toISOString());
 
     const { data, error } = await query;
     if (error) throw error;

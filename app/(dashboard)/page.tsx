@@ -5,6 +5,8 @@ import { DashboardFilter } from "@/components/dashboard-filter";
 import { RevenueChart } from "@/components/revenue-chart";
 import { getDashboardStats, getLowStockProducts, getRecentOrders, getRevenueData } from "@/lib/data/dashboard";
 import { getStoreSettings } from "@/lib/data/settings";
+import { getPreviousPeriodTotals } from "@/lib/data/reports";
+import { COMPARISON_LABELS, percentChange } from "@/lib/reports";
 
 export const revalidate = 0; // Ensure fresh data on every request
 
@@ -16,8 +18,9 @@ export default async function Home({ searchParams }: DashboardProps) {
   const params = await searchParams;
   const period = typeof params.period === "string" ? params.period : "all";
 
-  const [stats, recentOrders, revenueData, lowStock] = await Promise.all([
+  const [stats, previous, recentOrders, revenueData, lowStock] = await Promise.all([
     getDashboardStats(period),
+    getPreviousPeriodTotals(period),
     getRecentOrders(),
     getRevenueData(period),
     getStoreSettings().then(async ({ low_stock_threshold }) => ({
@@ -25,6 +28,13 @@ export default async function Home({ searchParams }: DashboardProps) {
       ...(await getLowStockProducts(low_stock_threshold)),
     })),
   ]);
+
+  // Change against the window just before the period (none for "all time")
+  const comparison = previous && {
+    label: COMPARISON_LABELS[period] ?? "vs previous period",
+    revenue: percentChange(stats.totalRevenue, previous.revenue),
+    orders: percentChange(stats.totalOrders, previous.orders),
+  };
 
   return (
     <div className="p-4 pl-16 lg:pl-4 w-full lg:w-[98%] mx-auto h-[calc(100vh-2rem)] flex flex-col space-y-4 overflow-auto">
@@ -39,7 +49,7 @@ export default async function Home({ searchParams }: DashboardProps) {
       </div>
 
       <div className="flex-none">
-        <StatsCards stats={stats} />
+        <StatsCards stats={stats} comparison={comparison} />
       </div>
 
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">

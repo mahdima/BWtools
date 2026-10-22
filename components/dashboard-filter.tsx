@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Calendar, ChevronDown } from "lucide-react";
 
 export function DashboardFilter() {
   const router = useRouter();
+  const pathname = usePathname(); // the dashboard and the Reports page share this filter
   const searchParams = useSearchParams();
   const currentPeriod = searchParams.get("period") || "all";
 
@@ -16,7 +17,8 @@ export function DashboardFilter() {
     } else {
       params.set("period", value);
     }
-    router.push(`/?${params.toString()}`);
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
   };
 
   const periodLabels: Record<string, string> = {

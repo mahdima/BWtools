@@ -1038,12 +1038,36 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Tick when:** the SQL is applied (then `npm run db:types`). Then a product edit, a role change and an export appear at `/audit` with the right admin, and an UPDATE on `audit_log` is rejected.
 
 ### P7-02 · Reports
-- [ ] Done
+- [x] Done
 
 **Steps:**
 1. Show the change against the previous period on the stat cards.
 2. Add a best-sellers report.
 3. Add revenue by category and by brand.
+
+**Notes (2026-10-22):**
+- **Done, with optional SQL for the owner.** `docs/sql/P7-02-reports.sql` adds two functions, both service_role only:
+  - `period_totals(start, end)`: orders and non-cancelled revenue in a window;
+  - `sales_by(group, start, end)`: units and sales per product, category or brand.
+
+  Until they exist (`PGRST202`), the code computes the same figures from rows in pages of 1000, so the SQL is only a performance step and doesn't block the feature.
+- **Previous period** (`lib/reports.ts`):
+  - `previousPeriod` is the window of the same length just before the period, calendar-aware: `getPeriodStart(period, getPeriodStart(period, now))`. `percentChange` returns null when the previous value is 0, and `formatPercentChange` gives "+12%", "−4%" or "+3.3%".
+  - On the dashboard, `getPreviousPeriodTotals` feeds `StatsCards`. Revenue and orders show the change "vs previous 7 days / month / 3 months / year"; "All time" keeps the old descriptions.
+  - The arrow and sign carry the direction, with green and red only on the white cards (the blue card stays white). "No earlier data to compare" appears when the previous window is empty.
+  - The old card always showed a decorative TrendingUp arrow; it was removed because it suggested a trend that wasn't measured.
+- **`/reports`** (all roles, period filter shared with the dashboard; `DashboardFilter` now keeps the current path):
+  - a best-sellers table (top 10 by sales, with units; the name searches the product list);
+  - "Sales by category" and "Sales by brand" as ranked horizontal bar lists (`SalesBarList`). Following the dataviz guidance: one series in one colour (primary, validated against the light surface: all checks pass); 8 px bars from a square baseline with a 4 px rounded end; a track in a light step of the same hue; values as text on every row (so the list is its own table view); a hover title; and the tail folded into "Other (n)" after 8 rows.
+  - Also: a Sidebar link, `loading.tsx`, and a shared `formatDA` (`lib/money.ts`).
+- **Definitions** (shown on the page):
+  - **Sales** = order lines (quantity × `unit_price`) from orders that weren't cancelled.
+  - **Real data:** sales total **92,132 DA against 99,132 DA of revenue**, because 14 of the 17 orders have a total 500 DA above their lines, probably delivery. The two are labelled differently so nobody expects them to match.
+- **Verified:**
+  - 8 tests for `lib/reports.ts`.
+  - The loaders against the real project (read-only, aggregates): for every period, product, category and brand sales each sum to 92,132 DA and 316 units. The previous windows are correct: last 3 months → the window before had 1 order / 9,294 DA, so −100%; last year → nothing before, so no comparison.
+  - A temporary preview page (deleted) with real report data and sample changes. Screenshots at 1440 px and 390 px were reviewed: deltas, bars, the empty state and long product names wrap without overflow, with 0 page errors.
+  - `typecheck`, lint (0 errors, 26 warnings), 163 tests and `build` pass.
 
 ### P7-03 · Bulk actions and product import
 - [ ] Done

@@ -12,6 +12,7 @@ import {
   User,
   ChevronUp,
   History,
+  BarChart3,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -68,6 +69,11 @@ const items: ISidebarItem[] = [
     name: "Order",
     path: "/order",
     icon: ShoppingBag,
+  },
+  {
+    name: "Reports",
+    path: "/reports",
+    icon: BarChart3,
   },
   {
     name: "Team",
