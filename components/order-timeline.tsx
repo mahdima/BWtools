@@ -4,8 +4,8 @@ interface TimelineEvent {
   id: number;
   old_status: string | null;
   new_status: string;
-  created_at: string;
-  admins: { full_name: string } | null;
+  created_at: string | null;
+  admins: { full_name: string | null } | null;
 }
 
 interface OrderTimelineProps {
@@ -76,7 +76,7 @@ export function OrderTimeline({ events }: OrderTimelineProps) {
                   <div className="flex gap-2 mt-1 text-xs text-gray-500">
                     <span>{event.admins?.full_name || "System"}</span>
                     <span>•</span>
-                    <span>{new Date(event.created_at).toLocaleString()}</span>
+                    <span>{event.created_at && new Date(event.created_at).toLocaleString()}</span>
                   </div>
                 </div>
               </div>

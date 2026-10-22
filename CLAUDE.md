@@ -101,13 +101,19 @@ Each feature folder (`product`, `brand`, `categories`, `customers`, `order`, `te
 
 Status changes go through `updateOrderStatus` in [app/(dashboard)/order/actions.ts](app/(dashboard)/order/actions.ts), which also writes an `order_status_history` row recording who made the change. Admins can attach internal notes (`order_notes`). Notifications (`notifications` table, one row per admin) are created by `createNotification` / `notifyNewOrder` in [app/(dashboard)/notifications/actions.ts](app/(dashboard)/notifications/actions.ts).
 
-## Database naming quirks (must match exactly)
+## Database schema
 
-Several column and bucket names in the Supabase schema are misspelled or unusually cased. Use them exactly as written:
+The schema lives in the Supabase project (ref `gfyxqvkwjlqfripwdobi`, linked through `supabase/`). [types/supabase.ts](types/supabase.ts) is generated from it, and all three clients are typed with `Database`. After any schema change, regenerate it with `npm run db:types`, then run `npm run typecheck`. Don't edit the generated file by hand, and prefer its types over `any`. Primary keys are numbers except `admins.id` and `profiles.id`, which are auth user UUIDs, so convert URL and form IDs with `Number()` and check them with `Number.isInteger()`.
 
-- `products`: `product_id`, `product_name`, `unite_price`, `in_stock_vailable`, `Category_id` (capital C), `brand_id`, `product_link` (image URL), `description`
-- `categories`: `categorie_id`, `categorie_name`
-- `brands`: `brand_id`, `brand_name`
-- Order statuses: `New`, `processing` (lowercase), `Delivering`, `Delivered`, `Cancelled`
+Several names are misspelled or unusually cased. Use them exactly as written:
+
+- `products`: `product_id`, `product_name`, `unite_price`, `in_stock_vailable` (nullable), `Category_id` (capital C), `brand_id` (nullable), `product_link` (image URL), `description`
+- `categories`: `categorie_id`, `categorie_name`, `cat_image_url`
+- `brands`: `brand_id`, `brand_name`, `brand_image_url`
+- `admins`: `id`, `full_name`, `role`, `is_active`, `created_at`, `updated_at`. **There is no `email` column**; the email lives on the auth user.
+- `orders`: `id`, `user_id`, `address_id` (→ `addresses`), `status`, `total`, `created_at`. There are no customer-name or address columns: the customer comes from `profiles` / `profiles_with_email` via `user_id`, and the shipping address from `addresses` via `address_id`.
+- `order_items`: `order_id`, `product_id`, `quantity`, `unit_price` (the price paid; not the product's current `unite_price`)
+- `profiles`: `id`, `username`, `full_name`, `avatar_url`, `website`. The `profiles_with_email` view adds `email` and `phone` from auth.
+- Order statuses: `New`, `processing` (lowercase), `Delivering`, `Delivered`, `Cancelled` (see `lib/orders.ts`)
 - Storage buckets: `products` (product images), `StaticAssests` (category images, misspelled)
-- Customers are read from the `profiles_with_email` view and the `profiles` table.
+- `addresses`, `favorites` and `saved_orders` belong to the mobile app; the dashboard doesn't use them yet.

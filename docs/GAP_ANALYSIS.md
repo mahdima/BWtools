@@ -34,14 +34,16 @@ Anyone who can sign in to the Supabase project can take full control of the dash
 
 ## Bugs in the current code
 
-The review found 12 defects. Order search is broken outright, and two of the bugs can lose or misreport data. Rows marked "verify" depend on table columns that only the Supabase project can confirm.
+The review found 14 defects, two of them confirmed later from the generated schema types. Order search and adding team members are broken outright, and several bugs lose or misreport data. Rows marked "verify" depend on table columns that only the Supabase project can confirm.
 
 | Severity | Bug | Where | Fix |
 | --- | --- | --- | --- |
 | High | Order search never works. `textSearch("id", …)` runs a full-text query on the numeric `id` column, so the query errors and the table shows "No results". | `app/(dashboard)/actions.ts` (`getOrders`) | Use `.eq("id", Number(search))` when the input is numeric, or search by customer instead. |
 | High | Product and brand delete buttons act on the first click with no confirmation, and failures are thrown away without telling the user. | `product/columns.tsx`, `brand/columns.tsx` | Add a confirm dialog and a toast for success or error. |
 | Medium | Export CSV only exports the 20 orders on the current page, and values containing quotes or line breaks corrupt the file. | `order/page.tsx`, `components/csv-exporter.tsx` | Add a server action that exports every order matching the filter, with proper CSV escaping. |
-| Medium | Invoices disagree with the order page (verify). The invoice reads `item.price` and falls back to the product's current price; the order page reads `item.unit_price`. "Bill To" reads `customer_name` and `shipping_address` from the order, while the order page takes the customer from `profiles`. | `app/invoice/[id]/page.tsx`, `components/invoice-printable.tsx` | Share one loader between the two pages and use the price stored on the order line. |
+| Medium | Invoices are wrong (**confirmed from the schema**). `order_items` has only `unit_price`, so the invoice's `item.price` falls back to the product's *current* price. `orders` has no customer or address columns, so "Bill To" always reads "Guest Customer". | `app/invoice/[id]/page.tsx`, `components/invoice-printable.tsx` | Share one loader between the two pages and use `unit_price`; take the customer from `profiles_with_email` and the address from `addresses`. |
+| Medium | **The shipping address is never shown.** It is stored in `addresses` (via `orders.address_id`), but the order page reads `profile.address` / `profile.city`, which don't exist. | `order/[id]/page.tsx` | Join `addresses` in the order loader (P3-05). |
+| Medium | **Adding a team member fails, and the Team page shows no emails.** `createAdmin` inserts `email` into `admins`, which has no such column; the team cards read the same missing field. | `team/actions.ts` | Drop `email` from the insert, and load emails from the auth users (P3-09). |
 | Medium | The order status filter resets on reload or Back. The table starts with no filter and then deletes `status` from the URL. | `components/data-table.tsx:161` | Initialise column filters from the URL. |
 | Medium | New-order and low-stock notifications are never created. `notifyNewOrder` and `createNotification` are not called anywhere, so the bell only shows rows inserted from outside this repo. | `notifications/actions.ts` | Create them from a Supabase database trigger or webhook when an order is inserted or stock drops. |
 | Low | The revenue chart groups by "Mon D" with no year, so for Last year and All time the same day in different years is added together. | `app/(dashboard)/actions.ts` (`getRevenueData`) | Group by ISO date, and by week or month for long ranges. |

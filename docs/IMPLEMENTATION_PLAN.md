@@ -256,18 +256,29 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Tests:** `lib/roles.test.ts` and `lib/orders.test.ts`, 25 tests, all passing. Deliberately breaking the role ranking made a test fail, so the tests do catch regressions.
 - **Other checks:** lint (0 errors), `typecheck` and `build` pass, and the production audit is 0.
 
-### P2-03 · Versioned schema and generated types (needs owner)
-- [ ] Done
+### P2-03 · Generated types and typed clients (needs owner)
+- [x] Done
 
 **Why:** Code quality: the schema lives only in Supabase, and queries are untyped.
 **Steps:**
-1. **Needs owner:** run `npx supabase login`, `npx supabase init`, `npx supabase link --project-ref <ref>` and `npx supabase db pull`, then commit `supabase/migrations/`.
+1. **Needs owner:** run `npx supabase login` and `npx supabase link --project-ref <ref>`, then `npx supabase init`.
 2. Run `npx supabase gen types typescript --linked > types/supabase.ts`, and add an `npm run db:types` script for it.
 3. Type the clients with `createClient<Database>()` / `createServerClient<Database>()`.
 4. Fix the resulting type errors. If this grows large, split the work into follow-up tasks per folder.
 5. Update the "Database naming quirks" section of CLAUDE.md with any confirmed column names (for example `order_items.unit_price` vs `price`).
 
-**Done when:** Types are generated, `tsc` passes, and the migrations folder is committed.
+**Done when:** Types are generated and `tsc` passes. (Pulling the schema into migrations moved to P2-06.)
+
+**Notes (2026-10-22):**
+- **Setup:** the owner logged in and linked the project. `supabase init` created `supabase/config.toml`; `supabase/.temp` is gitignored.
+- **Types:** `types/supabase.ts` (603 lines: 13 tables and 1 view, no functions or enums). `npm run db:types` regenerates it using the Supabase CLI, pinned as a dev dependency at 2.121.0. I checked that the output is plain UTF-8 on Windows.
+- **Typed clients:** `supabaseAdmin`, `utils/supabase/server.ts` and the middleware client all use `Database`. This surfaced **22 type errors in 8 files**, now fixed with no behaviour change:
+  - String IDs against numeric columns: order page, actions and invoice now parse with `Number()`, use `notFound()` for invalid IDs, and order actions take `number` and check `Number.isInteger`. Category actions use `Number(id)`.
+  - Nullable columns: component prop types in notifications, timeline, notes and recent orders now allow `null`.
+  - `admins` has no `email`: the team card's `email` is now optional. Real emails come in P3-09.
+- **Other changes:** `getTeamMembers` now shows `is_active = null` as active, matching the guard.
+- **Checks:** `tsc` has 0 errors, lint 0 errors, tests 25/25, `build` passes, and the production audit is 0.
+- **Schema facts that change other tasks:** see the notes on P3-05 (invoice and order page), P3-09 (team emails) and P4-01 (brand images). The confirmed columns are now in CLAUDE.md under "Database schema".
 
 ### P2-04 · Input validation with zod
 - [ ] Done
@@ -292,6 +303,19 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Set placeholder `NEXT_PUBLIC_SUPABASE_*` / `SUPABASE_SERVICE_ROLE_KEY` values so the build does not fail on missing environment variables.
 
 **Done when:** The workflow is green on a pull request.
+
+### P2-06 · Pull the schema into migrations (needs Docker)
+- [ ] Done
+
+**Why:** Split from P2-03. Tables, row-level security, grants and buckets should be versioned in the repo and reviewed like code.
+**Depends on:** P2-03
+**Files:** `supabase/migrations/<timestamp>_remote_schema.sql`
+**Steps:**
+1. Start Docker Desktop. The Supabase CLI runs `pg_dump` in a container; without the daemon it fails with `DockerRunError`.
+2. Run `npx supabase db pull`. It is read-only against the remote database, and creates its own temporary login role, so no database password is needed. Review the generated migration, especially the RLS policies on `profiles` and `admins` (see P1-07).
+3. From then on, new SQL goes into `supabase/migrations/` instead of `docs/sql/`. Update the workflow rule in CLAUDE.md to match.
+
+**Done when:** `supabase/migrations/` holds the remote schema and is committed.
 
 ---
 
@@ -349,6 +373,12 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 
 **Done when:** The invoice and the order page show the same customer, lines and prices for any order.
 
+**Notes (2026-10-22, schema confirmed in P2-03):**
+- `order_items` has `unit_price` and no `price`, so the invoice currently shows each product's current price.
+- `orders` has no `customer_name`, `customer_email` or `shipping_address`, so the invoice always says "Guest Customer".
+- The shipping address lives in `addresses` (`full_name, phone_number, street, city, state, zip_code, country`) via `orders.address_id`. The order page reads `profile.address` / `profile.city`, which don't exist, so **the shipping address is shown nowhere today**.
+- `getOrderWithDetails` should join `addresses`, and both pages should show it.
+
 ### P3-06 · Revenue chart grouping and shared date ranges
 - [ ] Done
 
@@ -381,6 +411,19 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 
 **Done when:** Adding a brand no longer computes the ID in app code.
 
+### P3-09 · Adding a team member fails
+- [ ] Done
+
+**Why:** Bug, also on `master`: `createAdmin` inserts `email` into `admins`, but the table has no such column (`id, full_name, role, is_active, created_at, updated_at`). The insert fails with `42703: column "email" of relation "admins" does not exist`, and the new auth user is rolled back. Found on 2026-10-22 while granting access by hand.
+**Depends on:** —
+**Files:** `app/(dashboard)/team/actions.ts`
+**Steps:**
+1. Remove `email` from the `admins` insert in `createAdmin`. The email stays on the auth user, where `getCurrentAdmin()` already reads it.
+
+**Done when:** A super admin can add a member from `/team/new`, and the new member can sign in.
+
+**Notes (2026-10-22, from P2-03):** For the same reason, the Team page shows **no email** on any member card: `getTeamMembers` reads `admins.*`, which has no email. Consider loading emails from the auth users (for example `supabaseAdmin.auth.admin.listUsers()`, mapped by id) in `getTeamMembers`. The card's `email` prop is optional for now.
+
 ---
 
 ## Phase 4 — Clean up
@@ -395,6 +438,8 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 2. Add an image picker to the modal, and an image thumbnail column to the table.
 
 **Done when:** You can add and change category images from the Categories page.
+
+**Notes (2026-10-22, from P2-03):** `brands` also has a `brand_image_url` column that the dashboard never sets. Consider the same picker for brands.
 
 ### P4-02 · Delete legacy and dead code
 - [ ] Done

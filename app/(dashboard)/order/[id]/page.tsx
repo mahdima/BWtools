@@ -16,11 +16,12 @@ import {
 } from "lucide-react";
 import { updateOrderStatus, getOrderTimeline, getOrderNotes } from "../actions";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import man from "../../../../img/man.png";
 import { OrderTimeline } from "@/components/order-timeline";
 import { OrderNotes } from "@/components/order-notes";
 
-async function getOrder(id: string) {
+async function getOrder(id: number) {
   // First fetch the order
   const { data: order, error: orderError } = await supabaseAdmin
     .from("orders")
@@ -87,7 +88,7 @@ async function getOrder(id: string) {
   return { ...order, profiles: profile };
 }
 
-async function getOrderItems(orderId: string) {
+async function getOrderItems(orderId: number) {
   const { data, error } = await supabaseAdmin
     .from("order_items")
     .select("*, products(product_name, product_link)")
@@ -106,10 +107,13 @@ interface OrderDetailsPageProps {
 
 const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
   const { id } = await params;
-  const order = await getOrder(id);
-  const items = await getOrderItems(id);
-  const timeline = await getOrderTimeline(id);
-  const notes = await getOrderNotes(id);
+  const orderId = Number(id);
+  if (!Number.isInteger(orderId)) notFound();
+
+  const order = await getOrder(orderId);
+  const items = await getOrderItems(orderId);
+  const timeline = await getOrderTimeline(orderId);
+  const notes = await getOrderNotes(orderId);
 
   if (!order) {
     return <div>Order not found</div>;
@@ -228,7 +232,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
           {/* Timeline & Notes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <OrderTimeline events={timeline} />
-            <OrderNotes orderId={id} notes={notes} />
+            <OrderNotes orderId={orderId} notes={notes} />
           </div>
         </div>
 

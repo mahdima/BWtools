@@ -18,10 +18,12 @@ export async function getTeamMembers() {
     return [];
   }
   
-  // A missing or unknown role is shown as viewer, matching what lib/auth enforces
+  // A missing or unknown role is shown as viewer and a null is_active as active,
+  // matching what lib/auth enforces
   return (data || []).map(member => ({
     ...member,
     role: isRole(member.role) ? member.role : 'viewer',
+    is_active: member.is_active !== false,
   }));
 }
 

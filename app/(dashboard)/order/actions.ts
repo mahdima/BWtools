@@ -5,10 +5,10 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { isOrderStatus } from "@/lib/orders";
 
-export async function updateOrderStatus(orderId: string, newStatus: string) {
+export async function updateOrderStatus(orderId: number, newStatus: string) {
     const admin = await requireAdmin("admin");
 
-    if (!orderId || !newStatus) {
+    if (!Number.isInteger(orderId) || !newStatus) {
         throw new Error("Order ID and status are required");
     }
 
@@ -38,7 +38,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
 
     // Log status change to history
     await supabaseAdmin.from('order_status_history').insert({
-        order_id: parseInt(orderId),
+        order_id: orderId,
         old_status: oldStatus,
         new_status: newStatus,
         changed_by: admin.id,
@@ -49,7 +49,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
 }
 
 // Get order status history
-export async function getOrderTimeline(orderId: string) {
+export async function getOrderTimeline(orderId: number) {
     const { data, error } = await supabaseAdmin
         .from('order_status_history')
         .select('*, admins(full_name)')
@@ -64,11 +64,15 @@ export async function getOrderTimeline(orderId: string) {
 }
 
 // Add internal note to order
-export async function addOrderNote(orderId: string, note: string) {
+export async function addOrderNote(orderId: number, note: string) {
     const admin = await requireAdmin("admin");
 
+    if (!Number.isInteger(orderId)) {
+        throw new Error("Order ID is required");
+    }
+
     const { error } = await supabaseAdmin.from('order_notes').insert({
-        order_id: parseInt(orderId),
+        order_id: orderId,
         admin_id: admin.id,
         note,
     });
@@ -82,7 +86,7 @@ export async function addOrderNote(orderId: string, note: string) {
 }
 
 // Get all notes for an order
-export async function getOrderNotes(orderId: string) {
+export async function getOrderNotes(orderId: number) {
     const { data, error } = await supabaseAdmin
         .from('order_notes')
         .select('*, admins(full_name)')

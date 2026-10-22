@@ -12,12 +12,14 @@ interface InvoicePageProps {
 export default async function InvoicePage({ params }: InvoicePageProps) {
   await requireAdminPage();
   const { id } = await params;
+  const orderId = Number(id);
+  if (!Number.isInteger(orderId)) return notFound();
 
   // Fetch Order
   const { data: order, error: orderError } = await supabaseAdmin
     .from("orders")
     .select("*")
-    .eq("id", id)
+    .eq("id", orderId)
     .single();
 
   if (orderError || !order) {
@@ -29,7 +31,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   const { data: items, error: itemsError } = await supabaseAdmin
     .from("order_items")
     .select("*, products(product_name, unite_price)")
-    .eq("order_id", id);
+    .eq("order_id", orderId);
 
   // If order_items table exists, we map it. If not, we just pass empty array.
   // Assuming a join with products to get details.

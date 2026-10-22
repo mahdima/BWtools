@@ -125,7 +125,7 @@ const EditProduct = async ({ params }: { params: Promise<{ id: string }> }) => {
               <select
                 id="brand"
                 name="brand"
-                defaultValue={productData.brand_id}
+                defaultValue={productData.brand_id ?? undefined}
                 className="p-3 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] h-[50px] text-gray-700 outline-none transition-colors bg-white"
               >
                 {brands.map((brand: any) => (
@@ -146,7 +146,7 @@ const EditProduct = async ({ params }: { params: Promise<{ id: string }> }) => {
                 id="description"
                 name="description"
                 rows={3}
-                defaultValue={productData.description}
+                defaultValue={productData.description ?? undefined}
                 className="p-3 block w-full rounded-md border border-gray-300 focus:border-[#0B1DFF] focus:ring-[#0B1DFF] text-gray-700 outline-none transition-colors resize-none"
               />
             </div>

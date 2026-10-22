@@ -6,12 +6,12 @@ import { MessageSquare, Send } from "lucide-react";
 import { addOrderNote } from "@/app/(dashboard)/order/actions";
 
 interface OrderNotesProps {
-  orderId: string;
+  orderId: number;
   notes: {
     id: number;
     note: string;
-    created_at: string;
-    admins: { full_name: string } | null;
+    created_at: string | null;
+    admins: { full_name: string | null } | null;
   }[];
 }
 
@@ -76,7 +76,7 @@ export function OrderNotes({ orderId, notes }: OrderNotesProps) {
                 <p className="text-sm text-gray-800">{note.note}</p>
                 <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
                   <span>{note.admins?.full_name || "Admin"}</span>
-                  <span>{new Date(note.created_at).toLocaleString()}</span>
+                  <span>{note.created_at && new Date(note.created_at).toLocaleString()}</span>
                 </div>
               </div>
             ))

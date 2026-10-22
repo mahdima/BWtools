@@ -30,8 +30,8 @@ interface Notification {
   title: string;
   message: string;
   link: string | null;
-  is_read: boolean;
-  created_at: string;
+  is_read: boolean | null;
+  created_at: string | null;
 }
 
 interface NotificationsPanelProps {
@@ -125,7 +125,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
                     {notification.message}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    {new Date(notification.created_at).toLocaleString()}
+                    {notification.created_at && new Date(notification.created_at).toLocaleString()}
                   </p>
                 </div>
                 {notification.link && (

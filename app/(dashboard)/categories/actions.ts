@@ -42,7 +42,7 @@ export async function updateCategory(formData: FormData) {
   const { error } = await supabase
     .from("categories")
     .update({ categorie_name: name })
-    .eq("categorie_id", id);
+    .eq("categorie_id", Number(id));
 
   if (error) {
     return { success: false, message: error.message };
@@ -60,7 +60,7 @@ export async function deleteCategory(id: string) {
   const { error } = await supabase
     .from("categories")
     .delete()
-    .eq("categorie_id", id);
+    .eq("categorie_id", Number(id));
 
   if (error) {
     return { success: false, message: error.message };

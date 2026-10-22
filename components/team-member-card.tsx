@@ -26,7 +26,7 @@ import {
 
 interface TeamMember {
   id: string;
-  email: string;
+  email?: string; // `admins` has no email column; P3-09 loads it from the auth user
   full_name: string | null;
   role: string;
   is_active: boolean;

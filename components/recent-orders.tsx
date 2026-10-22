@@ -10,9 +10,9 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 interface Order {
-  id: string;
+  id: number;
   total: number;
-  status: string;
+  status: string | null;
   created_at: string;
 }
 
@@ -70,7 +70,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                 <TableCell className="py-4">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border border-transparent ${
-                      statusColors[order.status] || "bg-gray-100 text-gray-700"
+                      statusColors[order.status ?? ""] || "bg-gray-100 text-gray-700"
                     }`}
                   >
                     {order.status}
