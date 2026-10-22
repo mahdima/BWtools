@@ -31,7 +31,7 @@ Follow this for every feature, fix or refactor bigger than a one-line change.
 npm run dev        # dev server on http://localhost:3000
 npm run build      # production build
 npm run start      # serve the production build
-npm run typecheck  # tsc --noEmit
+npm run typecheck  # next typegen && tsc --noEmit (typegen writes the gitignored next-env.d.ts)
 npm run lint       # eslint . (flat config in eslint.config.mjs; warnings are allowed, errors are not)
 npm test           # vitest run (unit tests, *.test.ts next to the code)
 npx vitest run lib/roles.test.ts   # a single test file
@@ -39,6 +39,8 @@ npx vitest run -t "hasRole"        # tests whose name matches
 ```
 
 Unit tests cover pure helpers in `lib/` and use explicit imports (`import { describe, it, expect } from "vitest"`), not globals. The ESLint toolchain has a known dev-only `braces` advisory with no fix released, so use `npm audit --omit=dev` to check what ships.
+
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs `npm ci`, typecheck, lint, test, build and the production audit on every push and pull request, with placeholder Supabase variables. Keep the build working without real credentials: don't make module-level code require a live Supabase connection.
 
 The app needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. The database schema, RLS policies and storage buckets live in the Supabase project; there are no migrations in this repo.
 
