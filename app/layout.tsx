@@ -46,10 +46,11 @@ export default function RootLayout({
       <body
         className={`${outfit.className} antialiased selection:bg-indigo-500/30`}
       >
+        {/* Light only until the screens get a proper dark theme (P7-05) */}
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <Suspense fallback={null}>

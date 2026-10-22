@@ -25,7 +25,7 @@ export function OrderTimeline({ events }: OrderTimelineProps) {
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
         <h2 className="font-semibold text-gray-900 flex items-center">
-          <Clock className="h-5 w-5 mr-2 text-[#0B1DFF]" />
+          <Clock className="h-5 w-5 mr-2 text-primary" />
           Status History
         </h2>
       </div>
@@ -44,7 +44,7 @@ export function OrderTimeline({ events }: OrderTimelineProps) {
                 )}
 
                 {/* Timeline Dot */}
-                <div className="w-6 h-6 rounded-full bg-[#0B1DFF] flex items-center justify-center flex-shrink-0 z-10">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 z-10">
                   <div className="w-2 h-2 rounded-full bg-white" />
                 </div>
 

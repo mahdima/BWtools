@@ -58,7 +58,7 @@ export default function LoginPage({
                     type="email"
                     autoComplete="email"
                     required
-                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#0B1DFF] focus:border-[#0B1DFF] sm:text-sm transition duration-200"
+                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-200"
                     placeholder="Enter your email"
                   />
                 </div>
@@ -78,7 +78,7 @@ export default function LoginPage({
                     type="password"
                     autoComplete="current-password"
                     required
-                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#0B1DFF] focus:border-[#0B1DFF] sm:text-sm transition duration-200"
+                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-200"
                     placeholder="••••••••"
                   />
                 </div>
@@ -95,7 +95,7 @@ export default function LoginPage({
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#0B1DFF] hover:bg-[#000ECC] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0B1DFF] transition duration-200 transform hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-strong focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-200 transform hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending ? "Signing in..." : "Sign in"}
               </button>
@@ -107,7 +107,7 @@ export default function LoginPage({
               </span>
               <a
                 href="#"
-                className="font-medium text-[#0B1DFF] hover:text-[#000ECC] text-sm"
+                className="font-medium text-primary hover:text-primary-strong text-sm"
               >
                 Contact Support
               </a>

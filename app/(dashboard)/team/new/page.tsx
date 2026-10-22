@@ -17,7 +17,7 @@ export default async function NewAdminPage() {
     <div className="p-6 max-w-2xl mx-auto">
       <Link
         href="/team"
-        className="inline-flex items-center text-sm text-gray-500 hover:text-[#0B1DFF] mb-4 transition-colors"
+        className="inline-flex items-center text-sm text-gray-500 hover:text-primary mb-4 transition-colors"
       >
         <ArrowLeft className="h-4 w-4 mr-1" /> Back to Team
       </Link>

@@ -7,7 +7,7 @@ import { createAdmin } from "@/app/(dashboard)/team/actions";
 import { useFormAction } from "@/lib/use-form-action";
 
 const inputClass =
-  "w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] outline-none";
+  "w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none";
 
 // The /team/new form. A client component so validation errors show inline and
 // keep what was typed; on success createAdmin redirects to /team.
@@ -69,7 +69,7 @@ export function NewAdminForm() {
             Cancel
           </Button>
         </Link>
-        <Button type="submit" disabled={isPending} className="flex-1 bg-[#0B1DFF] hover:bg-blue-700">
+        <Button type="submit" disabled={isPending} className="flex-1 bg-primary hover:bg-primary-strong">
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Create Admin
         </Button>

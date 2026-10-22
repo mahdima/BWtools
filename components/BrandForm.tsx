@@ -18,7 +18,7 @@ export function BrandForm({ brand, action, title }: BrandFormProps) {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6 text-[#0B1DFF]">{title}</h1>
+      <h1 className="text-2xl font-bold mb-6 text-primary">{title}</h1>
 
       <form onSubmit={onSubmit} className="bg-white rounded-lg">
         <div className="space-y-6">
@@ -35,7 +35,7 @@ export function BrandForm({ brand, action, title }: BrandFormProps) {
               id="brand"
               name="brand"
               defaultValue={brand?.brand_name || ""}
-              className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+              className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
               placeholder="Enter brand name"
               required
             />
@@ -62,7 +62,7 @@ export function BrandForm({ brand, action, title }: BrandFormProps) {
           <Button
             type="submit"
             disabled={isPending}
-            className="px-8 h-11 bg-[#0B1DFF] text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20"
+            className="px-8 h-11 bg-primary text-white hover:bg-primary-strong shadow-lg shadow-blue-500/20"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             {brand ? "Update Brand" : "Save Brand"}

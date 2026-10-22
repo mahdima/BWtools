@@ -58,7 +58,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
       <div className="mb-8">
         <Link
           href="/order"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-[#0B1DFF] mb-4 transition-colors"
+          className="inline-flex items-center text-sm text-gray-500 hover:text-primary mb-4 transition-colors"
         >
           <ArrowLeft className="h-4 w-4 mr-1" /> Back to Orders
         </Link>
@@ -96,7 +96,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
               <h2 className="font-semibold text-gray-900 flex items-center">
-                <ShoppingBag className="h-5 w-5 mr-2 text-[#0B1DFF]" />
+                <ShoppingBag className="h-5 w-5 mr-2 text-primary" />
                 Order Items
               </h2>
               <span className="text-sm text-gray-500">
@@ -146,7 +146,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                     </p>
                   )}
                   <p className="text-sm text-gray-500 mb-1">Total Amount</p>
-                  <p className="text-2xl font-bold text-[#0B1DFF]">
+                  <p className="text-2xl font-bold text-primary">
                     {order.total.toLocaleString()} DZD
                   </p>
                 </div>
@@ -167,7 +167,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
               <h2 className="font-semibold text-gray-900 flex items-center">
-                <User className="h-5 w-5 mr-2 text-[#0B1DFF]" />
+                <User className="h-5 w-5 mr-2 text-primary" />
                 Customer Details
               </h2>
             </div>
@@ -262,7 +262,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <h2 className="font-semibold text-gray-900 mb-4 flex items-center">
-              <Truck className="h-5 w-5 mr-2 text-[#0B1DFF]" />
+              <Truck className="h-5 w-5 mr-2 text-primary" />
               Update Status
             </h2>
             <OrderStatusActions orderId={orderId} currentStatus={order.status} />

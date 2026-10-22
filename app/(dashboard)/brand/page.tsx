@@ -34,7 +34,7 @@ const BrandPage = async ({ searchParams }: BrandPageProps) => {
           description="Manage product brands"
           headerActions={
             <Link href="/brand?add=true">
-              <Button className="bg-[#0b1dff] text-white hover:bg-blue-700 w-[180px] h-[40px]">
+              <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
                 <Plus className="mr-2 h-4 w-4" /> Add Brand
               </Button>
             </Link>

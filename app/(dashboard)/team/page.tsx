@@ -22,7 +22,7 @@ export default async function TeamPage() {
         </div>
         {isSuper && (
           <Link href="/team/new">
-            <Button className="bg-[#0b1dff] text-white hover:bg-blue-700">
+            <Button className="bg-primary text-white hover:bg-primary-strong">
               <UserPlus className="mr-2 h-4 w-4" /> Add Admin
             </Button>
           </Link>

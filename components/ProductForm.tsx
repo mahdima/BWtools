@@ -56,7 +56,7 @@ export function ProductForm({
                 id="product"
                 name="product"
                 defaultValue={product?.product_name || ""}
-                className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
                 placeholder="Enter product name"
                 required
               />
@@ -74,7 +74,7 @@ export function ProductForm({
                 id="category"
                 name="category"
                 defaultValue={product?.Category_id || ""}
-                className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
                 required
               >
                 <option value="" disabled>
@@ -102,7 +102,7 @@ export function ProductForm({
                   id="price"
                   name="price"
                   defaultValue={product?.unite_price ?? ""}
-                  className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                  className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
                   placeholder="0.00"
                   step="0.01"
                   required
@@ -121,7 +121,7 @@ export function ProductForm({
                   id="quantity"
                   name="quantity"
                   defaultValue={product?.in_stock_vailable ?? ""}
-                  className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                  className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
                   placeholder="0"
                   required
                 />
@@ -138,7 +138,7 @@ export function ProductForm({
                   id="brand"
                   name="brand"
                   defaultValue={product?.brand_id || ""}
-                  className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                  className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
                   required
                 >
                   <option value="" disabled>
@@ -201,7 +201,7 @@ export function ProductForm({
           <Button
             type="submit"
             disabled={isPending}
-            className="px-8 h-11 bg-[#0B1DFF] text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20"
+            className="px-8 h-11 bg-primary text-white hover:bg-primary-strong shadow-lg shadow-blue-500/20"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             {product ? "Update Product" : "Save Product"}

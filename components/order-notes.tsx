@@ -36,7 +36,7 @@ export function OrderNotes({ orderId, notes }: OrderNotesProps) {
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
         <h2 className="font-semibold text-gray-900 flex items-center">
-          <MessageSquare className="h-5 w-5 mr-2 text-[#0B1DFF]" />
+          <MessageSquare className="h-5 w-5 mr-2 text-primary" />
           Internal Notes
         </h2>
       </div>
@@ -49,12 +49,12 @@ export function OrderNotes({ orderId, notes }: OrderNotesProps) {
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
               placeholder="Add a note..."
-              className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] outline-none text-sm"
+              className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm"
             />
             <Button
               type="submit"
               disabled={!newNote.trim() || isSubmitting}
-              className="bg-[#0B1DFF] hover:bg-blue-700"
+              className="bg-primary hover:bg-primary-strong"
             >
               <Send className="h-4 w-4" />
             </Button>

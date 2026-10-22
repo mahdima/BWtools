@@ -644,7 +644,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Checks:** `typecheck`, lint (0 errors, 29 warnings), 95 tests and `build` pass.
 
 ### P4-05 · Design tokens and forced light theme
-- [ ] Done
+- [x] Done
 
 **Files:** `app/globals.css`, `app/layout.tsx`, every component that uses `#0B1DFF` / `#0b1dff`
 **Steps:**
@@ -653,6 +653,13 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 3. Set `defaultTheme="light"` and `enableSystem={false}` until P7-05.
 
 **Done when:** `grep -ri "#0b1dff" app components` returns nothing, and the UI looks the same.
+
+**Notes (2026-10-22):**
+- **Tokens:** `--primary`, `--ring` and `--sidebar-primary` are now the exact brand blue (`oklch(0.466 0.303 264.9)` = #0B1DFF; they were a slightly different indigo). The new `--primary-strong` (#000ECC) is exposed as the `primary-strong` utility for hover states.
+- **Replacements:** the 41 remaining hard-coded usages became `bg-primary`, `text-primary`, `focus:ring-primary`, `focus:border-primary` and `hover:*-primary-strong`. The 8 brand buttons that hovered to Tailwind's `blue-700` now use `hover:bg-primary-strong`. The only hex left is in two CSS comments.
+- **Theme:** `ThemeProvider` uses `defaultTheme="light"` with `enableSystem={false}`. With the browser emulating a dark OS, `<html>` keeps class `light`.
+- **Visual check:** a login screenshot matches the earlier one.
+- **Checks:** `typecheck`, lint (0 errors), 95 tests and `build` pass.
 
 ### P4-06 · Logging cleanup and Next 16 conventions
 - [ ] Done
