@@ -14,15 +14,15 @@ export function ErrorState({ error, retry }: { error: unknown; retry: () => void
 
   return (
     <div role="alert" className="flex flex-col items-center justify-center text-center gap-4 p-10 min-h-[60vh]">
-      <div className="rounded-full bg-red-50 p-4">
-        <AlertTriangle className="h-8 w-8 text-red-600" aria-hidden />
+      <div className="rounded-full bg-red-500/10 p-4">
+        <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" aria-hidden />
       </div>
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <p className="text-sm text-gray-500 max-w-md">
+        <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground max-w-md">
           {t("pageNotLoaded")}
         </p>
-        {digest && <p className="text-xs text-gray-400 font-mono">{t("reference", { digest })}</p>}
+        {digest && <p className="text-xs text-muted-foreground/70 font-mono">{t("reference", { digest })}</p>}
       </div>
       <div className="flex gap-3">
         <Button onClick={() => retry()} className="bg-primary text-white hover:bg-primary-strong">

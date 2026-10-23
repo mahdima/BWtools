@@ -27,7 +27,7 @@ export function Modal({
   return (
     <Dialog open onOpenChange={(open) => !open && onDismiss()}>
       <DialogContent
-        className="sm:max-w-5xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-white"
+        className="sm:max-w-5xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-card"
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>

@@ -94,21 +94,21 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
         >
           <Download className="h-4 w-4" /> {t("downloadTemplate")}
         </Button>
-        {fileName && <span className="text-sm text-gray-500">{fileName}</span>}
+        {fileName && <span className="text-sm text-muted-foreground">{fileName}</span>}
       </div>
 
       {preview && !preview.success && (
-        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div role="alert" className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-800 dark:text-red-400">
           {preview.message}
         </div>
       )}
 
       {preview?.success && (
-        <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-50 p-4">
+        <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
             <div>
-              <h2 className="font-bold text-gray-900">{t("preview")}</h2>
-              <p className="text-sm text-gray-500">
+              <h2 className="font-bold text-foreground">{t("preview")}</h2>
+              <p className="text-sm text-muted-foreground">
                 {preview.message}
                 {validCount < rows.length && ` ${t("skippedHint")}`}
               </p>
@@ -135,7 +135,7 @@ export function ImportPreviewTable({ rows }: { rows: ImportPreviewRow[] }) {
   return (
     <div className="max-h-[60vh] overflow-auto">
       <table className="w-full min-w-[760px] text-start text-sm">
-        <thead className="sticky top-0 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+        <thead className="sticky top-0 bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th scope="col" className="px-4 py-2 font-medium">{t("row")}</th>
             <th scope="col" className="px-4 py-2 font-medium">{t("name")}</th>
@@ -148,20 +148,20 @@ export function ImportPreviewTable({ rows }: { rows: ImportPreviewRow[] }) {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.row} className="border-t border-gray-50 align-top">
-              <td className="px-4 py-2 tabular-nums text-gray-500">{row.row}</td>
-              <td className="px-4 py-2 font-medium text-gray-900">{row.name || "—"}</td>
-              <td className="px-4 py-2 text-gray-700">{row.category || "—"}</td>
-              <td className="px-4 py-2 text-gray-700">{row.brand || "—"}</td>
-              <td className="px-4 py-2 text-end tabular-nums text-gray-700">{row.price || "—"}</td>
-              <td className="px-4 py-2 text-end tabular-nums text-gray-700">{row.quantity || "0"}</td>
+            <tr key={row.row} className="border-t border-border align-top">
+              <td className="px-4 py-2 tabular-nums text-muted-foreground">{row.row}</td>
+              <td className="px-4 py-2 font-medium text-foreground">{row.name || "—"}</td>
+              <td className="px-4 py-2 text-foreground/80">{row.category || "—"}</td>
+              <td className="px-4 py-2 text-foreground/80">{row.brand || "—"}</td>
+              <td className="px-4 py-2 text-end tabular-nums text-foreground/80">{row.price || "—"}</td>
+              <td className="px-4 py-2 text-end tabular-nums text-foreground/80">{row.quantity || "0"}</td>
               <td className="px-4 py-2">
                 {row.errors.length === 0 ? (
-                  <span className="inline-flex items-center gap-1 text-emerald-700">
+                  <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
                     <CheckCircle2 className="h-4 w-4" aria-hidden /> {t("ready")}
                   </span>
                 ) : (
-                  <ul className="space-y-0.5 text-red-700">
+                  <ul className="space-y-0.5 text-red-700 dark:text-red-400">
                     {row.errors.map((error) => (
                       <li key={error} className="flex items-start gap-1">
                         <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> {error}

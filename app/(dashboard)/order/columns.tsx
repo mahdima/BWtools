@@ -25,11 +25,11 @@ export type Order = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  New: "text-green-600",
-  processing: "text-blue-600",
-  Delivering: "text-yellow-600",
-  Delivered: "text-orange-600",
-  Cancelled: "text-red-800",
+  New: "text-green-600 dark:text-green-400",
+  processing: "text-primary",
+  Delivering: "text-yellow-600 dark:text-yellow-400",
+  Delivered: "text-orange-600 dark:text-orange-400",
+  Cancelled: "text-red-800 dark:text-red-400",
 };
 
 // Column titles are components so they can use translations (TanStack renders them)
@@ -40,7 +40,7 @@ function ColumnLabel({ k }: { k: "id" | "total" | "status" | "createdAt" }) {
 function StatusCell({ status }: { status: string | null }) {
   const t = useTranslations("orderStatus");
   return (
-    <div className={`font-medium ${STATUS_COLORS[status ?? ""] ?? "text-gray-600"}`}>
+    <div className={`font-medium ${STATUS_COLORS[status ?? ""] ?? "text-muted-foreground"}`}>
       {isOrderStatus(status) ? t(status) : status}
     </div>
   );

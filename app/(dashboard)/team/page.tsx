@@ -21,8 +21,8 @@ export default async function TeamPage() {
       {/* Header */}
       <div className="flex items-center justify-between py-4 mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">
             {t("subtitle")}
           </p>
         </div>
@@ -38,16 +38,16 @@ export default async function TeamPage() {
       {/* Role Legend */}
       <div className="flex gap-4 mb-6">
         <div className="flex items-center gap-2 text-sm">
-          <Shield className="h-4 w-4 text-purple-600" />
-          <span className="text-gray-600">{roles("super_admin")}</span>
+          <Shield className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+          <span className="text-muted-foreground">{roles("super_admin")}</span>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <UserCog className="h-4 w-4 text-blue-600" />
-          <span className="text-gray-600">{roles("admin")}</span>
+          <UserCog className="h-4 w-4 text-primary" />
+          <span className="text-muted-foreground">{roles("admin")}</span>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <Eye className="h-4 w-4 text-gray-600" />
-          <span className="text-gray-600">{roles("viewer")}</span>
+          <Eye className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground">{roles("viewer")}</span>
         </div>
       </div>
 
@@ -60,7 +60,7 @@ export default async function TeamPage() {
 
       {members.length === 0 && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>{t("noMembers")}</p>
           </div>

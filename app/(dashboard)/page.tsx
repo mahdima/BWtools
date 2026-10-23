@@ -44,8 +44,8 @@ export default async function Home({ searchParams }: DashboardProps) {
     <div className="p-4 ps-16 lg:ps-4 w-full lg:w-[98%] mx-auto h-[calc(100vh-2rem)] flex flex-col space-y-4 overflow-auto">
       <div className="flex-none flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">
             {t("subtitle")}
           </p>
         </div>

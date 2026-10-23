@@ -13,14 +13,14 @@ export default async function NotFound() {
   const t = await getTranslations("errors");
   const tc = await getTranslations("common");
   return (
-    <main className="min-h-screen bg-white flex flex-col items-center justify-center text-center gap-4 p-10">
-      <div className="rounded-full bg-blue-50 p-4">
+    <main className="min-h-screen bg-card flex flex-col items-center justify-center text-center gap-4 p-10">
+      <div className="rounded-full bg-blue-500/10 p-4">
         <SearchX className="h-8 w-8 text-primary" aria-hidden />
       </div>
       <div className="space-y-1">
         <p className="text-sm font-semibold text-primary">404</p>
-        <h1 className="text-2xl font-bold text-gray-900">{t("notFoundTitle")}</h1>
-        <p className="text-sm text-gray-500 max-w-md">
+        <h1 className="text-2xl font-bold text-foreground">{t("notFoundTitle")}</h1>
+        <p className="text-sm text-muted-foreground max-w-md">
           {t("notFoundText")}
         </p>
       </div>

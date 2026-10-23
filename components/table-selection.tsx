@@ -38,7 +38,7 @@ export function SelectCheckbox({
       checked={checked}
       onChange={(event) => onChange(event.target.checked)}
       onClick={(event) => event.stopPropagation()}
-      className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-primary"
+      className="h-4 w-4 cursor-pointer rounded border-border accent-primary"
     />
   );
 }

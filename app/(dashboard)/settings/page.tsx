@@ -18,8 +18,8 @@ const SettingsPage = async () => {
   return (
     <div className="p-4 w-[98%] mx-auto">
       <div className="mb-6 mt-5">
-        <h1 className="text-2xl font-bold mb-1 text-gray-900">{t("title")}</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold mb-1 text-foreground">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">
           {t("subtitle")}
         </p>
       </div>
@@ -31,17 +31,17 @@ const SettingsPage = async () => {
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 max-w-2xl">
+          <div className="rounded-2xl border border-border bg-card shadow-sm p-6 max-w-2xl">
             <h3 className="text-lg font-medium mb-4">{t("yourAccount")}</h3>
             <dl className="grid gap-4">
               <div className="grid grid-cols-3 items-center gap-4">
-                <dt className="text-sm font-medium text-gray-500">{t("email")}</dt>
-                <dd className="col-span-2 font-medium text-gray-900">{admin.email}</dd>
+                <dt className="text-sm font-medium text-muted-foreground">{t("email")}</dt>
+                <dd className="col-span-2 font-medium text-foreground">{admin.email}</dd>
               </div>
               <div className="grid grid-cols-3 items-center gap-4">
-                <dt className="text-sm font-medium text-gray-500">{t("role")}</dt>
+                <dt className="text-sm font-medium text-muted-foreground">{t("role")}</dt>
                 <dd className="col-span-2 flex">
-                  <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">
+                  <span className="bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded text-xs font-bold">
                     {roles(admin.role)}
                   </span>
                 </dd>
@@ -49,11 +49,11 @@ const SettingsPage = async () => {
             </dl>
           </div>
 
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 max-w-2xl">
+          <div className="rounded-2xl border border-border bg-card shadow-sm p-6 max-w-2xl">
             <h3 className="text-lg font-medium mb-1">{t("store")}</h3>
-            <p className="text-sm text-gray-500 mb-4">{t("storeHelp")}</p>
+            <p className="text-sm text-muted-foreground mb-4">{t("storeHelp")}</p>
             {isSuperAdmin && settings.isDefault && (
-              <p className="mb-4 p-3 rounded-lg bg-amber-50 text-amber-700 text-sm">
+              <p className="mb-4 p-3 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 text-sm">
                 {t("defaultsNotice")}
               </p>
             )}
@@ -69,8 +69,8 @@ const SettingsPage = async () => {
                   [t("lowStockThreshold"), String(settings.low_stock_threshold)],
                 ].map(([label, value]) => (
                   <div key={label} className="grid grid-cols-3 items-center gap-4">
-                    <dt className="text-sm font-medium text-gray-500">{label}</dt>
-                    <dd className="col-span-2 font-medium text-gray-900">{value}</dd>
+                    <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+                    <dd className="col-span-2 font-medium text-foreground">{value}</dd>
                   </div>
                 ))}
               </dl>
@@ -79,7 +79,7 @@ const SettingsPage = async () => {
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 max-w-2xl">
+          <div className="rounded-2xl border border-border bg-card shadow-sm p-6 max-w-2xl">
             <SecurityForm />
           </div>
         </TabsContent>

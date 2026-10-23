@@ -32,6 +32,7 @@ import { useAdmin } from "@/components/admin-provider";
 import { hasRole, type Role } from "@/lib/roles";
 import { useTranslations } from "next-intl";
 import { LanguagePicker } from "@/components/language-picker";
+import { ThemePicker } from "@/components/theme-picker";
 
 interface ISidebarItem {
   // Key in messages/*.json "nav"
@@ -122,7 +123,7 @@ const Sidebar = ({
       {/* Top: Logo & Notifications */}
       <div className="flex justify-between items-center mb-10 px-6">
         <Image
-          className="w-auto h-9 object-contain opacity-90 hover:opacity-100 transition-opacity"
+          className="w-auto h-9 object-contain opacity-90 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert"
           src={logo}
           alt="bwtools"
         />
@@ -138,7 +139,10 @@ const Sidebar = ({
 
       {/* Bottom: language, then the user profile dropdown */}
       <div className="px-4 pt-4 border-t border-sidebar-border mt-auto">
-        <LanguagePicker className="mb-3 px-2.5" />
+        <div className="mb-3 flex flex-col gap-2 px-2.5">
+          <LanguagePicker />
+          <ThemePicker />
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-sidebar-accent cursor-pointer transition-colors group border border-transparent hover:border-sidebar-border/50">

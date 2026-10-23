@@ -61,9 +61,9 @@ function EntryRow({ entry, labels, time }: { entry: AuditEntry; labels: ChangeLa
   const changes = formatChanges(entry.changes, labels);
 
   return (
-    <tr className="border-b border-gray-100 align-top last:border-0">
-      <td className="whitespace-nowrap px-4 py-3 text-gray-500">{time.format(new Date(entry.created_at))}</td>
-      <td className="px-4 py-3 font-medium text-gray-900">
+    <tr className="border-b border-border align-top last:border-0">
+      <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{time.format(new Date(entry.created_at))}</td>
+      <td className="px-4 py-3 font-medium text-foreground">
         {entry.admins?.full_name || (entry.admin_id ? t("unnamedAdmin") : t("deletedAdmin"))}
       </td>
       <td className="whitespace-nowrap px-4 py-3">
@@ -79,7 +79,7 @@ function EntryRow({ entry, labels, time }: { entry: AuditEntry; labels: ChangeLa
           `${entityLabel}${shownId}`
         )}
       </td>
-      <td className="px-4 py-3 text-gray-600">
+      <td className="px-4 py-3 text-muted-foreground">
         {changes.length > 0 ? (
           <ul className="space-y-0.5">
             {changes.map((line, index) => (
@@ -89,7 +89,7 @@ function EntryRow({ entry, labels, time }: { entry: AuditEntry; labels: ChangeLa
             ))}
           </ul>
         ) : (
-          <span className="text-gray-400">—</span>
+          <span className="text-muted-foreground/70">—</span>
         )}
       </td>
     </tr>
@@ -107,9 +107,9 @@ export function AuditLogTable({ entries }: { entries: AuditEntry[] }) {
   });
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card">
       <table className="w-full min-w-[720px] text-start text-sm">
-        <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+        <thead className="border-b border-border bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
           <tr>
             <th scope="col" className="px-4 py-3 font-medium">{t("when")}</th>
             <th scope="col" className="px-4 py-3 font-medium">{t("who")}</th>
@@ -123,7 +123,7 @@ export function AuditLogTable({ entries }: { entries: AuditEntry[] }) {
             entries.map((entry) => <EntryRow key={entry.id} entry={entry} labels={labels} time={time} />)
           ) : (
             <tr>
-              <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
+              <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
                 {t("nothing")}
               </td>
             </tr>

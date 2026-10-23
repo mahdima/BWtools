@@ -1205,13 +1205,30 @@ The printed invoice stays as it is: its language is a store decision, not an adm
 - **P7-04 is complete.** Still to check when logged in: a validation error and a success toast in French and Arabic.
 
 ### P7-05 · Full dark mode
-- [ ] Done
+- [x] Done
 
 **Depends on:** P4-05
 **Steps:**
 1. Make every surface use tokens.
 2. Add a theme toggle in the sidebar menu.
 3. Re-enable system theme detection.
+
+**Notes (2026-10-23):**
+- **Tokens everywhere:** a token-aware script converted 591 hard-coded colour classes in 44 files.
+  - **Neutrals:** `bg-white` → `bg-card`; `text-gray-900` → `text-foreground`; `text-gray-500/600` → `text-muted-foreground`; grey borders → `border-border`; `bg-gray-50/100` → `bg-muted`.
+  - **Brand blues:** become `primary`.
+  - **Status tints:** `bg-red-50`, `border-green-200` and similar become translucent tints of the 500 shade, which work on both backgrounds. Coloured text gets a lighter `dark:` shade.
+  - The shadcn `tabs` component was fixed by hand.
+  - Left alone: the printed invoice (it stays white), and white text on the blue card.
+- **Theme choice:** next-themes now follows the device (`defaultTheme="system"`). `ThemePicker` (Light / Dark / System, translated) sits under the language picker in the sidebar and is remembered in the browser. `color-scheme` is set per theme, so native inputs, date pickers and scrollbars match.
+- **Chart:** SVG attributes don't read CSS variables reliably, so `RevenueChart` picks grid, axis, bar and tooltip colours from `resolvedTheme`.
+- **Logo:** the logo's black wordmark disappeared on dark backgrounds; it now renders white in dark mode (`dark:brightness-0 dark:invert`) in the sidebar and on the login page.
+- **Verified** (Playwright on the dev server, with a temporary page of the shell, dashboard widgets, tables, order timeline and notes, audit table and product form, deleted afterwards; plus the real login page):
+  - The device's light or dark setting is followed, and the picker overrides it and survives a reload.
+  - A contrast scan (computed lab/oklab luminance) found no text below 3:1 in dark mode. The only light-mode hits are on the blue revenue card, whose gradient background the scan can't read.
+  - Screenshots were reviewed, with 0 page errors.
+  - `typecheck`, lint (0 errors, 25 warnings), 189 tests and `build` pass.
+- **Still to check when logged in:** each real page in dark mode.
 
 ---
 

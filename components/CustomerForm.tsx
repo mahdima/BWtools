@@ -25,7 +25,7 @@ interface CustomerFormProps {
 }
 
 const inputClass =
-  "w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-sm";
+  "w-full h-10 px-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-all text-sm";
 
 export function CustomerForm({ customer, trigger }: CustomerFormProps) {
   const t = useTranslations("customers.form");
@@ -35,13 +35,13 @@ export function CustomerForm({ customer, trigger }: CustomerFormProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <button className="text-gray-500 hover:text-blue-600" aria-label={t("title")}>
+          <button className="text-muted-foreground hover:text-primary" aria-label={t("title")}>
             <Pencil className="h-4 w-4" />
           </button>
         )}
       </DialogTrigger>
       {/* Radix mounts the content on open, so each open starts without an old error */}
-      <DialogContent className="sm:max-w-md bg-white" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-md bg-card" aria-describedby={undefined}>
         <CustomerFormBody customer={customer} onDone={() => setIsOpen(false)} />
       </DialogContent>
     </Dialog>
@@ -76,25 +76,25 @@ function CustomerFormBody({
         <input type="hidden" name="id" value={customer.id} />
 
         {state && !state.success && (
-          <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+          <div role="alert" className="p-3 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 text-sm">
             {state.message}
           </div>
         )}
 
         <div className="space-y-2">
-          <label htmlFor="customer-email" className="text-sm font-medium text-gray-700">
+          <label htmlFor="customer-email" className="text-sm font-medium text-foreground/80">
             {t("emailReadOnly")}
           </label>
           <input
             id="customer-email"
             disabled
             defaultValue={customer.email}
-            className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 text-sm"
+            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/60 text-muted-foreground text-sm"
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="customer-username" className="text-sm font-medium text-gray-700">
+          <label htmlFor="customer-username" className="text-sm font-medium text-foreground/80">
             {t("username")}
           </label>
           <input
@@ -107,7 +107,7 @@ function CustomerFormBody({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="customer-phone" className="text-sm font-medium text-gray-700">
+          <label htmlFor="customer-phone" className="text-sm font-medium text-foreground/80">
             {t("phone")}
           </label>
           <input
@@ -123,14 +123,14 @@ function CustomerFormBody({
           <button
             type="button"
             onClick={onDone}
-            className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors"
           >
             {tc("cancel")}
           </button>
           <button
             disabled={isPending}
             type="submit"
-            className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            className="bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary-strong disabled:opacity-50 flex items-center gap-2"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("update")}

@@ -18,14 +18,14 @@ export function OrderBulkActions() {
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="bulk-status" className="text-gray-600">
+      <label htmlFor="bulk-status" className="text-muted-foreground">
         {t("setStatus")}
       </label>
       <select
         id="bulk-status"
         value={status}
         onChange={(event) => setStatus(event.target.value as OrderStatus | "")}
-        className="h-8 rounded-md border border-gray-200 bg-white px-2 text-sm"
+        className="h-8 rounded-md border border-border bg-card px-2 text-sm"
       >
         <option value="">{t("choose")}</option>
         {ORDER_STATUSES.map((value) => (

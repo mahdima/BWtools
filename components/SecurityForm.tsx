@@ -38,7 +38,7 @@ export function SecurityForm() {
     <div className="space-y-6">
       <div className="space-y-1">
         <h3 className="text-lg font-medium">{t("passwordTitle")}</h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           {t("passwordHelp")}
         </p>
       </div>
@@ -47,8 +47,8 @@ export function SecurityForm() {
         <div
           className={`p-3 rounded-lg text-sm ${
             message.success
-              ? "bg-green-50 text-green-600"
-              : "bg-red-50 text-red-600"
+              ? "bg-green-500/10 text-green-600 dark:text-green-400"
+              : "bg-red-500/10 text-red-600 dark:text-red-400"
           }`}
         >
           {message.text}
@@ -83,7 +83,7 @@ export function SecurityForm() {
         <Button
           disabled={loading}
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-primary hover:bg-primary-strong text-white"
         >
           {loading && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
           {t("updatePassword")}

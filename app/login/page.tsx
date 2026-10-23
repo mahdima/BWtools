@@ -31,7 +31,7 @@ export default function LoginPage({
         : "");
 
   return (
-    <div className="relative flex min-h-screen bg-white">
+    <div className="relative flex min-h-screen bg-card">
       <LanguagePicker className="absolute top-4 end-4 z-10" />
       {/* Left Side - Login Form */}
       <div className="w-full mt-20 lg:w-1/2 flex  justify-center p-8 lg:p-16">
@@ -41,11 +41,11 @@ export default function LoginPage({
               <Image
                 src={logo}
                 alt="WBtools Logo"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain dark:brightness-0 dark:invert"
                 priority
               />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 tracking-tight text-center">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight text-center">
               {t("welcome")}
             </h2>
           </div>
@@ -55,7 +55,7 @@ export default function LoginPage({
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground/80"
                 >
                   {tc("emailAddress")}
                 </label>
@@ -66,7 +66,7 @@ export default function LoginPage({
                     type="email"
                     autoComplete="email"
                     required
-                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-200"
+                    className="appearance-none block w-full px-3 py-3 border border-border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-200"
                     placeholder={tc("emailPlaceholder")}
                   />
                 </div>
@@ -75,7 +75,7 @@ export default function LoginPage({
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground/80"
                 >
                   {t("password")}
                 </label>
@@ -86,7 +86,7 @@ export default function LoginPage({
                     type="password"
                     autoComplete="current-password"
                     required
-                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-200"
+                    className="appearance-none block w-full px-3 py-3 border border-border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-200"
                     placeholder="••••••••"
                   />
                 </div>
@@ -94,7 +94,7 @@ export default function LoginPage({
             </div>
 
             {errorMessage && (
-              <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md border border-red-200">
+              <div className="text-red-500 text-sm bg-red-500/10 p-3 rounded-md border border-red-500/20">
                 {errorMessage}
               </div>
             )}
@@ -122,7 +122,7 @@ export default function LoginPage({
       </div>
 
       {/* Right Side - Image */}
-      <div className="hidden lg:block lg:w-1/2 relative bg-gray-100">
+      <div className="hidden lg:block lg:w-1/2 relative bg-muted">
         <Image
           src={material}
           alt="Login Background"

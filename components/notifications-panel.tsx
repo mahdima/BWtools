@@ -50,11 +50,11 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
   const getIcon = (type: string) => {
     switch (type) {
       case "new_order":
-        return <Package className="h-4 w-4 text-green-600" />;
+        return <Package className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case "low_stock":
-        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+        return <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />;
       default:
-        return <Info className="h-4 w-4 text-blue-600" />;
+        return <Info className="h-4 w-4 text-primary" />;
     }
   };
 
@@ -94,7 +94,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto p-0 text-xs text-blue-600 hover:text-blue-800"
+              className="h-auto p-0 text-xs text-primary hover:text-primary-strong"
               onClick={handleMarkAllAsRead}
               disabled={isPending}
             >
@@ -105,7 +105,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
         <DropdownMenuSeparator />
 
         {notifications.length === 0 ? (
-          <div className="p-4 text-center text-sm text-gray-500">
+          <div className="p-4 text-center text-sm text-muted-foreground">
             {t("none")}
           </div>
         ) : (
@@ -114,7 +114,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
               <DropdownMenuItem
                 key={notification.id}
                 className={`flex items-start gap-3 p-3 cursor-pointer ${
-                  !notification.is_read ? "bg-blue-50/50" : ""
+                  !notification.is_read ? "bg-blue-500/5" : ""
                 }`}
                 onClick={() =>
                   !notification.is_read && handleMarkAsRead(notification.id)
@@ -131,10 +131,10 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
                   >
                     {notification.title}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {notification.message}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground/70 mt-1">
                     {notification.created_at &&
                       new Intl.DateTimeFormat(intlLocale(locale), {
                         dateStyle: "medium",
@@ -145,7 +145,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
                 </div>
                 {notification.link && (
                   <Link href={notification.link} className="flex-shrink-0">
-                    <ExternalLink className="h-4 w-4 text-gray-400 hover:text-blue-600" />
+                    <ExternalLink className="h-4 w-4 text-muted-foreground/70 hover:text-primary" />
                   </Link>
                 )}
               </DropdownMenuItem>

@@ -14,11 +14,11 @@ export default async function ProductImportPage() {
   return (
     <div className="flex h-full w-full flex-col space-y-4 overflow-auto p-4 ps-16 lg:ps-4">
       <div className="py-2">
-        <Link href="/product" className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary">
+        <Link href="/product" className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4 rtl:rotate-180" /> {t("back")}
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <div className="mt-2 max-w-3xl space-y-1 text-sm text-gray-600">
+        <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+        <div className="mt-2 max-w-3xl space-y-1 text-sm text-muted-foreground">
           <p>{t("intro1")}</p>
           <p>{t("intro2", { max: MAX_IMPORT_ROWS })}</p>
         </div>

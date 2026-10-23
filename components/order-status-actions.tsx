@@ -10,11 +10,11 @@ import { useRunWithToast } from "@/lib/use-toast-action";
 import { useTranslations } from "next-intl";
 
 const STATUS_BUTTONS: { status: OrderStatus; icon: LucideIcon; className: string }[] = [
-  { status: "New", icon: Box, className: "hover:bg-green-50 hover:text-green-700 hover:border-green-200" },
-  { status: "processing", icon: Box, className: "hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200" },
-  { status: "Delivering", icon: Truck, className: "hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-200" },
-  { status: "Delivered", icon: Truck, className: "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200" },
-  { status: "Cancelled", icon: Box, className: "hover:bg-red-50 hover:text-red-700 hover:border-red-200" },
+  { status: "New", icon: Box, className: "hover:bg-green-500/10 hover:text-green-700 hover:border-green-500/30" },
+  { status: "processing", icon: Box, className: "hover:bg-blue-500/10 hover:text-primary-strong hover:border-blue-500/30" },
+  { status: "Delivering", icon: Truck, className: "hover:bg-yellow-500/10 hover:text-yellow-700 hover:border-yellow-500/30" },
+  { status: "Delivered", icon: Truck, className: "hover:bg-orange-500/10 hover:text-orange-700 hover:border-orange-500/30" },
+  { status: "Cancelled", icon: Box, className: "hover:bg-red-500/10 hover:text-red-700 hover:border-red-500/30" },
 ];
 
 interface OrderStatusActionsProps {

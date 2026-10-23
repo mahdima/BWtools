@@ -39,7 +39,7 @@ export function ProductBulkActions({ archived }: { archived: boolean }) {
       destructive
       action={() => deleteProducts(selectedIds)}
       trigger={
-        <Button variant="outline" size="sm" className="h-8 gap-1 bg-background text-red-600 hover:text-red-700">
+        <Button variant="outline" size="sm" className="h-8 gap-1 bg-background text-red-600 dark:text-red-400 hover:text-red-700">
           <Trash2 className="h-3.5 w-3.5" /> {t("deleteConfirm")}
         </Button>
       }

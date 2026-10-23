@@ -24,7 +24,7 @@ function CustomerLink({ customer }: { customer: Customer }) {
   const t = useTranslations("customers");
   const name = customer.username && customer.username !== "Null" ? customer.username : null;
   return (
-    <Link href={`/customers/${customer.id}`} className="font-medium text-gray-900 hover:text-primary hover:underline">
+    <Link href={`/customers/${customer.id}`} className="font-medium text-foreground hover:text-primary hover:underline">
       {name || customer.email || t("viewCustomer")}
     </Link>
   );
@@ -48,7 +48,7 @@ function CustomerActions({ customer }: { customer: Customer }) {
               variant="ghost"
               size="icon"
               aria-label={t("edit", { name: customer.username || customer.email || t("editFallback") })}
-              className="h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-blue-500/10"
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -75,7 +75,7 @@ export const columns: ColumnDef<Customer>[] = [
       return val && val !== "Null" ? (
         val
       ) : (
-        <span className="text-gray-400">-</span>
+        <span className="text-muted-foreground/70">-</span>
       );
     },
   },
@@ -88,7 +88,7 @@ export const columns: ColumnDef<Customer>[] = [
       return val && val !== "Null" ? (
         <span dir="ltr">{val}</span>
       ) : (
-        <span className="text-gray-400">-</span>
+        <span className="text-muted-foreground/70">-</span>
       );
     },
   },

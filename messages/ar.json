@@ -709,5 +709,11 @@
       "reactivateFailed": "فشلت إعادة التفعيل: {error}",
       "reactivated": "تمت إعادة تفعيل المسؤول."
     }
+  },
+  "theme": {
+    "label": "المظهر",
+    "light": "فاتح",
+    "dark": "داكن",
+    "system": "حسب الجهاز"
   }
 }

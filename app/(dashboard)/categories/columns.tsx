@@ -46,7 +46,7 @@ function CategoryActions({ category }: { category: Category }) {
               variant="ghost"
               size="icon"
               aria-label={t("edit", { name: category.category })}
-              className="h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+              className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-blue-500/10"
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -64,7 +64,7 @@ function CategoryActions({ category }: { category: Category }) {
               variant="ghost"
               size="icon"
               aria-label={t("delete", { name: category.category })}
-              className="h-7 w-7 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              className="h-7 w-7 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 transition-colors"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -90,18 +90,18 @@ export const columns: ColumnDef<Category>[] = [
           alt={row.original.category}
           width={40}
           height={40}
-          className="h-10 w-10 rounded-md object-cover border border-gray-100"
+          className="h-10 w-10 rounded-md object-cover border border-border"
           unoptimized
         />
       ) : (
-        <div className="h-10 w-10 rounded-md bg-gray-100" aria-hidden />
+        <div className="h-10 w-10 rounded-md bg-muted" aria-hidden />
       ),
   },
   {
     accessorKey: "category",
     header: () => <ColumnLabel k="category" />,
     cell: ({ row }) => (
-      <div className="font-medium text-gray-900">
+      <div className="font-medium text-foreground">
         {row.getValue("category")}
       </div>
     ),

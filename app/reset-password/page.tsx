@@ -9,11 +9,11 @@ export default async function ResetPasswordPage() {
   const t = await getTranslations("auth");
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white p-8">
+    <div className="flex min-h-screen items-center justify-center bg-card p-8">
       <div className="w-full max-w-md space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t("resetTitle")}</h1>
-          <p className="mt-2 text-sm text-gray-600">{t("resetFor", { email: admin.email ?? "" })}</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">{t("resetTitle")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t("resetFor", { email: admin.email ?? "" })}</p>
         </div>
         <ResetPasswordForm />
       </div>

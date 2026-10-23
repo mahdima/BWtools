@@ -13,24 +13,24 @@ export default function ForgotPasswordPage() {
   const { state, isPending, onSubmit } = useFormAction(requestPasswordReset);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-white p-8">
+    <div className="relative flex min-h-screen items-center justify-center bg-card p-8">
       <LanguagePicker className="absolute top-4 end-4" />
       <div className="w-full max-w-md space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t("forgotPassword")}</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">{t("forgotPassword")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             {t("forgotIntro")}
           </p>
         </div>
 
         {state?.success ? (
-          <div role="status" className="p-4 rounded-md border border-green-200 bg-green-50 text-sm text-green-700">
+          <div role="status" className="p-4 rounded-md border border-green-500/20 bg-green-500/10 text-sm text-green-700 dark:text-green-400">
             {state.message}
           </div>
         ) : (
           <form onSubmit={onSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground/80">
                 {tc("emailAddress")}
               </label>
               <input
@@ -39,13 +39,13 @@ export default function ForgotPasswordPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="mt-1 appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                className="mt-1 appearance-none block w-full px-3 py-3 border border-border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                 placeholder={tc("emailPlaceholder")}
               />
             </div>
 
             {state && !state.success && (
-              <div role="alert" className="text-red-500 text-sm bg-red-50 p-3 rounded-md border border-red-200">
+              <div role="alert" className="text-red-500 text-sm bg-red-500/10 p-3 rounded-md border border-red-500/20">
                 {state.message}
               </div>
             )}

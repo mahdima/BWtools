@@ -33,12 +33,12 @@ export default async function AuditPage({
   return (
     <div className="flex h-full w-full flex-col overflow-auto p-4 ps-16 lg:ps-4">
       <div className="py-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <p className="text-sm text-gray-500">{t("subtitle")}</p>
+        <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {!available ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-400">
           {t("notSetUp")}
         </div>
       ) : (
@@ -54,7 +54,7 @@ export default async function AuditPage({
                   className={`rounded-full border px-3 py-1 text-sm transition-colors ${
                     active
                       ? "border-primary bg-primary text-white"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-primary/40 hover:text-primary"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-primary"
                   }`}
                 >
                   {value ? t(`entities.${value}`) : t("all")}
@@ -66,16 +66,16 @@ export default async function AuditPage({
           <AuditLogTable entries={data} />
 
           {pageCount > 1 && (
-            <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+            <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
               <span>{t("pageSummary", { page, count: pageCount, entries: count })}</span>
               <div className="flex gap-2">
                 {page > 1 && (
-                  <Link href={auditUrl(entity, page - 1)} className="rounded-md border border-gray-200 bg-white px-3 py-1.5 hover:bg-gray-50">
+                  <Link href={auditUrl(entity, page - 1)} className="rounded-md border border-border bg-card px-3 py-1.5 hover:bg-muted/60">
                     {t("previous")}
                   </Link>
                 )}
                 {page < pageCount && (
-                  <Link href={auditUrl(entity, page + 1)} className="rounded-md border border-gray-200 bg-white px-3 py-1.5 hover:bg-gray-50">
+                  <Link href={auditUrl(entity, page + 1)} className="rounded-md border border-border bg-card px-3 py-1.5 hover:bg-muted/60">
                     {t("next")}
                   </Link>
                 )}

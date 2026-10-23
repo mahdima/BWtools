@@ -20,13 +20,13 @@ interface LowStockProps {
 export function LowStock({ products, total, threshold }: LowStockProps) {
   const t = useTranslations("dashboard");
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden h-full flex flex-col">
-      <div className="p-6 border-b border-gray-50 flex items-center justify-between flex-none">
+    <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden h-full flex flex-col">
+      <div className="p-6 border-b border-border flex items-center justify-between flex-none">
         <div>
-          <h3 className="font-bold text-lg text-gray-900">{t("lowStockTitle")}</h3>
-          <p className="text-xs text-gray-500">{t("lowStockThreshold", { threshold })}</p>
+          <h3 className="font-bold text-lg text-foreground">{t("lowStockTitle")}</h3>
+          <p className="text-xs text-muted-foreground">{t("lowStockThreshold", { threshold })}</p>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-600 border border-red-100">
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
           <AlertTriangle className="h-4 w-4" aria-hidden />
           <span className="text-xs font-bold">
             {t("lowStockItems", { count: total })}
@@ -36,11 +36,11 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
       <div className="p-0 flex-1 overflow-auto min-h-0">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent border-gray-50">
-              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 ps-6 h-10">
+            <TableRow className="hover:bg-transparent border-border">
+              <TableHead className="font-medium text-xs uppercase tracking-wider text-muted-foreground ps-6 h-10">
                 {t("product")}
               </TableHead>
-              <TableHead className="font-medium text-xs uppercase tracking-wider text-gray-500 text-end pe-6 h-10">
+              <TableHead className="font-medium text-xs uppercase tracking-wider text-muted-foreground text-end pe-6 h-10">
                 {t("stock")}
               </TableHead>
             </TableRow>
@@ -48,20 +48,20 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
           <TableBody>
             {products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={2} className="text-center text-gray-500 py-8">
+                <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
                   {t("noLowStock")}
                 </TableCell>
               </TableRow>
             ) : (
               products.map((product) => (
-                <TableRow key={product.product_id} className="border-gray-50 hover:bg-gray-50/50">
-                  <TableCell className="font-medium text-gray-900 ps-6 py-4">
+                <TableRow key={product.product_id} className="border-border hover:bg-muted/40">
+                  <TableCell className="font-medium text-foreground ps-6 py-4">
                     <Link href={`/product?edit=${product.product_id}`} className="hover:text-primary">
                       {product.product_name}
                     </Link>
                   </TableCell>
                   <TableCell className="text-end pe-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-600">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/10 text-red-600 dark:text-red-400">
                       {(product.in_stock_vailable ?? 0) === 0 ? t("outOfStock") : t("left", { count: product.in_stock_vailable ?? 0 })}
                     </span>
                   </TableCell>
@@ -72,7 +72,7 @@ export function LowStock({ products, total, threshold }: LowStockProps) {
         </Table>
       </div>
       {total > 0 && (
-        <div className="px-6 py-3 border-t border-gray-50 text-end">
+        <div className="px-6 py-3 border-t border-border text-end">
           <Link href="/product?stock=low" className="text-sm font-medium text-primary hover:text-primary-strong">
             {t("viewAllLowStock")}
           </Link>

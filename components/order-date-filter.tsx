@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 
 const inputClass =
-  "h-8 rounded-md border border-gray-200 bg-background px-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none";
+  "h-8 rounded-md border border-border bg-background px-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none";
 
 // From/to date pickers for the order list, kept in the URL (?from=YYYY-MM-DD&to=...)
 // like the other filters, so reload, Back and the CSV export all see them.
@@ -40,7 +40,7 @@ export function OrderDateFilter() {
         onChange={(e) => setDates({ from: e.target.value })}
         className={inputClass}
       />
-      <span className="text-gray-400" aria-hidden>
+      <span className="text-muted-foreground/70" aria-hidden>
         –
       </span>
       <label htmlFor="order-to" className="sr-only">

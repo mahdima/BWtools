@@ -100,7 +100,7 @@ Performance is fine at today's volume, but two things will break as orders grow:
 
 | Type | Issue | Fix |
 | --- | --- | --- |
-| UX | The theme follows the OS (`defaultTheme="system"`) with no toggle. Only 18 `dark:` classes exist against 85 hard-coded `bg-white` / `text-gray-900`, so dark-mode users see a mixed screen. | Force light mode now; do a proper token-based dark theme later. |
+| UX | The theme follows the OS (`defaultTheme="system"`) with no toggle. Only 18 `dark:` classes exist against 85 hard-coded `bg-white` / `text-gray-900`, so dark-mode users see a mixed screen. | Force light mode now; do a proper token-based dark theme later. **Done (P7-05):** every surface uses tokens, with a Light / Dark / System picker. |
 | UX | Loading states are missing. There is one root `loading.tsx`, and the `Suspense` fallbacks wrap data that is already fetched, so they never show. The `Skeleton` component is unused. | Add a `loading.tsx` with skeletons per route. |
 | UX | Four hand-made modals with no focus trap. Icon-only edit and delete buttons have no accessible label, and form labels are not linked to inputs. | One shadcn `Dialog`, `aria-label` on icon buttons, and `htmlFor` on labels. |
 | Performance / correctness | Dashboard stats and the revenue chart download every order's total and sum it in JavaScript. Cost grows with the size of the `orders` table, and **Supabase returns at most 1000 rows per request**, so above 1000 orders in a period the revenue figures are silently too low. | A Postgres function or view that returns the aggregates (P6-06). |

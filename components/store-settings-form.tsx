@@ -8,7 +8,7 @@ import { useFormAction } from "@/lib/use-form-action";
 import { useTranslations } from "next-intl";
 
 const inputClass =
-  "w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-primary transition-all text-sm";
+  "w-full h-10 px-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-all text-sm";
 
 // label and help are keys in messages/*.json "settings"
 const FIELDS: {
@@ -38,7 +38,7 @@ export function StoreSettingsForm({ settings }: { settings: StoreSettings }) {
     <form onSubmit={onSubmit} className="space-y-4">
       {FIELDS.map(({ name, label, type, help }) => (
         <div key={name} className="grid grid-cols-3 items-start gap-4">
-          <label htmlFor={`store-${name}`} className="text-sm font-medium text-gray-500 pt-2.5">
+          <label htmlFor={`store-${name}`} className="text-sm font-medium text-muted-foreground pt-2.5">
             {t(label)}
           </label>
           <div className="col-span-2 space-y-1">
@@ -53,7 +53,7 @@ export function StoreSettingsForm({ settings }: { settings: StoreSettings }) {
               aria-describedby={help ? `store-${name}-help` : undefined}
             />
             {help && (
-              <p id={`store-${name}-help`} className="text-xs text-gray-400">
+              <p id={`store-${name}-help`} className="text-xs text-muted-foreground/70">
                 {t(help)}
               </p>
             )}
@@ -62,7 +62,7 @@ export function StoreSettingsForm({ settings }: { settings: StoreSettings }) {
       ))}
 
       {state && !state.success && (
-        <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+        <div role="alert" className="p-3 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 text-sm">
           {state.message}
         </div>
       )}

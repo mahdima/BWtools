@@ -15,33 +15,33 @@ import {
 export function BestSellers({ rows }: { rows: SalesRow[] }) {
   const t = useTranslations("reports");
   return (
-    <section className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="border-b border-gray-50 p-6">
-        <h2 className="text-lg font-bold text-gray-900">{t("bestSellers")}</h2>
-        <p className="text-xs text-gray-500">{t("topProducts", { count: rows.length || 10 })}</p>
+    <section className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border p-6">
+        <h2 className="text-lg font-bold text-foreground">{t("bestSellers")}</h2>
+        <p className="text-xs text-muted-foreground">{t("topProducts", { count: rows.length || 10 })}</p>
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-gray-50 hover:bg-transparent">
-              <TableHead className="h-10 w-12 ps-6 text-xs font-medium uppercase tracking-wider text-gray-500">#</TableHead>
-              <TableHead className="h-10 text-xs font-medium uppercase tracking-wider text-gray-500">{t("product")}</TableHead>
-              <TableHead className="h-10 text-end text-xs font-medium uppercase tracking-wider text-gray-500">{t("units")}</TableHead>
-              <TableHead className="h-10 pe-6 text-end text-xs font-medium uppercase tracking-wider text-gray-500">{t("sales")}</TableHead>
+            <TableRow className="border-border hover:bg-transparent">
+              <TableHead className="h-10 w-12 ps-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">#</TableHead>
+              <TableHead className="h-10 text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("product")}</TableHead>
+              <TableHead className="h-10 text-end text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("units")}</TableHead>
+              <TableHead className="h-10 pe-6 text-end text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("sales")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center text-gray-500">
+                <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
                   {t("noSales")}
                 </TableCell>
               </TableRow>
             ) : (
               rows.map((row, index) => (
-                <TableRow key={`${row.id}-${row.label}`} className="border-gray-50 hover:bg-gray-50/50">
-                  <TableCell className="ps-6 tabular-nums text-gray-500">{index + 1}</TableCell>
-                  <TableCell className="font-medium text-gray-900">
+                <TableRow key={`${row.id}-${row.label}`} className="border-border hover:bg-muted/40">
+                  <TableCell className="ps-6 tabular-nums text-muted-foreground">{index + 1}</TableCell>
+                  <TableCell className="font-medium text-foreground">
                     {row.id !== null && !row.missing ? (
                       <Link href={`/product?search=${encodeURIComponent(row.label)}`} className="hover:text-primary">
                         {row.label}
@@ -50,8 +50,8 @@ export function BestSellers({ rows }: { rows: SalesRow[] }) {
                       t("missingProduct")
                     )}
                   </TableCell>
-                  <TableCell className="text-end tabular-nums text-gray-700">{row.quantity}</TableCell>
-                  <TableCell className="pe-6 text-end font-medium tabular-nums text-gray-900">{formatDA(row.revenue)}</TableCell>
+                  <TableCell className="text-end tabular-nums text-foreground/80">{row.quantity}</TableCell>
+                  <TableCell className="pe-6 text-end font-medium tabular-nums text-foreground">{formatDA(row.revenue)}</TableCell>
                 </TableRow>
               ))
             )}

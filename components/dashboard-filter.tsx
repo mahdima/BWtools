@@ -27,14 +27,14 @@ export function DashboardFilter() {
 
   return (
     <div className="relative w-[180px]">
-      <div className="flex items-center justify-between w-full h-10 px-3 py-2 bg-white border border-gray-200 rounded-lg shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50/50">
+      <div className="flex items-center justify-between w-full h-10 px-3 py-2 bg-card border border-border rounded-lg shadow-sm transition-all hover:border-muted-foreground/40 hover:bg-muted/40">
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground/80">
             {t(`periods.${currentPeriod}`)}
           </span>
         </div>
-        <ChevronDown className="h-4 w-4 text-gray-400" />
+        <ChevronDown className="h-4 w-4 text-muted-foreground/70" />
       </div>
       <select
         aria-label={t("periodLabel")}

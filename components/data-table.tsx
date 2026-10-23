@@ -246,12 +246,12 @@ export function DataTable<TData, TValue>({
           {(title || description) && (
             <div className="lg:me-8">
               {title && (
-                <h1 className="text-2xl font-bold text-gray-900 leading-none">
+                <h1 className="text-2xl font-bold text-foreground leading-none">
                   {title}
                 </h1>
               )}
               {description && (
-                <p className="text-sm text-gray-500 mt-1">{description}</p>
+                <p className="text-sm text-muted-foreground mt-1">{description}</p>
               )}
             </div>
           )}
@@ -271,7 +271,7 @@ export function DataTable<TData, TValue>({
                       variant={isSelected ? "default" : "outline"}
                       className={`h-8 border-dashed ${
                         isSelected
-                          ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          ? "bg-primary hover:bg-primary-strong text-white"
                           : "text-muted-foreground"
                       }`}
                       onClick={() => {
@@ -330,7 +330,7 @@ export function DataTable<TData, TValue>({
             aria-label={t("bulkActions")}
             className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm"
           >
-            <span className="font-medium text-gray-900">{t("selected", { count: selectedIds.length })}</span>
+            <span className="font-medium text-foreground">{t("selected", { count: selectedIds.length })}</span>
             {bulkActions}
             <Button variant="ghost" size="sm" className="ms-auto h-8" onClick={() => setRowSelection({})}>
               {t("clearSelection")}

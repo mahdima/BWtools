@@ -709,5 +709,11 @@
       "reactivateFailed": "Échec de la réactivation : {error}",
       "reactivated": "Administrateur réactivé."
     }
+  },
+  "theme": {
+    "label": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
   }
 }

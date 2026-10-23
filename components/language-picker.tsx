@@ -16,7 +16,7 @@ export function LanguagePicker({ className = "" }: { className?: string }) {
   const [isPending, startTransition] = useTransition();
 
   return (
-    <label className={`inline-flex items-center gap-2 text-sm text-gray-600 ${className}`}>
+    <label className={`inline-flex items-center gap-2 text-sm text-muted-foreground ${className}`}>
       <Languages className="h-4 w-4 shrink-0" aria-hidden />
       <span className="sr-only">{t("language")}</span>
       <select
@@ -29,7 +29,7 @@ export function LanguagePicker({ className = "" }: { className?: string }) {
             router.refresh();
           });
         }}
-        className="h-8 rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 disabled:opacity-60"
+        className="h-8 rounded-md border border-border bg-card px-2 text-sm text-foreground/80 disabled:opacity-60"
       >
         {LOCALES.map((value) => (
           <option key={value} value={value} lang={value}>

@@ -18,13 +18,13 @@ export default async function NewAdminPage() {
     <div className="p-6 max-w-2xl mx-auto">
       <Link
         href="/team"
-        className="inline-flex items-center text-sm text-gray-500 hover:text-primary mb-4 transition-colors"
+        className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-4 transition-colors"
       >
         <ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" /> {t("backToTeam")}
       </Link>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">{t("newTitle")}</h1>
+      <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+        <h1 className="text-2xl font-bold text-foreground mb-6">{t("newTitle")}</h1>
 
         <NewAdminForm />
       </div>

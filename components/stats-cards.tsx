@@ -46,9 +46,9 @@ function Delta({ change, label, onAccent }: { change: number | null; label: stri
   const tone = onAccent
     ? "text-white"
     : direction === "up"
-      ? "text-emerald-600"
+      ? "text-emerald-600 dark:text-emerald-400"
       : direction === "down"
-        ? "text-red-600"
+        ? "text-red-600 dark:text-red-400"
         : "text-muted-foreground";
 
   return (
@@ -84,7 +84,7 @@ export function StatsCards({ stats, comparison }: StatsCardsProps) {
       onAccent: false,
       className: "glass-card hover:border-primary/20",
       iconClass:
-        "bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
+        "bg-orange-500/10 text-orange-600 dark:text-orange-400 dark:bg-orange-500/20 dark:text-orange-400",
       textClass: "text-muted-foreground",
     },
     {
@@ -96,7 +96,7 @@ export function StatsCards({ stats, comparison }: StatsCardsProps) {
       onAccent: false,
       className: "glass-card hover:border-primary/20",
       iconClass:
-        "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
+        "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-400",
       textClass: "text-muted-foreground",
     },
     {
@@ -108,7 +108,7 @@ export function StatsCards({ stats, comparison }: StatsCardsProps) {
       onAccent: false,
       className: "glass-card hover:border-primary/20",
       iconClass:
-        "bg-violet-500/10 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400",
+        "bg-violet-500/10 text-violet-600 dark:text-violet-400 dark:bg-violet-500/20 dark:text-violet-400",
       textClass: "text-muted-foreground",
     },
   ];

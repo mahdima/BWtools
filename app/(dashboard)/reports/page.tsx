@@ -20,8 +20,8 @@ export default async function ReportsPage({ searchParams }: ReportsProps) {
     <div className="flex h-full w-full flex-col space-y-4 overflow-auto p-4 ps-16 lg:ps-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-          <p className="max-w-2xl text-sm text-gray-500">{t("intro")}</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">{t("intro")}</p>
         </div>
         <DashboardFilter />
       </div>

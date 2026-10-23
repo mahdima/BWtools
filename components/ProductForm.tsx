@@ -50,7 +50,7 @@ export function ProductForm({
             <div>
               <label
                 htmlFor="product"
-                className="block text-sm font-semibold text-gray-700 mb-2"
+                className="block text-sm font-semibold text-foreground/80 mb-2"
               >
                 {t("name")}
               </label>
@@ -59,7 +59,7 @@ export function ProductForm({
                 id="product"
                 name="product"
                 defaultValue={product?.product_name || ""}
-                className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                className="px-4 py-2 block w-full rounded-md border border-border focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-foreground/80 outline-none transition-all bg-muted/40 focus:bg-card"
                 placeholder={t("namePlaceholder")}
                 required
               />
@@ -69,7 +69,7 @@ export function ProductForm({
             <div>
               <label
                 htmlFor="category"
-                className="block text-sm font-semibold text-gray-700 mb-2"
+                className="block text-sm font-semibold text-foreground/80 mb-2"
               >
                 {t("category")}
               </label>
@@ -77,7 +77,7 @@ export function ProductForm({
                 id="category"
                 name="category"
                 defaultValue={product?.Category_id || ""}
-                className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                className="px-4 py-2 block w-full rounded-md border border-border focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-foreground/80 outline-none transition-all bg-muted/40 focus:bg-card"
                 required
               >
                 <option value="" disabled>
@@ -96,7 +96,7 @@ export function ProductForm({
               <div>
                 <label
                   htmlFor="price"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
+                  className="block text-sm font-semibold text-foreground/80 mb-2"
                 >
                   {t("price")}
                 </label>
@@ -105,7 +105,7 @@ export function ProductForm({
                   id="price"
                   name="price"
                   defaultValue={product?.unite_price ?? ""}
-                  className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                  className="px-4 py-2 block w-full rounded-md border border-border focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-foreground/80 outline-none transition-all bg-muted/40 focus:bg-card"
                   placeholder="0.00"
                   step="0.01"
                   required
@@ -115,7 +115,7 @@ export function ProductForm({
               <div>
                 <label
                   htmlFor="quantity"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
+                  className="block text-sm font-semibold text-foreground/80 mb-2"
                 >
                   {t("quantity")}
                 </label>
@@ -124,7 +124,7 @@ export function ProductForm({
                   id="quantity"
                   name="quantity"
                   defaultValue={product?.in_stock_vailable ?? ""}
-                  className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                  className="px-4 py-2 block w-full rounded-md border border-border focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-foreground/80 outline-none transition-all bg-muted/40 focus:bg-card"
                   placeholder="0"
                   required
                 />
@@ -133,7 +133,7 @@ export function ProductForm({
               <div>
                 <label
                   htmlFor="brand"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
+                  className="block text-sm font-semibold text-foreground/80 mb-2"
                 >
                   {t("brand")}
                 </label>
@@ -141,7 +141,7 @@ export function ProductForm({
                   id="brand"
                   name="brand"
                   defaultValue={product?.brand_id || ""}
-                  className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
+                  className="px-4 py-2 block w-full rounded-md border border-border focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-foreground/80 outline-none transition-all bg-muted/40 focus:bg-card"
                   required
                 >
                   <option value="" disabled>
@@ -160,7 +160,7 @@ export function ProductForm({
             <div>
               <label
                 htmlFor="description"
-                className="block text-sm font-semibold text-gray-700 mb-2"
+                className="block text-sm font-semibold text-foreground/80 mb-2"
               >
                 {t("description")}
               </label>
@@ -171,10 +171,10 @@ export function ProductForm({
 
           {/* Right Side: Image Upload */}
           <div className="w-full lg:w-1/3 flex flex-col">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-foreground/80 mb-2">
               {t("image")}
             </label>
-            <div className="bg-gray-50/50 rounded-lg border border-dashed border-gray-200 p-4 h-full min-h-[300px] flex items-center justify-center">
+            <div className="bg-muted/40 rounded-lg border border-dashed border-border p-4 h-full min-h-[300px] flex items-center justify-center">
               <ProductImageUpload
                 key={product?.product_link}
                 defaultValue={product?.product_link}
@@ -185,18 +185,18 @@ export function ProductForm({
         </div>
 
         {state && !state.success && (
-          <div role="alert" className="mt-6 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+          <div role="alert" className="mt-6 p-3 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 text-sm">
             {state.message}
           </div>
         )}
 
         {/* Bottom Buttons */}
-        <div className="flex gap-3 mt-8 pt-4 border-t border-gray-100 justify-end">
+        <div className="flex gap-3 mt-8 pt-4 border-t border-border justify-end">
           <Link href="/product">
             <Button
               type="button"
               variant="ghost"
-              className="px-8 h-11 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              className="px-8 h-11 text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               {tc("cancel")}
             </Button>

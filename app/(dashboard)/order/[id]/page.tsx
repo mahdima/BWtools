@@ -50,16 +50,16 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
   const callPhone = customer?.phone || shippingAddress?.phone;
 
   const statusColors = {
-    New: "bg-green-100 text-green-700 border-green-200",
-    processing: "bg-blue-100 text-blue-700 border-blue-200",
-    Delivering: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    Delivered: "bg-orange-100 text-orange-700 border-orange-200",
-    Cancelled: "bg-red-100 text-red-700 border-red-200",
+    New: "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/20",
+    processing: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20",
+    Delivering: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
+    Delivered: "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/20",
+    Cancelled: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20",
   };
 
   const currentStatusColor =
     statusColors[order.status as keyof typeof statusColors] ||
-    "bg-gray-100 text-gray-700 border-gray-200";
+    "bg-muted text-foreground/80 border-border";
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -67,16 +67,16 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
       <div className="mb-8">
         <Link
           href="/order"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-primary mb-4 transition-colors"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-4 transition-colors"
         >
           <ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" /> {t("back")}
         </Link>
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
               {t("title", { id: order.id })}
             </h1>
-            <div className="flex items-center text-gray-500 text-sm">
+            <div className="flex items-center text-muted-foreground text-sm">
               <Calendar className="h-4 w-4 me-2" />
               {formatDate(order.createdAt, locale, true)}
             </div>
@@ -85,7 +85,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
             <Link
               href={`/invoice/${order.id}`}
               target="_blank"
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium bg-muted hover:bg-accent text-foreground/80 transition-colors"
             >
               <CreditCard className="h-4 w-4" />
               {tOrders("printInvoice")}
@@ -102,13 +102,13 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Main Content - Items */}
         <div className="col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-              <h2 className="font-semibold text-gray-900 flex items-center">
+          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-border bg-muted/40 flex justify-between items-center">
+              <h2 className="font-semibold text-foreground flex items-center">
                 <ShoppingBag className="h-5 w-5 me-2 text-primary" />
                 {t("items")}
               </h2>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 {t("itemsCount", { count: items.length })}
               </span>
             </div>
@@ -117,7 +117,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                 {items.map((item) => (
                   <li
                     key={item.id}
-                    className="flex justify-between items-center py-4 border-b border-gray-50 last:border-0 last:pb-0"
+                    className="flex justify-between items-center py-4 border-b border-border last:border-0 last:pb-0"
                   >
                     <div className="flex items-center gap-4">
                       {item.productImage && (
@@ -126,37 +126,37 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                           alt={item.productName}
                           width={64}
                           height={64}
-                          className="h-16 w-16 object-cover rounded-md border border-gray-100"
+                          className="h-16 w-16 object-cover rounded-md border border-border"
                           unoptimized
                         />
                       )}
 
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-foreground">
                           {item.productName}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           {t("qty", { quantity: item.quantity, price: formatPrice(item.unitPrice) })}
                         </p>
                       </div>
                     </div>
-                    <div className="font-semibold text-gray-900">
+                    <div className="font-semibold text-foreground">
                       {formatPrice(item.lineTotal)}
                     </div>
                   </li>
                 ))}
               </ul>
-              <div className="mt-6 pt-6 border-t border-gray-100 flex justify-end">
+              <div className="mt-6 pt-6 border-t border-border flex justify-end">
                 <div className="text-end">
                   {order.itemsTotal !== order.total && (
-                    <p className="text-sm text-gray-500 mb-1">
+                    <p className="text-sm text-muted-foreground mb-1">
                       {t("itemsAndCharges", {
                         items: formatPrice(order.itemsTotal),
                         charges: formatPrice(order.total - order.itemsTotal),
                       })}
                     </p>
                   )}
-                  <p className="text-sm text-gray-500 mb-1">{t("totalAmount")}</p>
+                  <p className="text-sm text-muted-foreground mb-1">{t("totalAmount")}</p>
                   <p className="text-2xl font-bold text-primary">
                     {formatPrice(order.total)}
                   </p>
@@ -175,16 +175,16 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
         {/* Sidebar - Status Actions & Customer Info */}
         <div className="space-y-6">
           {/* Customer Info Card */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-              <h2 className="font-semibold text-gray-900 flex items-center">
+          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-border bg-muted/40">
+              <h2 className="font-semibold text-foreground flex items-center">
                 <User className="h-5 w-5 me-2 text-primary" />
                 {t("customerDetails")}
               </h2>
             </div>
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden">
+                <div className="w-12 h-12 rounded-full bg-muted overflow-hidden">
                   <Image
                     src={man}
                     alt=""
@@ -192,24 +192,24 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                   />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900">
+                  <p className="font-bold text-foreground">
                     {customer?.name || t("guest")}
                   </p>
-                  <p className="text-xs text-gray-500">{t("customer")}</p>
+                  <p className="text-xs text-muted-foreground">{t("customer")}</p>
                 </div>
               </div>
 
               <div className="pt-2 space-y-3">
                 {customer?.phone && (
                   <div className="flex items-start gap-3">
-                    <Phone className="h-4 w-4 text-gray-400 mt-1" />
+                    <Phone className="h-4 w-4 text-muted-foreground/70 mt-1" />
                     <div className="flex-1">
-                      <p className="text-xs text-gray-500 uppercase">
+                      <p className="text-xs text-muted-foreground uppercase">
                         {t("phoneNumber")}
                       </p>
                       <a
                         href={`tel:${customer.phone}`}
-                        className="text-blue-600 font-medium hover:underline block"
+                        className="text-primary font-medium hover:underline block"
                       >
                         {customer.phone}
                       </a>
@@ -218,24 +218,24 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                 )}
 
                 <div className="flex items-start gap-3">
-                  <Mail className="h-4 w-4 text-gray-400 mt-1" />
+                  <Mail className="h-4 w-4 text-muted-foreground/70 mt-1" />
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase">{t("email")}</p>
-                    <p className="text-sm text-gray-700 break-all">
+                    <p className="text-xs text-muted-foreground uppercase">{t("email")}</p>
+                    <p className="text-sm text-foreground/80 break-all">
                       {customer?.email || t("noEmail")}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-4 w-4 text-gray-400 mt-1" />
+                  <MapPin className="h-4 w-4 text-muted-foreground/70 mt-1" />
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase">
+                    <p className="text-xs text-muted-foreground uppercase">
                       {t("shippingAddress")}
                     </p>
                     {shippingAddress ? (
                       <>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-sm text-foreground/80">
                           {formatAddressLines(shippingAddress).map((line) => (
                             <span key={line} className="block">
                               {line}
@@ -245,14 +245,14 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                         {shippingAddress.phone && (
                           <a
                             href={`tel:${shippingAddress.phone}`}
-                            className="text-sm text-blue-600 font-medium hover:underline block mt-1"
+                            className="text-sm text-primary font-medium hover:underline block mt-1"
                           >
                             {t("deliveryPhone", { phone: shippingAddress.phone })}
                           </a>
                         )}
                       </>
                     ) : (
-                      <p className="text-sm text-gray-500">{t("noAddress")}</p>
+                      <p className="text-sm text-muted-foreground">{t("noAddress")}</p>
                     )}
                   </div>
                 </div>
@@ -262,7 +262,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                 <div className="pt-2">
                   <a
                     href={`tel:${callPhone}`}
-                    className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors"
+                    className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary-strong text-white font-medium py-2 rounded-lg transition-colors"
                   >
                     <Phone className="h-4 w-4" /> {t("callCustomer")}
                   </a>
@@ -272,8 +272,8 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
           </div>
 
           <Can minRole="admin">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-              <h2 className="font-semibold text-gray-900 mb-4 flex items-center">
+            <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+              <h2 className="font-semibold text-foreground mb-4 flex items-center">
                 <Truck className="h-5 w-5 me-2 text-primary" />
                 {t("updateStatus")}
               </h2>

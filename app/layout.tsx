@@ -55,13 +55,8 @@ export default async function RootLayout({
         className={`${outfit.variable} ${arabic.variable} font-sans antialiased selection:bg-indigo-500/30`}
       >
         <NextIntlClientProvider>
-        {/* Light only until the screens get a proper dark theme (P7-05) */}
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
+        {/* Follows the device until the admin picks light or dark (P7-05) */}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Suspense fallback={null}>
             <ToastListener />
           </Suspense>

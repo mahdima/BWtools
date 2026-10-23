@@ -23,14 +23,14 @@ export function SalesBarList({
     row.other !== undefined ? t("other", { count: row.other }) : row.missing ? missingLabel : row.label;
 
   return (
-    <section className="flex h-full flex-col rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="border-b border-gray-50 p-6">
-        <h2 className="text-lg font-bold text-gray-900">{title}</h2>
-        <p className="text-xs text-gray-500">{description}</p>
+    <section className="flex h-full flex-col rounded-2xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border p-6">
+        <h2 className="text-lg font-bold text-foreground">{title}</h2>
+        <p className="text-xs text-muted-foreground">{description}</p>
       </div>
 
       {rows.length === 0 ? (
-        <p className="px-6 py-10 text-center text-sm text-gray-500">{t("noSales")}</p>
+        <p className="px-6 py-10 text-center text-sm text-muted-foreground">{t("noSales")}</p>
       ) : (
         <ol className="space-y-1 p-4">
           {rows.map((row) => {
@@ -41,13 +41,13 @@ export function SalesBarList({
               <li
                 key={`${row.id}-${row.label}-${row.other ?? ""}`}
                 title={`${label}: ${formatDA(row.revenue)} (${units})`}
-                className="rounded-lg px-2 py-2 transition-colors hover:bg-gray-50"
+                className="rounded-lg px-2 py-2 transition-colors hover:bg-muted/60"
               >
                 <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
-                  <span className="truncate text-gray-700">{label}</span>
-                  <span className="shrink-0 font-medium tabular-nums text-gray-900">
+                  <span className="truncate text-foreground/80">{label}</span>
+                  <span className="shrink-0 font-medium tabular-nums text-foreground">
                     {formatDA(row.revenue)}
-                    <span className="ms-2 text-xs font-normal text-gray-500">{units}</span>
+                    <span className="ms-2 text-xs font-normal text-muted-foreground">{units}</span>
                   </span>
                 </div>
                 {/* Track in a light step of the bar's own hue; square at the baseline, 4px rounded at the data end */}

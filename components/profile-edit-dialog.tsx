@@ -23,7 +23,7 @@ interface ProfileEditDialogProps {
 }
 
 const inputClass =
-  "w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-sm";
+  "w-full h-10 px-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-all text-sm";
 
 export function ProfileEditDialog({ admin, className }: ProfileEditDialogProps) {
   const t = useTranslations("profile");
@@ -35,7 +35,7 @@ export function ProfileEditDialog({ admin, className }: ProfileEditDialogProps) 
         <button className={className}>{t("editProfile")}</button>
       </DialogTrigger>
       {/* Radix mounts the content on open, so each open starts without an old error */}
-      <DialogContent className="sm:max-w-md bg-white" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-md bg-card" aria-describedby={undefined}>
         <ProfileFormBody admin={admin} onDone={() => setIsOpen(false)} />
       </DialogContent>
     </Dialog>
@@ -68,13 +68,13 @@ function ProfileFormBody({
 
       <form onSubmit={onSubmit} className="space-y-4">
         {state && !state.success && (
-          <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+          <div role="alert" className="p-3 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 text-sm">
             {state.message}
           </div>
         )}
 
         <div className="space-y-2">
-          <label htmlFor="profile-full-name" className="text-sm font-medium text-gray-700">
+          <label htmlFor="profile-full-name" className="text-sm font-medium text-foreground/80">
             {t("fullName")}
           </label>
           <input
@@ -88,7 +88,7 @@ function ProfileFormBody({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="profile-email" className="text-sm font-medium text-gray-700">
+          <label htmlFor="profile-email" className="text-sm font-medium text-foreground/80">
             {t("email")}
           </label>
           <input
@@ -100,7 +100,7 @@ function ProfileFormBody({
             placeholder="admin@example.com"
             aria-describedby="profile-email-help"
           />
-          <p id="profile-email-help" className="text-xs text-gray-400">
+          <p id="profile-email-help" className="text-xs text-muted-foreground/70">
             {t("emailHelp")}
           </p>
         </div>
@@ -109,14 +109,14 @@ function ProfileFormBody({
           <button
             type="button"
             onClick={onDone}
-            className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors"
           >
             {tc("cancel")}
           </button>
           <button
             disabled={isPending}
             type="submit"
-            className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            className="bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary-strong disabled:opacity-50 flex items-center gap-2"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("saveChanges")}

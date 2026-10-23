@@ -8,7 +8,7 @@ import { useFormAction } from "@/lib/use-form-action";
 import { useTranslations } from "next-intl";
 
 const inputClass =
-  "mt-1 appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm";
+  "mt-1 appearance-none block w-full px-3 py-3 border border-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm";
 
 // New password after a reset link; same rules as Settings (8-72 characters, must match).
 export function ResetPasswordForm() {
@@ -26,7 +26,7 @@ export function ResetPasswordForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="password" className="block text-sm font-medium text-foreground/80">
           {t("newPassword")}
         </label>
         <input
@@ -41,7 +41,7 @@ export function ResetPasswordForm() {
         />
       </div>
       <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground/80">
           {t("confirmNewPassword")}
         </label>
         <input
@@ -57,7 +57,7 @@ export function ResetPasswordForm() {
       </div>
 
       {state && !state.success && (
-        <div role="alert" className="text-red-500 text-sm bg-red-50 p-3 rounded-md border border-red-200">
+        <div role="alert" className="text-red-500 text-sm bg-red-500/10 p-3 rounded-md border border-red-500/20">
           {state.message}
         </div>
       )}
