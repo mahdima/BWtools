@@ -214,6 +214,29 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Browser smoke test** (headless Chrome against `next start`): 11/11 checks passed with 0 console errors. Covered: no-session redirects for 7 routes, the login form, the unauthorized message, and the error for wrong credentials.
 - **Still to run (needs test credentials):** the logged-in pages and typing in the product editor. Tick the box after that run.
 
+### P1-10 · Fix the row-level security policies found in the schema (needs owner)
+- [ ] Done
+
+**Why:** Found by reviewing `supabase/migrations/20261023194545_remote_schema.sql` (P2-06). The mobile app's public key reaches the database as `anon`, and any customer who signs up in the app is `authenticated`. Several policies only check that the caller is signed in, so they let any customer do things meant for admins.
+**Depends on:** P2-06. Fix together with P1-07, which covers `profiles_with_email` and the `profiles` select policy.
+**Files:** `supabase/migrations/<timestamp>_p1-10-rls.sql` (the owner applies it)
+**Steps:**
+1. Add an `is_admin()` SQL function (`security definer`, `stable`, checks for an active row in `admins`). Use it in place of `auth.role() = 'authenticated'` in these policies:
+   - `order_notes` "Admins can manage order notes": today any customer can read and change every internal note.
+   - `order_status_history` "Admins can insert status history".
+   - `notifications` "System can insert notifications".
+
+   The dashboard writes through the service role, which bypasses RLS, so it keeps working.
+2. Replace the recursive "Admins can view all admin profiles" policy on `admins` (it selects from `admins` inside itself, which causes the HTTP 500 seen in P1-07) with `using (is_admin())`.
+3. `categories` "Allow insert for authenticated users": drop it. Only the dashboard (service role) adds categories.
+4. `saved_orders`:
+   - "Enable read access for all users" becomes `using (auth.uid() = user_id)`; today anyone can read every saved order.
+   - The insert policy becomes `with check (auth.uid() = user_id)`.
+5. `orders` "Users can cancel their own orders": today it lets a customer change any column of their order (total, status). Restrict it to setting `status = 'Cancelled'` on a `New` order, or move cancelling into an RPC.
+6. Before applying, check with the mobile-app developer that the app doesn't rely on reading other users' saved orders, or on inserting categories.
+
+**Done when:** a customer account (anon or authenticated key) can no longer read order notes, other users' saved orders or customer emails, or write admin data; the dashboard and the mobile app still work.
+
 ---
 
 ## Phase 2 — Safety net
@@ -325,7 +348,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Pending:** tick the box once the workflow is green on GitHub, which needs the branch pushed.
 
 ### P2-06 · Pull the schema into migrations (needs Docker)
-- [ ] Done
+- [x] Done
 
 **Why:** Split from P2-03. Tables, row-level security, grants and buckets should be versioned in the repo and reviewed like code.
 **Depends on:** P2-03
@@ -336,6 +359,13 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 3. From then on, new SQL goes into `supabase/migrations/` instead of `docs/sql/`. Update the workflow rule in CLAUDE.md to match.
 
 **Done when:** `supabase/migrations/` holds the remote schema and is committed.
+
+**Notes (2026-10-23):**
+- **The schema is in the repo:** `supabase/migrations/20261023194545_remote_schema.sql` (13 tables, all with RLS enabled; the `profiles_with_email` view; `handle_new_user`; 32 policies; grants). It contains no secrets or data.
+- **Used `npx supabase db dump --linked` instead of `db pull`.** Both are read-only on the tables, and both briefly create the CLI's temporary login role. But `db pull` can also write a row to the remote migration-history table (`supabase_migrations.schema_migrations`), which is a change to production. `db dump` doesn't.
+- **For the owner, before the first `supabase db push`:** run `npx supabase migration repair --status applied 20261023194545`. This records the migration as already applied, so it isn't run against the live database again.
+- **From now on,** new SQL goes into `supabase/migrations/<timestamp>_<task>.sql` (CLAUDE.md updated). The files already in `docs/sql/` stay where they are until the owner applies them.
+- **Reviewing the policies found new security issues;** see P1-10.
 
 ---
 
@@ -1160,7 +1190,6 @@ The printed invoice stays as it is: its language is a store decision, not an adm
   - The preview caught the Arabic arrow pointing the wrong way, which is fixed.
   - `typecheck`, lint (0 errors, 26 warnings), 189 tests and `build` pass.
 
-
 **P7-04c notes (2026-10-23):**
 - **Translated:**
   - **Products:** list, columns, form, image upload, bulk bar, and the import page and its preview.
@@ -1180,7 +1209,6 @@ The printed invoice stays as it is: its language is a store decision, not an adm
   - A temporary preview page (deleted) rendered all the translated tables, forms, notes, timeline and status buttons in Arabic and French, with 0 page errors. Screenshots were reviewed.
   - A scan of the page text and labels found no English left. The French "Description" and "Action" hits are the same words in French.
   - `typecheck`, lint (0 errors, 25 warnings), 190 tests and `build` pass.
-
 
 **P7-04d notes (2026-10-23):**
 - **Validation messages are keys.**

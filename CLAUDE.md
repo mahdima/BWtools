@@ -20,7 +20,7 @@ Follow this for every feature, fix or refactor bigger than a one-line change.
 4. **Verify before moving on.** Run `npm run typecheck`, `npm run lint` and `npm test`. Add a `*.test.ts` for any new pure helper. Run `npm run build` at the end of each phase. For UI changes, run `npm run dev` and check the page. A task is not done until its "Done when" check passes.
 5. **Update the plan.** Tick the task's checkbox, and add a short note under the task if something was deferred or found along the way.
 6. **Report, then stop.** Summarise what changed, how it was verified, and what the next task is. If the user asked for a whole phase or feature, carry on to the next task only after the current one is verified.
-7. **Database changes go through migrations.** Write SQL in `supabase/migrations/`, or in `docs/sql/<task-id>-<name>.sql` until P2-03 sets that folder up, and ask the user to apply it. Never run DDL or data changes against the production Supabase project yourself.
+7. **Database changes go through migrations.** Write SQL as a new file in `supabase/migrations/` (`<UTC timestamp>_<task-id>-<name>.sql`) and ask the user to apply it. The older files in `docs/sql/` are still pending with the owner. Never run DDL or data changes against the production Supabase project yourself.
 8. **Commit only when asked**: one commit per task, with the task ID in the message (for example `P1-03: only active admins can sign in`).
 
 **Never create artifacts.** Don't publish claude.ai Artifacts or Claude Docs, and don't use any artifact or docs tool, even for reports, plans, dashboards or anything else meant to be shared. Write every report, plan, analysis or write-up as a Markdown file in `docs/` in this repo, then summarise it in chat.
@@ -42,7 +42,7 @@ Unit tests cover pure helpers in `lib/` and use explicit imports (`import { desc
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs `npm ci`, typecheck, lint, test, build and the production audit on every push and pull request, with placeholder Supabase variables. Keep the build working without real credentials: don't make module-level code require a live Supabase connection.
 
-The app needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. Optionally set `NEXT_PUBLIC_SITE_URL`, the public origin used in password-reset links; without it the request host is used. Password reset: `/forgot-password` → email → `/auth/confirm` (route handler) → `/reset-password`. The `/auth/confirm` URLs must be on Supabase's redirect allow-list. The database schema, RLS policies and storage buckets live in the Supabase project; there are no migrations in this repo.
+The app needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. Optionally set `NEXT_PUBLIC_SITE_URL`, the public origin used in password-reset links; without it the request host is used. Password reset: `/forgot-password` → email → `/auth/confirm` (route handler) → `/reset-password`. The `/auth/confirm` URLs must be on Supabase's redirect allow-list. The database schema (tables, RLS policies, grants) is versioned in `supabase/migrations/`, starting from a dump of the live project (P2-06, refresh with `npx supabase db dump --linked`, which needs Docker). Storage buckets and auth settings still live only in the Supabase project.
 
 ## Stack
 
