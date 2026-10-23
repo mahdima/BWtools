@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_STORE_SETTINGS, isMissingTableError, storeSettingsSchema } from "@/lib/store-settings";
 import { parseForm } from "@/lib/validation/form";
+import en from "@/messages/en.json";
 
 const form = (fields: Record<string, string>) => {
   const fd = new FormData();
@@ -28,7 +29,7 @@ describe("storeSettingsSchema", () => {
     const base = { store_name: "BW", contact_email: "a@b.dz", address: "", invoice_footer: "" };
     const err = (fields: Record<string, string>) => {
       const r = parseForm(storeSettingsSchema, form({ ...base, low_stock_threshold: "10", ...fields }));
-      return r.success ? "" : r.message;
+      return r.success ? "" : en.validation[r.message as keyof typeof en.validation];
     };
     expect(err({ store_name: "  " })).toBe("Store name is required.");
     expect(err({ contact_email: "nope" })).toBe("Enter a valid contact email.");

@@ -99,7 +99,12 @@ describe("setArchived", () => {
 });
 
 describe("archiveResult", () => {
-  const messages = { done: "Archived.", notFound: "Not found.", unavailable: "Can't delete.", failed: "Failed" };
+  const messages = {
+    done: "Archived.",
+    notFound: "Not found.",
+    unavailable: "Can't delete.",
+    failed: (error: string) => `Failed: ${error}`,
+  };
 
   it("maps each outcome to its message", () => {
     expect(archiveResult({ status: "done" }, messages)).toEqual({ success: true, message: "Archived." });

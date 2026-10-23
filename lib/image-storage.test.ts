@@ -99,7 +99,7 @@ describe("uploadImage", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     db.upload.mockResolvedValueOnce({ error: { message: "Bucket not found" } });
     await expect(uploadImage(PRODUCT_IMAGES, new File(["x"], "a.jpg", { type: "image/jpeg" }))).rejects.toThrow(
-      "Failed to upload the image: Bucket not found",
+      "Bucket not found",
     );
   });
 });

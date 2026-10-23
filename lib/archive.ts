@@ -55,10 +55,10 @@ export async function setArchived(
 }
 
 // The result to show for a setArchived outcome. `unavailable` is the message for when
-// the column doesn't exist yet; `failed` is prefixed to the database error.
+// the column doesn't exist yet; `failed` builds the message around the database error.
 export function archiveResult(
   outcome: Awaited<ReturnType<typeof setArchived>>,
-  messages: { done: string; notFound: string; unavailable: string; failed: string },
+  messages: { done: string; notFound: string; unavailable: string; failed: (error: string) => string },
 ): ActionResult {
   switch (outcome.status) {
     case "done":
@@ -68,7 +68,7 @@ export function archiveResult(
     case "unavailable":
       return { success: false, message: messages.unavailable };
     case "failed":
-      return { success: false, message: `${messages.failed}: ${outcome.message}` };
+      return { success: false, message: messages.failed(outcome.message) };
   }
 }
 

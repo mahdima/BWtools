@@ -1,10 +1,12 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
+import { notAuthorized, parseFormT } from "@/lib/server-messages";
+
 import { createClient } from "@/utils/supabase/server";
 import { getAuthorizedAdmin } from "@/lib/auth";
-import { parseForm } from "@/lib/validation/form";
 import { passwordChangeSchema } from "@/lib/validation/admin";
-import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
+import { type ActionResult } from "@/lib/action-result";
 import { isMissingTableError, storeSettingsSchema } from "@/lib/store-settings";
 import { getStoreSettings, storeSettingsTable } from "@/lib/data/settings";
 import { logAudit } from "@/lib/audit";
@@ -14,12 +16,11 @@ import { revalidatePath } from "next/cache";
 export async function updatePassword(formData: FormData) {
   // Any active admin may change their own password.
   const admin = await getAuthorizedAdmin("viewer");
-  if (!admin) {
-    return { success: false, message: "Not authorized" };
-  }
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.settings");
 
   // Same rules as new admin accounts: 8 to 72 characters, and both fields must match
-  const parsed = parseForm(passwordChangeSchema, formData);
+  const parsed = await parseFormT(passwordChangeSchema, formData);
   if (!parsed.success) {
     return { success: false, message: parsed.message };
   }
@@ -33,15 +34,16 @@ export async function updatePassword(formData: FormData) {
   }
 
   logAudit(admin.id, "password_change", "admin", admin.id);
-  return { success: true, message: "Password updated successfully" };
+  return { success: true, message: t("passwordUpdated") };
 }
 
 // Form action (via useFormAction): super admins edit the store-wide settings.
 export async function updateStoreSettings(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const admin = await getAuthorizedAdmin("super_admin");
-  if (!admin) return NOT_AUTHORIZED;
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.settings");
 
-  const parsed = parseForm(storeSettingsSchema, formData);
+  const parsed = await parseFormT(storeSettingsSchema, formData);
   if (!parsed.success) {
     return { success: false, message: parsed.message };
   }
@@ -60,12 +62,12 @@ export async function updateStoreSettings(_prevState: ActionResult | null, formD
     return {
       success: false,
       message: isMissingTableError(error)
-        ? "The store settings table doesn't exist yet. Ask the project owner to run docs/sql/P6-01-store-settings.sql."
-        : `Failed to save settings: ${error.message}`,
+        ? t("storeTableMissing")
+        : t("storeSaveFailed", { error: error.message }),
     };
   }
 
   logAudit(admin.id, "update", "store_settings", 1, diffChanges(before, parsed.data));
   revalidatePath("/settings");
-  return { success: true, message: "Store settings saved." };
+  return { success: true, message: t("storeSaved") };
 }

@@ -1105,7 +1105,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
 - **Still to check when logged in:** run a real bulk delete and status change, and import a small file.
 
 ### P7-04 · Arabic and French interface
-- [ ] Done
+- [x] Done
 
 **Steps:**
 1. Add `next-intl` with English, French and Arabic.
@@ -1122,7 +1122,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
   - **Translated:** sidebar and mobile menu, `DataTable` chrome (filter, pagination, selection bar), confirm dialog, login, forgot and reset password, and the error and not-found pages.
 - [x] **P7-04b · Dashboard and admin screens:** dashboard widgets, reports, settings (password and store forms), profile dialog, team, audit log, notifications panel.
 - [x] **P7-04c · Catalogue and orders:** products (columns, form, import, bulk), brands, categories, orders (list, detail, notes, timeline, status, bulk) and customers.
-- [ ] **P7-04d · Messages from the server:** server-action results (toasts) and validation messages through `getTranslations`.
+- [x] **P7-04d · Messages from the server:** server-action results (toasts) and validation messages through `getTranslations`.
 
 The printed invoice stays as it is: its language is a store decision, not an admin preference.
 
@@ -1180,6 +1180,29 @@ The printed invoice stays as it is: its language is a store decision, not an adm
   - A temporary preview page (deleted) rendered all the translated tables, forms, notes, timeline and status buttons in Arabic and French, with 0 page errors. Screenshots were reviewed.
   - A scan of the page text and labels found no English left. The French "Description" and "Action" hits are the same words in French.
   - `typecheck`, lint (0 errors, 25 warnings), 190 tests and `build` pass.
+
+
+**P7-04d notes (2026-10-23):**
+- **Validation messages are keys.**
+  - The zod schemas (`lib/validation/*`, `storeSettingsSchema`) now carry keys such as `"priceNotPositive"` instead of English. `parseForm` returns the key.
+  - Server actions call `parseFormT` from `lib/server-messages.ts` (server-only), which translates the key from the `validation` namespace and leaves unknown keys, such as zod's built-in defaults, as they are.
+  - Tests read the keys as English through `messages/en.json`, so their expectations didn't change.
+- **Action results:** every action translates with `getTranslations("actions.<feature>")`. Database and Supabase error text is passed in as `{error}`, so only the wording around it is translated.
+  - `notAuthorized()` replaces the `NOT_AUTHORIZED` constant in actions; the constant stays for `lib/toast-action.test.ts`.
+  - `uploadFailed()` wraps the storage error, now that `uploadImage` throws the raw message.
+  - `archiveResult` takes `failed: (error) => string`.
+  - `bulkResult` takes the translated `BulkWords` from `getBulkWords()` and writes each part as its own sentence, which reads naturally in all three languages. The unused `countLabel` was removed.
+- **CSV import:** `readProductImport` reports problems as `{ key, values }` (`ImportMessage`), translated by the preview and import actions.
+- **Other server text:**
+  - The order export's message and CSV column headers follow the admin's language. Status values in the file stay as stored.
+  - Sign-in maps Supabase's `invalid_credentials` to a translated "Invalid email or password."; other Supabase texts pass through unchanged.
+- **Client-side fallbacks:** `runWithToast` takes the fallback error as an argument, and components use `useRunWithToast()` (`lib/use-toast-action.ts`). `ToastListener` is translated.
+- **Not translated, by design:** raw database and Supabase error details, notification titles and texts (stored data), the printed invoice, and `global-error.tsx`.
+- **Verified:**
+  - Playwright on the dev server: a wrong sign-in shows "E-mail ou mot de passe incorrect." in French and the Arabic equivalent; a server action called without a session answers "Non autorisé" / "غير مصرّح لك" (temporary page, deleted). 4/4 checks passed, with 0 page errors.
+  - The messages test also covers the new namespaces.
+  - `typecheck`, lint (0 errors, 25 warnings), 189 tests, `build` and the guard check (34 actions; only login, logout, forgot-password and `setLocale` are public) pass.
+- **P7-04 is complete.** Still to check when logged in: a validation error and a success toast in French and Arabic.
 
 ### P7-05 · Full dark mode
 - [ ] Done

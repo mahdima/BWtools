@@ -3,7 +3,8 @@ import { z } from "zod";
 export type ParseResult<T> = { success: true; data: T } | { success: false; message: string };
 
 // Validates FormData (or a plain object) against a schema. On failure, returns the first
-// problem as a sentence that can be shown to the user, e.g. "Price must be greater than 0."
+// problem as a key in messages/*.json "validation", e.g. "priceNotPositive". Server
+// actions use parseFormT (lib/server-messages.ts), which translates it.
 export function parseForm<S extends z.ZodType>(
   schema: S,
   input: FormData | Record<string, unknown>,
@@ -12,7 +13,7 @@ export function parseForm<S extends z.ZodType>(
   const result = schema.safeParse(values);
 
   if (result.success) return { success: true, data: result.data };
-  return { success: false, message: result.error.issues[0]?.message ?? "Invalid input." };
+  return { success: false, message: result.error.issues[0]?.message ?? "invalidInput" };
 }
 
 // Accepted image uploads and the file extension stored for each.
@@ -28,16 +29,16 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const optionalImage = z.preprocess(
   (value) => (value instanceof File && value.size === 0 ? undefined : value),
   z
-    .instanceof(File, { error: "Image upload is invalid." })
-    .refine((file) => file.type in IMAGE_TYPES, "Image must be a JPEG, PNG or WebP file.")
-    .refine((file) => file.size <= MAX_IMAGE_BYTES, "Image must be 5 MB or smaller.")
+    .instanceof(File, { error: "imageInvalid" })
+    .refine((file) => file.type in IMAGE_TYPES, "imageType")
+    .refine((file) => file.size <= MAX_IMAGE_BYTES, "imageTooLarge")
     .optional(),
 );
 
 // The current image URL posted back when no new file is chosen; empty when removed.
 export const existingImageUrl = z
   .string()
-  .refine((url) => url === "" || /^https?:\/\//.test(url), "Image URL is invalid.")
+  .refine((url) => url === "" || /^https?:\/\//.test(url), "imageUrlInvalid")
   .optional();
 
 // Extension for a file that passed `optionalImage`, taken from its MIME type, not its name.

@@ -68,7 +68,7 @@ There is no plain anon client any more. Don't add one: the anon key is public (i
 
 Minimum roles: catalogue, orders and customers need `admin`; team management needs `super_admin`; own profile, password and notifications need `viewer`. In the UI, wrap controls a viewer can't use in `<Can minRole="admin">` from [components/admin-provider.tsx](components/admin-provider.tsx) (the layout provides the role; `useAdmin()` reads it). Server pages can check `hasRole((await getCurrentAdmin())?.role, "admin")`. Hiding is only for UX: the action must still check the role. Order statuses are listed in [lib/orders.ts](lib/orders.ts).
 
-After the role check, validate input before touching the database. Add a zod schema in [lib/validation/](lib/validation/) (one file per entity, with user-facing messages) and call `parseForm(schema, formData)`. It returns `{ success, data }` or `{ success: false, message }` with the first problem as a sentence. For image uploads, use `optionalImage` (JPEG/PNG/WebP, 5 MB max) and name the stored file with `imageExtension(file)`, never the client's file name. Don't read raw `formData.get(...)` values into queries.
+After the role check, validate input before touching the database. Add a zod schema in [lib/validation/](lib/validation/) (one file per entity; messages are keys in the `validation` namespace of `messages/*.json`) and call `await parseFormT(schema, formData)` from [lib/server-messages.ts](lib/server-messages.ts). It returns `{ success, data }` or `{ success: false, message }` with the first problem as a translated sentence. For image uploads, use `optionalImage` (JPEG/PNG/WebP, 5 MB max) and name the stored file with `imageExtension(file)`, never the client's file name. Don't read raw `formData.get(...)` values into queries.
 
 **Known gap:** production still runs the old code until Phase 1 of the plan is deployed. In the old code, any Supabase account can sign in, and any signed-in user can make themselves `super_admin`.
 
@@ -97,6 +97,11 @@ After the role check, validate input before touching the database. Add a zod sch
   - [lib/messages.test.ts](lib/messages.test.ts) fails when `fr` or `ar` lacks a key or a placeholder, or a message doesn't format.
   - Add every new string to all three files, and use ICU plurals (Arabic has zero/one/two/few/many/other).
   - Use `useTranslations("ns")` in client components and `await getTranslations("ns")` in async server code.
+- Server messages are translated too (P7-04d):
+  - zod schemas use keys from the `validation` namespace as messages (`.min(1, "productNameRequired")`), never English.
+  - Actions validate with `await parseFormT(schema, input)` and deny with `return notAuthorized();` (both in [lib/server-messages.ts](lib/server-messages.ts)).
+  - Actions word their results with `getTranslations("actions.<feature>")`, passing raw database errors in as `{error}`.
+  - Client components run actions through `useRunWithToast()`.
 - Arabic is laid out right to left. In class names, use logical utilities only: `ps-`/`pe-`, `ms-`/`me-`, `start-`/`end-`, `text-start`/`text-end`, `border-s`/`border-e`, `rounded-s`/`rounded-e`. Never use `pl-`, `ml-`, `left-` or `text-left`.
   - Give arrows and chevrons that point "forward" or "back" `rtl:rotate-180`.
   - Keep the centring of dialogs (`left-[50%] translate-x-[-50%]`) physical.

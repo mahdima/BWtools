@@ -3,8 +3,10 @@
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 export function ToastListener() {
+  const t = useTranslations("common");
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -15,9 +17,9 @@ export function ToastListener() {
       // Small delay to ensure UI is ready
       setTimeout(() => {
         if (toastType === "success") {
-          toast.success("Operation completed successfully");
+          toast.success(t("done"));
         } else if (toastType === "error") {
-          toast.error("Something went wrong");
+          toast.error(t("failed"));
         }
       }, 0);
 
@@ -26,7 +28,7 @@ export function ToastListener() {
       params.delete("toast");
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [searchParams, pathname, router]);
+  }, [searchParams, pathname, router, t]);
 
   return null;
 }

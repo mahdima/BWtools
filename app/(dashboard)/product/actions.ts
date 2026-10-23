@@ -1,16 +1,18 @@
 'use server'
 
+import { getTranslations } from "next-intl/server";
+import { getBulkWords, getValidationText, notAuthorized, parseFormT, uploadFailed } from "@/lib/server-messages";
+
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthorizedAdmin } from "@/lib/auth";
-import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
-import { parseForm } from "@/lib/validation/form";
+import { isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
 import { productSchema } from "@/lib/validation/product";
 import { removeUnusedImage, uploadImage } from "@/lib/image-storage";
 import { PRODUCT_IMAGES } from "@/lib/storage-path";
 import { archiveResult, setArchived } from "@/lib/archive";
 import { logAudit } from "@/lib/audit";
 import { diffChanges } from "@/lib/audit-changes";
-import { MAX_BULK, bulkResult, countLabel, parseBulkIds } from "@/lib/bulk";
+import { MAX_BULK, bulkResult, parseBulkIds } from "@/lib/bulk";
 import { getProductFormOptions, getProductNames } from "@/lib/data/products";
 import { normalizeName, readProductImport, type ImportLookup, type ImportRow } from "@/lib/product-import";
 import { revalidatePath } from "next/cache";
@@ -30,9 +32,10 @@ function cleanUpImage(url: string | null | undefined) {
 // Form action (via useFormAction): returns an error to show, or redirects on success.
 export async function addProduct(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.products");
 
-    const parsed = parseForm(productSchema, formData);
+    const parsed = await parseFormT(productSchema, formData);
     if (!parsed.success) {
         return { success: false, message: parsed.message };
     }
@@ -43,7 +46,7 @@ export async function addProduct(_prevState: ActionResult | null, formData: Form
         try {
             product_link = await uploadImage(PRODUCT_IMAGES, input.productImage);
         } catch (error) {
-            return { success: false, message: (error as Error).message };
+            return uploadFailed(error);
         }
     }
 
@@ -66,7 +69,7 @@ export async function addProduct(_prevState: ActionResult | null, formData: Form
     if (error) {
         console.error("Error inserting product:", error);
         cleanUpImage(product_link); // the upload belongs to no product
-        return { success: false, message: `Failed to add product: ${error.message}` };
+        return { success: false, message: t("addFailed", { error: error.message }) };
     }
 
     logAudit(admin.id, "create", "product", created.product_id, {
@@ -80,11 +83,12 @@ export async function addProduct(_prevState: ActionResult | null, formData: Form
 
 export async function deleteProduct(productId: string): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.products");
 
     const id = Number(productId);
     if (!Number.isInteger(id)) {
-        return { success: false, message: "Product not found." };
+        return { success: false, message: t("notFound") };
     }
 
     const result = await removeProduct(admin.id, id);
@@ -93,9 +97,7 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
     revalidatePath("/product");
     return {
         success: true,
-        message: result.outcome === "deleted"
-            ? "Product deleted."
-            : "This product is used by orders or favorites, so it was archived instead of deleted.",
+        message: result.outcome === "deleted" ? t("deleted") : t("archivedInstead"),
     };
 }
 
@@ -105,6 +107,7 @@ async function removeProduct(
     adminId: string,
     id: number,
 ): Promise<{ outcome: "deleted" } | { outcome: "archived" } | { outcome: "failed"; message: string }> {
+    const t = await getTranslations("actions.products");
     const { data, error } = await supabaseAdmin
         .from('products')
         .delete()
@@ -114,7 +117,7 @@ async function removeProduct(
     if (error) {
         if (!isForeignKeyViolation(error)) {
             console.error("Error deleting product:", error);
-            return { outcome: "failed", message: `Failed to delete product: ${error.message}` };
+            return { outcome: "failed", message: t("deleteFailed", { error: error.message }) };
         }
 
         const archived = await setArchived("products", id, true);
@@ -124,15 +127,15 @@ async function removeProduct(
         }
         const { message } = archiveResult(archived, {
             done: "",
-            notFound: "Product not found.",
-            unavailable: "This product appears in existing orders or favorites, so it can't be deleted.",
-            failed: "Failed to archive product",
+            notFound: t("notFound"),
+            unavailable: t("inUse"),
+            failed: (error) => t("archiveFailed", { error }),
         });
         return { outcome: "failed", message };
     }
 
     if (!data?.length) {
-        return { outcome: "failed", message: "Product not found." };
+        return { outcome: "failed", message: t("notFound") };
     }
 
     cleanUpImage(data[0].product_link);
@@ -143,10 +146,11 @@ async function removeProduct(
 // Bulk delete (P7-03): each product is deleted, or archived when it's still used.
 export async function deleteProducts(productIds: string[]): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.products");
 
     const ids = parseBulkIds(productIds);
-    if (!ids) return { success: false, message: `Select between 1 and ${MAX_BULK} products.` };
+    if (!ids) return { success: false, message: t("selectBetween", { max: MAX_BULK }) };
 
     let deleted = 0;
     let archived = 0;
@@ -162,23 +166,25 @@ export async function deleteProducts(productIds: string[]): Promise<ActionResult
     if (deleted || archived) revalidatePath("/product");
     return bulkResult(
         [
-            deleted ? `Deleted ${countLabel(deleted, "product")}` : "",
-            archived ? `${deleted ? "archived" : "Archived"} ${countLabel(archived, "product")} still used by orders or favorites` : "",
+            deleted ? t("deletedCount", { count: deleted }) : "",
+            archived ? t("archivedCount", { count: archived }) : "",
         ].filter(Boolean),
         failures,
+        await getBulkWords(),
     );
 }
 
 export async function restoreProduct(productId: string): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.products");
 
     const id = Number(productId);
     if (!Number.isInteger(id)) {
-        return { success: false, message: "Product not found." };
+        return { success: false, message: t("notFound") };
     }
 
-    const result = archiveResult(await setArchived("products", id, false), RESTORE_MESSAGES);
+    const result = archiveResult(await setArchived("products", id, false), await restoreMessages());
     if (result.success) {
         logAudit(admin.id, "restore", "product", id);
         revalidatePath("/product");
@@ -186,25 +192,29 @@ export async function restoreProduct(productId: string): Promise<ActionResult> {
     return result;
 }
 
-const RESTORE_MESSAGES = {
-    done: "Product restored.",
-    notFound: "Product not found.",
-    unavailable: "Archiving isn't set up yet.",
-    failed: "Failed to restore product",
-};
+async function restoreMessages() {
+    const [t, tc] = await Promise.all([getTranslations("actions.products"), getTranslations("actions.common")]);
+    return {
+        done: t("restored"),
+        notFound: t("notFound"),
+        unavailable: tc("archivingUnavailable"),
+        failed: (error: string) => t("restoreFailed", { error }),
+    };
+}
 
 // Bulk restore from the Archived view (P7-03).
 export async function restoreProducts(productIds: string[]): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.products");
 
     const ids = parseBulkIds(productIds);
-    if (!ids) return { success: false, message: `Select between 1 and ${MAX_BULK} products.` };
+    if (!ids) return { success: false, message: t("selectBetween", { max: MAX_BULK }) };
 
     let restored = 0;
     const failures: string[] = [];
     for (const id of ids) {
-        const result = archiveResult(await setArchived("products", id, false), RESTORE_MESSAGES);
+        const result = archiveResult(await setArchived("products", id, false), await restoreMessages());
         if (result.success) {
             restored++;
             logAudit(admin.id, "restore", "product", id);
@@ -214,7 +224,7 @@ export async function restoreProducts(productIds: string[]): Promise<ActionResul
     }
 
     if (restored) revalidatePath("/product");
-    return bulkResult(restored ? [`Restored ${countLabel(restored, "product")}`] : [], failures);
+    return bulkResult(restored ? [t("restoredCount", { count: restored })] : [], failures, await getBulkWords());
 }
 
 // Form action bound to a product id (via useFormAction): returns an error or redirects.
@@ -224,14 +234,15 @@ export async function updateProduct(
     formData: FormData,
 ): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.products");
 
     const id = Number(productId);
     if (!Number.isInteger(id)) {
-        return { success: false, message: "Product not found." };
+        return { success: false, message: t("notFound") };
     }
 
-    const parsed = parseForm(productSchema, formData);
+    const parsed = await parseFormT(productSchema, formData);
     if (!parsed.success) {
         return { success: false, message: parsed.message };
     }
@@ -246,10 +257,10 @@ export async function updateProduct(
 
     if (readError) {
         console.error("Error reading product:", readError);
-        return { success: false, message: `Failed to update product: ${readError.message}` };
+        return { success: false, message: t("updateFailed", { error: readError.message }) };
     }
     if (!current) {
-        return { success: false, message: "Product not found." };
+        return { success: false, message: t("notFound") };
     }
 
     // A new file replaces the image. Otherwise the form's existingImageUrl says whether
@@ -259,7 +270,7 @@ export async function updateProduct(
         try {
             product_link = await uploadImage(PRODUCT_IMAGES, input.productImage);
         } catch (error) {
-            return { success: false, message: (error as Error).message };
+            return uploadFailed(error);
         }
     }
 
@@ -281,7 +292,7 @@ export async function updateProduct(
     if (error) {
         console.error("Error updating product:", error);
         if (input.productImage) cleanUpImage(product_link); // the new upload wasn't saved
-        return { success: false, message: `Failed to update product: ${error.message}` };
+        return { success: false, message: t("updateFailed", { error: error.message }) };
     }
 
     if (current.product_link !== product_link) cleanUpImage(current.product_link);
@@ -291,7 +302,7 @@ export async function updateProduct(
 }
 
 // One checked row of a CSV import, as the preview shows it (P7-03).
-export type ImportPreviewRow = Omit<ImportRow, "values">;
+export type ImportPreviewRow = Omit<ImportRow, "values" | "errors"> & { errors: string[] };
 export type ImportPreviewResult = ActionResult & { rows?: ImportPreviewRow[]; validCount?: number };
 
 // Categories and brands an import may use (active ones), and the names already taken.
@@ -302,18 +313,20 @@ async function importLookup(): Promise<ImportLookup> {
 
 // Checks a products CSV without saving anything, for the preview step.
 export async function previewProductImport(csv: string): Promise<ImportPreviewResult> {
-    if (!(await getAuthorizedAdmin("admin"))) return NOT_AUTHORIZED;
-    if (typeof csv !== "string") return { success: false, message: "Choose a CSV file." };
+    if (!(await getAuthorizedAdmin("admin"))) return notAuthorized();
+    const t = await getTranslations("actions.products");
+    if (typeof csv !== "string") return { success: false, message: t("chooseCsv") };
 
+    const text = await getValidationText();
     const { error, rows } = readProductImport(csv, await importLookup());
-    if (error) return { success: false, message: error };
+    if (error) return { success: false, message: text(error) };
 
     const validCount = rows.filter((row) => row.values).length;
     return {
         success: true,
-        message: `${countLabel(validCount, "product")} of ${rows.length} ready to import.`,
+        message: t("previewSummary", { valid: validCount, total: rows.length }),
         rows: rows.map(({ row, name, category, brand, price, quantity, errors }) => ({
-            row, name, category, brand, price, quantity, errors,
+            row, name, category, brand, price, quantity, errors: errors.map(text),
         })),
         validCount,
     };
@@ -323,20 +336,21 @@ export async function previewProductImport(csv: string): Promise<ImportPreviewRe
 // preview is only for the admin, never trusted.
 export async function importProducts(csv: string): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
-    if (typeof csv !== "string") return { success: false, message: "Choose a CSV file." };
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.products");
+    if (typeof csv !== "string") return { success: false, message: t("chooseCsv") };
 
     const { error, rows } = readProductImport(csv, await importLookup());
-    if (error) return { success: false, message: error };
+    if (error) return { success: false, message: (await getValidationText())(error) };
 
     const values = rows.flatMap((row) => (row.values ? [row.values] : []));
-    if (values.length === 0) return { success: false, message: "No row is ready to import. Fix the file and try again." };
+    if (values.length === 0) return { success: false, message: t("nothingToImport") };
 
     // One insert: either every valid row is saved or none is
     const { error: insertError } = await supabaseAdmin.from('products').insert(values);
     if (insertError) {
         console.error("Error importing products:", insertError);
-        return { success: false, message: `Import failed: ${insertError.message}` };
+        return { success: false, message: t("importFailed", { error: insertError.message }) };
     }
 
     const skipped = rows.length - values.length;
@@ -344,6 +358,6 @@ export async function importProducts(csv: string): Promise<ActionResult> {
     revalidatePath("/product");
     return {
         success: true,
-        message: `Imported ${countLabel(values.length, "product")}${skipped ? `; ${skipped} row${skipped === 1 ? " was" : "s were"} skipped` : ""}.`,
+        message: t("imported", { count: values.length, skipped }),
     };
 }

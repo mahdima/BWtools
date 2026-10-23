@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Send } from "lucide-react";
 import { addOrderNote } from "@/app/(dashboard)/order/actions";
-import { runWithToast } from "@/lib/toast-action";
+import { useRunWithToast } from "@/lib/use-toast-action";
 import { Can } from "@/components/admin-provider";
 import { useLocale, useTranslations } from "next-intl";
 import { formatDate } from "@/lib/i18n";
@@ -21,6 +21,7 @@ interface OrderNotesProps {
 
 export function OrderNotes({ orderId, notes }: OrderNotesProps) {
   const t = useTranslations("orders.notes");
+  const runToast = useRunWithToast();
   const locale = useLocale();
   const [newNote, setNewNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +32,7 @@ export function OrderNotes({ orderId, notes }: OrderNotesProps) {
 
     setIsSubmitting(true);
     // Keep the text if it fails, so nothing typed is lost
-    if (await runWithToast(() => addOrderNote(orderId, newNote.trim()))) {
+    if (await runToast(() => addOrderNote(orderId, newNote.trim()))) {
       setNewNote("");
     }
     setIsSubmitting(false);

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { updateOrderStatus } from "@/app/(dashboard)/order/actions";
 import type { OrderStatus } from "@/lib/orders";
-import { runWithToast } from "@/lib/toast-action";
+import { useRunWithToast } from "@/lib/use-toast-action";
 import { useTranslations } from "next-intl";
 
 const STATUS_BUTTONS: { status: OrderStatus; icon: LucideIcon; className: string }[] = [
@@ -24,6 +24,7 @@ interface OrderStatusActionsProps {
 
 export function OrderStatusActions({ orderId, currentStatus }: OrderStatusActionsProps) {
   const t = useTranslations("orders.statusActions");
+  const runToast = useRunWithToast();
   const statuses = useTranslations("orderStatus");
   const [isPending, startTransition] = useTransition();
 
@@ -38,7 +39,7 @@ export function OrderStatusActions({ orderId, currentStatus }: OrderStatusAction
             onClick={
               status === "Cancelled"
                 ? undefined
-                : () => startTransition(async () => void (await runWithToast(() => updateOrderStatus(orderId, status))))
+                : () => startTransition(async () => void (await runToast(() => updateOrderStatus(orderId, status))))
             }
           >
             <Icon className="h-4 w-4 me-2" /> {t("mark", { status: statuses(status) })}

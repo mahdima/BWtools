@@ -2,7 +2,8 @@
 
 import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
-import { parseForm } from '@/lib/validation/form'
+import { getTranslations } from 'next-intl/server'
+import { parseFormT } from '@/lib/server-messages'
 import { passwordResetRequestSchema } from '@/lib/validation/admin'
 import type { ActionResult } from '@/lib/action-result'
 
@@ -19,7 +20,7 @@ async function siteOrigin() {
 // Public form action. Always answers the same way, so it never reveals which
 // emails have an account.
 export async function requestPasswordReset(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const parsed = parseForm(passwordResetRequestSchema, formData)
+  const parsed = await parseFormT(passwordResetRequestSchema, formData)
   if (!parsed.success) {
     return { success: false, message: parsed.message }
   }
@@ -36,6 +37,6 @@ export async function requestPasswordReset(_prevState: ActionResult | null, form
 
   return {
     success: true,
-    message: 'If an account exists for that email, we sent a link to reset the password. It expires in one hour.',
+    message: (await getTranslations('actions.auth'))('resetSent'),
   }
 }

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import type { ActionResult } from "@/lib/action-result";
-import { runWithToast } from "@/lib/toast-action";
+import { useRunWithToast } from "@/lib/use-toast-action";
 import { useTranslations } from "next-intl";
 
 interface ConfirmDialogProps {
@@ -43,6 +43,7 @@ export function ConfirmDialog({
   onOpenChange,
 }: ConfirmDialogProps) {
   const t = useTranslations("common");
+  const runToast = useRunWithToast();
   const [internalOpen, setInternalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const open = controlledOpen ?? internalOpen;
@@ -71,7 +72,7 @@ export function ConfirmDialog({
               // Don't let Radix close the dialog before the action has finished
               event.preventDefault();
               startTransition(async () => {
-                await runWithToast(action);
+                await runToast(action);
                 setOpen(false);
               });
             }}

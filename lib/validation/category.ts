@@ -2,10 +2,10 @@ import { z } from "zod";
 import { existingImageUrl, optionalImage } from "./form";
 
 const categoryName = z
-  .string({ error: "Category name is required." })
+  .string({ error: "categoryNameRequired" })
   .trim()
-  .min(1, "Category name is required.")
-  .max(100, "Category name must be 100 characters or fewer.");
+  .min(1, "categoryNameRequired")
+  .max(100, "categoryNameTooLong");
 
 // Fields posted by components/CategoryForm.tsx and the legacy add/edit category pages.
 export const categorySchema = z.object({
@@ -15,5 +15,5 @@ export const categorySchema = z.object({
 });
 
 export const categoryUpdateSchema = categorySchema.extend({
-  id: z.coerce.number({ error: "Category not found." }).int("Category not found.").positive("Category not found."),
+  id: z.coerce.number({ error: "categoryNotFound" }).int("categoryNotFound").positive("categoryNotFound"),
 });

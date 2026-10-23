@@ -1,9 +1,11 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
+import { notAuthorized, parseFormT } from "@/lib/server-messages";
+
 import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getCurrentAdmin } from "@/lib/auth";
-import { parseForm } from "@/lib/validation/form";
 import { profileSchema } from "@/lib/validation/admin";
 import { logAudit } from "@/lib/audit";
 import { diffChanges } from "@/lib/audit-changes";
@@ -12,11 +14,10 @@ import { revalidatePath } from "next/cache";
 export async function updateAdminProfile(prevState: any, formData: FormData) {
   const admin = await getCurrentAdmin();
 
-  if (!admin) {
-    return { success: false, message: "Unauthorized" };
-  }
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.profile");
 
-  const parsed = parseForm(profileSchema, formData);
+  const parsed = await parseFormT(profileSchema, formData);
   if (!parsed.success) {
     return { success: false, message: parsed.message };
   }
@@ -30,7 +31,7 @@ export async function updateAdminProfile(prevState: any, formData: FormData) {
     .eq("id", admin.id);
 
   if (profileError) {
-    return { success: false, message: "Failed to update profile details: " + profileError.message };
+    return { success: false, message: t("updateFailed", { error: profileError.message }) };
   }
 
   logAudit(admin.id, "update", "admin", admin.id, {
@@ -49,13 +50,13 @@ export async function updateAdminProfile(prevState: any, formData: FormData) {
     const { error: authError } = await supabase.auth.updateUser({ email });
     if (authError) {
       revalidatePath("/", "layout"); // Ensure layout updates
-      return { success: true, message: "Profile updated, but email update failed: " + authError.message };
+      return { success: true, message: t("emailFailed", { error: authError.message }) };
     }
     // Note: This usually triggers a confirmation email to the new address.
     revalidatePath("/", "layout");
-    return { success: true, message: "Profile updated. Please check your new email for a confirmation link." };
+    return { success: true, message: t("checkEmail") };
   }
 
   revalidatePath("/", "layout");
-  return { success: true, message: "Profile updated successfully." };
+  return { success: true, message: t("updated") };
 }

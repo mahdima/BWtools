@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { downloadCsv } from "@/components/csv-exporter";
 import { toCsv } from "@/lib/csv";
 import { useTranslations } from "next-intl";
-import { runWithToast } from "@/lib/toast-action";
+import { useRunWithToast } from "@/lib/use-toast-action";
 import { IMPORT_TEMPLATE_HEADERS, MAX_IMPORT_CHARS } from "@/lib/product-import";
 import {
   importProducts,
@@ -23,6 +23,7 @@ import {
 export function ProductImport({ exampleCategory, exampleBrand }: { exampleCategory: string; exampleBrand: string }) {
   const t = useTranslations("products.import");
   const router = useRouter();
+  const runToast = useRunWithToast();
   const [csv, setCsv] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const [preview, setPreview] = useState<ImportPreviewResult | null>(null);
@@ -51,7 +52,7 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
   const runImport = () => {
     if (!csv) return;
     startTransition(async () => {
-      if (await runWithToast(() => importProducts(csv))) router.push("/product");
+      if (await runToast(() => importProducts(csv))) router.push("/product");
     });
   };
 

@@ -24,7 +24,7 @@ import {
   reactivateAdmin,
 } from "@/app/(dashboard)/team/actions";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { runWithToast } from "@/lib/toast-action";
+import { useRunWithToast } from "@/lib/use-toast-action";
 import { useLocale, useTranslations } from "next-intl";
 import { intlLocale } from "@/lib/i18n";
 import { isRole } from "@/lib/roles";
@@ -45,6 +45,7 @@ interface TeamMemberCardProps {
 
 export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
   const t = useTranslations("team");
+  const runToast = useRunWithToast();
   const roles = useTranslations("roles");
   const locale = useLocale();
   const name = member.full_name || member.email || t("thisAdmin");
@@ -75,7 +76,7 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
 
   const handleRoleChange = (newRole: string) => {
     startTransition(async () => {
-      await runWithToast(() => updateAdminRole(member.id, newRole));
+      await runToast(() => updateAdminRole(member.id, newRole));
     });
   };
 
@@ -85,7 +86,7 @@ export function TeamMemberCard({ member, canManage }: TeamMemberCardProps) {
       setConfirmDeactivate(true);
     } else {
       startTransition(async () => {
-        await runWithToast(() => reactivateAdmin(member.id));
+        await runToast(() => reactivateAdmin(member.id));
       });
     }
   };

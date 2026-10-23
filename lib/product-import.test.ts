@@ -5,7 +5,15 @@ import {
   parseImportNumber,
   readProductImport,
   type ImportLookup,
+  type ImportMessage,
 } from "@/lib/product-import";
+import { createTranslator } from "use-intl/core";
+import en from "@/messages/en.json";
+
+// Problems are keys plus values; read them as the English text the admin sees
+const t = createTranslator({ locale: "en", messages: en, namespace: "validation" });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- keys come from lib code
+const english = (m?: ImportMessage) => (m ? (t as any)(m.key, m.values) : undefined);
 
 const lookup: ImportLookup = {
   categories: [
@@ -48,7 +56,7 @@ describe("readProductImport", () => {
       lookup,
     );
     expect(error).toBeUndefined();
-    expect(rows.map((row) => row.errors)).toEqual([[], []]);
+    expect(rows.map((row) => row.errors.map(english))).toEqual([[], []]);
     expect(rows[0]).toMatchObject({ row: 2, category: "OUTILLAGE", brand: "Bosch" });
     expect(rows[0].values).toEqual({
       product_name: "Perceuse 18V",
@@ -72,7 +80,7 @@ describe("readProductImport", () => {
       ].join("\n"),
       lookup,
     );
-    expect(rows[0].errors).toEqual([
+    expect(rows[0].errors.map(english)).toEqual([
       'Unknown category "Garden".',
       "Brand is missing.",
       "Product name is required.",
@@ -80,21 +88,21 @@ describe("readProductImport", () => {
       "Quantity must be a whole number.",
     ]);
     expect(rows[0].values).toBeNull();
-    expect(rows[1].errors).toEqual(["A product with this name already exists."]);
-    expect(rows[2].errors).toEqual([]);
-    expect(rows[3].errors).toEqual(["This name appears more than once in the file."]);
+    expect(rows[1].errors.map(english)).toEqual(["A product with this name already exists."]);
+    expect(rows[2].errors.map(english)).toEqual([]);
+    expect(rows[3].errors.map(english)).toEqual(["This name appears more than once in the file."]);
   });
 
   it("rejects files without the required columns or rows", () => {
-    expect(readProductImport("name,quantity\nDrill,3", lookup).error).toBe(
+    expect(english(readProductImport("name,quantity\nDrill,3", lookup).error)).toBe(
       "Missing columns: price, category, brand. The first row must name the columns: name, price, quantity, category, brand, description.",
     );
-    expect(readProductImport("name,price,category,brand\n", lookup).error).toBe("The file has no products.");
-    expect(readProductImport("", lookup).error).toBe("The file has no products.");
+    expect(english(readProductImport("name,price,category,brand\n", lookup).error)).toBe("The file has no products.");
+    expect(english(readProductImport("", lookup).error)).toBe("The file has no products.");
   });
 
   it("caps the number of rows", () => {
     const text = ["name,price,category,brand", ...Array.from({ length: 501 }, (_, i) => `P${i},10,1,7`)].join("\n");
-    expect(readProductImport(text, lookup).error).toBe("The file has 501 products; import at most 500 at a time.");
+    expect(english(readProductImport(text, lookup).error)).toBe("The file has 501 products; import at most 500 at a time.");
   });
 });

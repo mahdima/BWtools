@@ -6,6 +6,10 @@ import { categorySchema, categoryUpdateSchema } from "@/lib/validation/category"
 import { customerSchema } from "@/lib/validation/customer";
 import { adminCreateSchema, passwordChangeSchema, profileSchema } from "@/lib/validation/admin";
 import { orderNoteSchema } from "@/lib/validation/order";
+import en from "@/messages/en.json";
+
+// Schemas report keys; tests read them as the English text the admin sees
+const english = (key: string) => (en.validation as Record<string, unknown>)[key] ?? key;
 
 function form(fields: Record<string, string | File>): FormData {
   const fd = new FormData();
@@ -19,7 +23,7 @@ const emptyFileInput = () => new File([], "", { type: "application/octet-stream"
 // Returns the error message, or "" when the input is valid.
 function errorOf(schema: Parameters<typeof parseForm>[0], input: FormData | Record<string, unknown>) {
   const result = parseForm(schema, input);
-  return result.success ? "" : result.message;
+  return result.success ? "" : english(result.message);
 }
 
 describe("optionalImage", () => {
@@ -33,11 +37,11 @@ describe("optionalImage", () => {
   });
 
   it("rejects other types and oversized files", () => {
-    expect(optionalImage.safeParse(file("image/gif")).error?.issues[0].message).toBe(
+    expect(english(optionalImage.safeParse(file("image/gif")).error?.issues[0].message ?? "")).toBe(
       "Image must be a JPEG, PNG or WebP file.",
     );
     expect(optionalImage.safeParse(file("image/svg+xml")).success).toBe(false);
-    expect(optionalImage.safeParse(file("image/png", MAX_IMAGE_BYTES + 1)).error?.issues[0].message).toBe(
+    expect(english(optionalImage.safeParse(file("image/png", MAX_IMAGE_BYTES + 1)).error?.issues[0].message ?? "")).toBe(
       "Image must be 5 MB or smaller.",
     );
   });

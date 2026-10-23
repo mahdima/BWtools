@@ -2,43 +2,43 @@ import { z } from "zod";
 import { ROLES } from "@/lib/roles";
 
 const fullName = z
-  .string({ error: "Full name is required." })
+  .string({ error: "fullNameRequired" })
   .trim()
-  .min(1, "Full name is required.")
-  .max(100, "Full name must be 100 characters or fewer.");
+  .min(1, "fullNameRequired")
+  .max(100, "fullNameTooLong");
 
 // Supabase Auth hashes with bcrypt, which only uses the first 72 bytes.
 const password = z
-  .string({ error: "Password is required." })
-  .min(8, "Password must be at least 8 characters.")
-  .max(72, "Password must be 72 characters or fewer.");
+  .string({ error: "passwordRequired" })
+  .min(8, "passwordTooShort")
+  .max(72, "passwordTooLong");
 
 // app/(dashboard)/team/new: a super admin creating an account.
 export const adminCreateSchema = z.object({
   fullName,
-  email: z.email("Enter a valid email address."),
+  email: z.email("emailInvalid"),
   password,
-  role: z.enum(ROLES, "Choose a valid role."),
+  role: z.enum(ROLES, "roleInvalid"),
 });
 
 // components/profile-edit-dialog.tsx: an admin editing their own profile.
 export const profileSchema = z.object({
   fullName,
-  email: z.union([z.literal(""), z.email("Enter a valid email address.")]).optional(),
+  email: z.union([z.literal(""), z.email("emailInvalid")]).optional(),
 });
 
 // app/forgot-password: asking for a password reset email.
 export const passwordResetRequestSchema = z.object({
-  email: z.email("Enter a valid email address."),
+  email: z.email("emailInvalid"),
 });
 
 // components/SecurityForm.tsx and app/reset-password: an admin setting a new password.
 export const passwordChangeSchema = z
   .object({
     password,
-    confirmPassword: z.string({ error: "Confirm your new password." }),
+    confirmPassword: z.string({ error: "confirmPasswordRequired" }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    error: "Passwords do not match.",
+    error: "passwordsDontMatch",
     path: ["confirmPassword"],
   });

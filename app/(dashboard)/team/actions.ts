@@ -1,10 +1,12 @@
 'use server'
 
+import { getTranslations } from "next-intl/server";
+import { notAuthorized, parseFormT } from "@/lib/server-messages";
+
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthorizedAdmin } from "@/lib/auth";
-import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
+import { type ActionResult } from "@/lib/action-result";
 import { isRole } from "@/lib/roles";
-import { parseForm } from "@/lib/validation/form";
 import { adminCreateSchema } from "@/lib/validation/admin";
 import { logAudit } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
@@ -14,9 +16,10 @@ import { redirect } from "next/navigation";
 // Form action (via useFormAction): returns an error to show, or redirects on success.
 export async function createAdmin(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const admin = await getAuthorizedAdmin('super_admin');
-  if (!admin) return NOT_AUTHORIZED;
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.team");
 
-  const parsed = parseForm(adminCreateSchema, formData);
+  const parsed = await parseFormT(adminCreateSchema, formData);
   if (!parsed.success) {
     return { success: false, message: parsed.message };
   }
@@ -31,7 +34,7 @@ export async function createAdmin(_prevState: ActionResult | null, formData: For
 
   if (authError) {
     console.error("Error creating auth user:", authError);
-    return { success: false, message: `Failed to create user: ${authError.message}` };
+    return { success: false, message: t("createUserFailed", { error: authError.message }) };
   }
 
   // Create admin record
@@ -47,7 +50,7 @@ export async function createAdmin(_prevState: ActionResult | null, formData: For
     console.error("Error creating admin record:", adminError);
     // Clean up auth user if admin creation fails
     await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-    return { success: false, message: `Failed to create admin: ${adminError.message}` };
+    return { success: false, message: t("createAdminFailed", { error: adminError.message }) };
   }
 
   logAudit(admin.id, "create", "admin", authData.user.id, { full_name: fullName, role });
@@ -58,21 +61,22 @@ export async function createAdmin(_prevState: ActionResult | null, formData: For
 // Update admin role (super admin only)
 export async function updateAdminRole(adminId: string, newRole: string): Promise<ActionResult> {
   const admin = await getAuthorizedAdmin('super_admin');
-  if (!admin) return NOT_AUTHORIZED;
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.team");
 
   if (!isRole(newRole)) {
-    return { success: false, message: `Invalid role: ${newRole}` };
+    return { success: false, message: t("invalidRole", { role: newRole }) };
   }
 
   // Prevent a super admin from demoting themselves (and leaving no super admin)
   if (admin.id === adminId) {
-    return { success: false, message: "You cannot change your own role." };
+    return { success: false, message: t("ownRole") };
   }
 
   // The previous role, for the audit log
   const { data: target } = await supabaseAdmin.from('admins').select('role').eq('id', adminId).maybeSingle();
   if (!target) {
-    return { success: false, message: "Admin not found." };
+    return { success: false, message: t("notFound") };
   }
 
   const { error } = await supabaseAdmin
@@ -82,22 +86,23 @@ export async function updateAdminRole(adminId: string, newRole: string): Promise
 
   if (error) {
     console.error("Error updating role:", error);
-    return { success: false, message: `Failed to update role: ${error.message}` };
+    return { success: false, message: t("roleUpdateFailed", { error: error.message }) };
   }
 
   logAudit(admin.id, "role_change", "admin", adminId, { role: { from: target.role, to: newRole } });
   revalidatePath('/team');
-  return { success: true, message: "Role updated." };
+  return { success: true, message: t("roleUpdated") };
 }
 
 // Deactivate admin (super admin only)
 export async function deactivateAdmin(adminId: string): Promise<ActionResult> {
   const admin = await getAuthorizedAdmin('super_admin');
-  if (!admin) return NOT_AUTHORIZED;
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.team");
 
   // Prevent deactivating yourself
   if (admin.id === adminId) {
-    return { success: false, message: "You cannot deactivate your own account." };
+    return { success: false, message: t("ownDeactivate") };
   }
 
   const { error } = await supabaseAdmin
@@ -107,7 +112,7 @@ export async function deactivateAdmin(adminId: string): Promise<ActionResult> {
 
   if (error) {
     console.error("Error deactivating admin:", error);
-    return { success: false, message: `Failed to deactivate: ${error.message}` };
+    return { success: false, message: t("deactivateFailed", { error: error.message }) };
   }
 
   logAudit(admin.id, "deactivate", "admin", adminId);
@@ -122,16 +127,17 @@ export async function deactivateAdmin(adminId: string): Promise<ActionResult> {
 
   if (banError) {
     console.error("Error banning deactivated admin:", banError);
-    return { success: false, message: `Deactivated, but failed to block sign-in: ${banError.message}` };
+    return { success: false, message: t("banFailed", { error: banError.message }) };
   }
 
-  return { success: true, message: "Admin deactivated." };
+  return { success: true, message: t("deactivated") };
 }
 
 // Reactivate admin (super admin only)
 export async function reactivateAdmin(adminId: string): Promise<ActionResult> {
   const admin = await getAuthorizedAdmin('super_admin');
-  if (!admin) return NOT_AUTHORIZED;
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.team");
 
   // Lift the sign-in ban first, so a failure leaves the account fully deactivated
   const { error: unbanError } = await supabaseAdmin.auth.admin.updateUserById(adminId, {
@@ -140,7 +146,7 @@ export async function reactivateAdmin(adminId: string): Promise<ActionResult> {
 
   if (unbanError) {
     console.error("Error lifting ban on admin:", unbanError);
-    return { success: false, message: `Failed to reactivate: ${unbanError.message}` };
+    return { success: false, message: t("reactivateFailed", { error: unbanError.message }) };
   }
 
   const { error } = await supabaseAdmin
@@ -150,10 +156,10 @@ export async function reactivateAdmin(adminId: string): Promise<ActionResult> {
 
   if (error) {
     console.error("Error reactivating admin:", error);
-    return { success: false, message: `Failed to reactivate: ${error.message}` };
+    return { success: false, message: t("reactivateFailed", { error: error.message }) };
   }
 
   logAudit(admin.id, "reactivate", "admin", adminId);
   revalidatePath('/team');
-  return { success: true, message: "Admin reactivated." };
+  return { success: true, message: t("reactivated") };
 }

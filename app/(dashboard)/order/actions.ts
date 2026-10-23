@@ -1,25 +1,28 @@
 'use server'
 
+import { getTranslations } from "next-intl/server";
+import { getBulkWords, notAuthorized, parseFormT } from "@/lib/server-messages";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { revalidatePath } from "next/cache";
 import { getAuthorizedAdmin } from "@/lib/auth";
-import { NOT_AUTHORIZED, type ActionResult } from "@/lib/action-result";
+import { type ActionResult } from "@/lib/action-result";
 import { isOrderStatus } from "@/lib/orders";
 import { resolveOrderFilters, type OrderFilterInput } from "@/lib/data/orders";
 import { toCsv, type CsvExportResult } from "@/lib/csv";
-import { parseForm } from "@/lib/validation/form";
 import { orderNoteSchema } from "@/lib/validation/order";
 import { logAudit } from "@/lib/audit";
 import { shorten } from "@/lib/audit-changes";
-import { MAX_BULK, bulkResult, countLabel, parseBulkIds } from "@/lib/bulk";
+import { MAX_BULK, bulkResult, parseBulkIds } from "@/lib/bulk";
 
 export async function updateOrderStatus(orderId: number, newStatus: string): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.orders");
 
     if (!Number.isInteger(orderId) || !isOrderStatus(newStatus)) {
-        return { success: false, message: "Invalid order or status." };
+        return { success: false, message: t("invalid") };
     }
 
     const error = await changeOrderStatus(admin.id, orderId, newStatus);
@@ -27,17 +30,18 @@ export async function updateOrderStatus(orderId: number, newStatus: string): Pro
 
     revalidatePath("/order");
     revalidatePath(`/order/${orderId}`);
-    return { success: true, message: `Order marked as ${newStatus}.` };
+    return { success: true, message: t("marked", { status: (await getTranslations("orderStatus"))(newStatus) }) };
 }
 
 // Bulk status change (P7-03): each order gets its own history entry and audit row.
 export async function updateOrdersStatus(orderIds: number[], newStatus: string): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.orders");
 
     const ids = parseBulkIds(orderIds);
     if (!ids || !isOrderStatus(newStatus)) {
-        return { success: false, message: `Choose a status and between 1 and ${MAX_BULK} orders.` };
+        return { success: false, message: t("bulkInvalid", { max: MAX_BULK }) };
     }
 
     let changed = 0;
@@ -49,11 +53,16 @@ export async function updateOrdersStatus(orderIds: number[], newStatus: string):
     }
 
     if (changed) revalidatePath("/order");
-    return bulkResult(changed ? [`Marked ${countLabel(changed, "order")} as ${newStatus}`] : [], failures);
+    return bulkResult(
+        changed ? [t("bulkMarked", { count: changed, status: (await getTranslations("orderStatus"))(newStatus) })] : [],
+        failures,
+        await getBulkWords(),
+    );
 }
 
 // Changes one order's status and records it. Returns an error result, or null on success.
 async function changeOrderStatus(adminId: string, orderId: number, newStatus: string): Promise<ActionResult | null> {
+    const t = await getTranslations("actions.orders");
     // Status + history in one transaction (docs/sql/P6-05-set-order-status.sql). The
     // function isn't in the generated types until the owner applies it, hence the cast.
     const { error: rpcError } = await (supabaseAdmin as unknown as SupabaseClient).rpc("set_order_status", {
@@ -67,9 +76,9 @@ async function changeOrderStatus(adminId: string, orderId: number, newStatus: st
         const fallback = await updateStatusWithoutTransaction(orderId, newStatus, adminId);
         if (fallback) return fallback;
     } else if (rpcError) {
-        if (rpcError.code === "P0002") return { success: false, message: "Order not found." };
+        if (rpcError.code === "P0002") return { success: false, message: t("notFound") };
         console.error("Error updating order status:", rpcError);
-        return { success: false, message: `Failed to update status: ${rpcError.message}` };
+        return { success: false, message: t("updateFailed", { error: rpcError.message }) };
     }
 
     logAudit(adminId, "status_change", "order", orderId, { status: { to: newStatus } });
@@ -83,6 +92,7 @@ async function updateStatusWithoutTransaction(
     newStatus: string,
     adminId: string,
 ): Promise<ActionResult | null> {
+    const t = await getTranslations("actions.orders");
     const { data: order } = await supabaseAdmin
         .from('orders')
         .select('status')
@@ -90,7 +100,7 @@ async function updateStatusWithoutTransaction(
         .maybeSingle();
 
     if (!order) {
-        return { success: false, message: "Order not found." };
+        return { success: false, message: t("notFound") };
     }
 
     const { error } = await supabaseAdmin
@@ -100,7 +110,7 @@ async function updateStatusWithoutTransaction(
 
     if (error) {
         console.error("Error updating order status:", error);
-        return { success: false, message: `Failed to update status: ${error.message}` };
+        return { success: false, message: t("updateFailed", { error: error.message }) };
     }
 
     const { error: historyError } = await supabaseAdmin.from('order_status_history').insert({
@@ -119,13 +129,14 @@ async function updateStatusWithoutTransaction(
 // Add internal note to order
 export async function addOrderNote(orderId: number, note: string): Promise<ActionResult> {
     const admin = await getAuthorizedAdmin("admin");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.orders");
 
     if (!Number.isInteger(orderId)) {
-        return { success: false, message: "Order not found." };
+        return { success: false, message: t("notFound") };
     }
 
-    const parsed = parseForm(orderNoteSchema, { note });
+    const parsed = await parseFormT(orderNoteSchema, { note });
     if (!parsed.success) {
         return { success: false, message: parsed.message };
     }
@@ -138,12 +149,12 @@ export async function addOrderNote(orderId: number, note: string): Promise<Actio
 
     if (error) {
         console.error("Error adding order note:", error);
-        return { success: false, message: `Failed to add note: ${error.message}` };
+        return { success: false, message: t("noteFailed", { error: error.message }) };
     }
 
     logAudit(admin.id, "note", "order", orderId, { note: shorten(parsed.data.note) });
     revalidatePath(`/order/${orderId}`);
-    return { success: true, message: "Note added." };
+    return { success: true, message: t("noteAdded") };
 }
 
 
@@ -158,7 +169,8 @@ function formatUtc(timestamp: string) {
 // Every order matching the list's search and status filter, as a CSV file.
 export async function exportOrders(filterInput: OrderFilterInput): Promise<CsvExportResult> {
     const admin = await getAuthorizedAdmin("viewer");
-    if (!admin) return NOT_AUTHORIZED;
+    if (!admin) return notAuthorized();
+    const t = await getTranslations("actions.orders");
 
     // Same filters as the list (search, status, date range)
     const filters = await resolveOrderFilters(filterInput);
@@ -183,7 +195,7 @@ export async function exportOrders(filterInput: OrderFilterInput): Promise<CsvEx
 
             if (error) {
                 console.error("Error exporting orders:", error);
-                return { success: false, message: `Export failed: ${error.message}` };
+                return { success: false, message: t("exportFailed", { error: error.message }) };
             }
 
             for (const order of data) {
@@ -209,10 +221,8 @@ export async function exportOrders(filterInput: OrderFilterInput): Promise<CsvEx
 
     return {
         success: true,
-        message: truncated
-            ? `Exported the first ${rows.length} orders.`
-            : `Exported ${rows.length} order${rows.length === 1 ? "" : "s"}.`,
-        csv: toCsv(["Order #", "Created at (UTC)", "Status", "Total (DZD)"], rows),
+        message: truncated ? t("exportedFirst", { count: rows.length }) : t("exported", { count: rows.length }),
+        csv: toCsv([t("csvOrder"), t("csvCreatedAt"), t("csvStatus"), t("csvTotal")], rows),
         filename: `orders${filters.status ? `-${filters.status.toLowerCase()}` : ""}-${date}.csv`,
     };
 }

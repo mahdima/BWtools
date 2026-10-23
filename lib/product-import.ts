@@ -38,6 +38,10 @@ export type ImportLookup = {
   existingNames: Set<string>;
 };
 
+// A problem, as a key in messages/*.json "validation" plus its values; the server
+// translates it for the admin.
+export type ImportMessage = { key: string; values?: Record<string, string | number> };
+
 export type ImportRow = {
   row: number; // position in the file, the header being row 1
   name: string;
@@ -45,7 +49,7 @@ export type ImportRow = {
   brand: string;
   price: string;
   quantity: string;
-  errors: string[];
+  errors: ImportMessage[];
   // The products row to insert, when there are no errors
   values: {
     product_name: string;
@@ -89,11 +93,11 @@ function resolve<T>(value: string, items: T[], id: (item: T) => number, name: (i
 
 // Reads a products CSV and checks every row. `error` is set when the file as a whole
 // can't be used (no rows, missing columns, too many rows).
-export function readProductImport(text: string, lookup: ImportLookup): { error?: string; rows: ImportRow[] } {
-  if (text.length > MAX_IMPORT_CHARS) return { error: "The file is too large (1 MB at most).", rows: [] };
+export function readProductImport(text: string, lookup: ImportLookup): { error?: ImportMessage; rows: ImportRow[] } {
+  if (text.length > MAX_IMPORT_CHARS) return { error: { key: "import.tooLarge" }, rows: [] };
 
   const [header, ...lines] = parseCsv(text);
-  if (!header || lines.length === 0) return { error: "The file has no products.", rows: [] };
+  if (!header || lines.length === 0) return { error: { key: "import.noProducts" }, rows: [] };
 
   const columns: Partial<Record<Field, number>> = {};
   header.forEach((title, index) => {
@@ -107,12 +111,15 @@ export function readProductImport(text: string, lookup: ImportLookup): { error?:
   const missing = REQUIRED.filter((field) => columns[field] === undefined);
   if (missing.length) {
     return {
-      error: `Missing column${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}. The first row must name the columns: ${IMPORT_TEMPLATE_HEADERS.join(", ")}.`,
+      error: {
+        key: "import.missingColumns",
+        values: { count: missing.length, columns: missing.join(", "), expected: IMPORT_TEMPLATE_HEADERS.join(", ") },
+      },
       rows: [],
     };
   }
   if (lines.length > MAX_IMPORT_ROWS) {
-    return { error: `The file has ${lines.length} products; import at most ${MAX_IMPORT_ROWS} at a time.`, rows: [] };
+    return { error: { key: "import.tooMany", values: { count: lines.length, max: MAX_IMPORT_ROWS } }, rows: [] };
   }
 
   const cell = (fields: string[], field: Field) => {
@@ -130,17 +137,17 @@ export function readProductImport(text: string, lookup: ImportLookup): { error?:
       quantity: cell(fields, "quantity"),
       description: cell(fields, "description"),
     };
-    const errors: string[] = [];
+    const errors: ImportMessage[] = [];
 
     const category = raw.category
       ? resolve(raw.category, lookup.categories, (c) => c.categorie_id, (c) => c.categorie_name)
       : undefined;
-    if (!raw.category) errors.push("Category is missing.");
-    else if (!category) errors.push(`Unknown category "${raw.category}".`);
+    if (!raw.category) errors.push({ key: "import.categoryMissing" });
+    else if (!category) errors.push({ key: "import.unknownCategory", values: { name: raw.category } });
 
     const brand = raw.brand ? resolve(raw.brand, lookup.brands, (b) => b.brand_id, (b) => b.brand_name) : undefined;
-    if (!raw.brand) errors.push("Brand is missing.");
-    else if (!brand) errors.push(`Unknown brand "${raw.brand}".`);
+    if (!raw.brand) errors.push({ key: "import.brandMissing" });
+    else if (!brand) errors.push({ key: "import.unknownBrand", values: { name: raw.brand } });
 
     const parsed = importSchema.safeParse({
       product: raw.name,
@@ -150,11 +157,11 @@ export function readProductImport(text: string, lookup: ImportLookup): { error?:
       quantity: parseImportNumber(raw.quantity) ?? 0,
       description: descriptionToHtml(raw.description),
     });
-    if (!parsed.success) errors.push(...parsed.error.issues.map((issue) => issue.message));
+    if (!parsed.success) errors.push(...parsed.error.issues.map((issue) => ({ key: issue.message })));
 
     const key = normalizeName(raw.name);
-    if (key && lookup.existingNames.has(key)) errors.push("A product with this name already exists.");
-    else if (key && seen.has(key)) errors.push("This name appears more than once in the file.");
+    if (key && lookup.existingNames.has(key)) errors.push({ key: "import.nameExists" });
+    else if (key && seen.has(key)) errors.push({ key: "import.nameRepeated" });
     seen.add(key);
 
     return {

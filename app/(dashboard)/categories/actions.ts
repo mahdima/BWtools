@@ -1,10 +1,12 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
+import { notAuthorized, parseFormT, uploadFailed } from "@/lib/server-messages";
+
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthorizedAdmin } from "@/lib/auth";
-import { parseForm } from "@/lib/validation/form";
 import { categorySchema, categoryUpdateSchema } from "@/lib/validation/category";
-import { NOT_AUTHORIZED, isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
+import { isForeignKeyViolation, type ActionResult } from "@/lib/action-result";
 import { removeUnusedImage, uploadImage } from "@/lib/image-storage";
 import { CATEGORY_IMAGES } from "@/lib/storage-path";
 import { archiveResult, hasActiveProducts, setArchived } from "@/lib/archive";
@@ -20,9 +22,10 @@ function cleanUpImage(url: string | null | undefined) {
 
 export async function addCategory(formData: FormData): Promise<ActionResult> {
   const admin = await getAuthorizedAdmin("admin");
-  if (!admin) return NOT_AUTHORIZED;
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.categories");
 
-  const parsed = parseForm(categorySchema, formData);
+  const parsed = await parseFormT(categorySchema, formData);
   if (!parsed.success) {
     return { success: false, message: parsed.message };
   }
@@ -33,7 +36,7 @@ export async function addCategory(formData: FormData): Promise<ActionResult> {
     try {
       cat_image_url = await uploadImage(CATEGORY_IMAGES, categoryImage);
     } catch (error) {
-      return { success: false, message: (error as Error).message };
+      return uploadFailed(error);
     }
   }
 
@@ -50,14 +53,15 @@ export async function addCategory(formData: FormData): Promise<ActionResult> {
 
   logAudit(admin.id, "create", "category", created.categorie_id, { categorie_name: categoryName });
   revalidatePath("/categories");
-  return { success: true, message: "Category added successfully" };
+  return { success: true, message: t("added") };
 }
 
 export async function updateCategory(formData: FormData): Promise<ActionResult> {
   const admin = await getAuthorizedAdmin("admin");
-  if (!admin) return NOT_AUTHORIZED;
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.categories");
 
-  const parsed = parseForm(categoryUpdateSchema, formData);
+  const parsed = await parseFormT(categoryUpdateSchema, formData);
   if (!parsed.success) {
     return { success: false, message: parsed.message };
   }
@@ -73,7 +77,7 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
     return { success: false, message: readError.message };
   }
   if (!current) {
-    return { success: false, message: "Category not found." };
+    return { success: false, message: t("notFound") };
   }
 
   // A new file replaces the image. Otherwise the form's existingImageUrl says whether
@@ -83,7 +87,7 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
     try {
       cat_image_url = await uploadImage(CATEGORY_IMAGES, categoryImage);
     } catch (error) {
-      return { success: false, message: (error as Error).message };
+      return uploadFailed(error);
     }
   }
 
@@ -100,16 +104,17 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
   if (current.cat_image_url !== cat_image_url) cleanUpImage(current.cat_image_url);
   logAudit(admin.id, "update", "category", id, diffChanges(current, { categorie_name: categoryName, cat_image_url }));
   revalidatePath("/categories");
-  return { success: true, message: "Category updated successfully" };
+  return { success: true, message: t("updated") };
 }
 
 export async function deleteCategory(categoryId: string): Promise<ActionResult> {
   const admin = await getAuthorizedAdmin("admin");
-  if (!admin) return NOT_AUTHORIZED;
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.categories");
 
   const id = Number(categoryId);
   if (!Number.isInteger(id)) {
-    return { success: false, message: "Category not found." };
+    return { success: false, message: t("notFound") };
   }
 
   // Ask for the deleted rows back, so "nothing was deleted" is reported, not hidden
@@ -123,14 +128,14 @@ export async function deleteCategory(categoryId: string): Promise<ActionResult> 
     if (!isForeignKeyViolation(error)) return { success: false, message: error.message };
 
     // Products still point to it. If they're all archived, archive the category too (P6-08)
-    const stillHasProducts = "This category still has products. Move or delete them first.";
+    const stillHasProducts = t("stillHasProducts");
     if ((await hasActiveProducts("Category_id", id)) !== false) return { success: false, message: stillHasProducts };
 
     const result = archiveResult(await setArchived("categories", id, true), {
-      done: "This category is used by archived products, so it was archived instead of deleted.",
-      notFound: "Category not found.",
+      done: t("archivedInstead"),
+      notFound: t("notFound"),
       unavailable: stillHasProducts,
-      failed: "Failed to archive category",
+      failed: (error) => t("archiveFailed", { error }),
     });
     if (result.success) {
       logAudit(admin.id, "archive", "category", id);
@@ -140,29 +145,30 @@ export async function deleteCategory(categoryId: string): Promise<ActionResult> 
   }
 
   if (!data?.length) {
-    return { success: false, message: "Category not found." };
+    return { success: false, message: t("notFound") };
   }
 
   cleanUpImage(data[0].cat_image_url);
   logAudit(admin.id, "delete", "category", id, { categorie_name: data[0].categorie_name });
   revalidatePath("/categories");
-  return { success: true, message: "Category deleted successfully" };
+  return { success: true, message: t("deleted") };
 }
 
 export async function restoreCategory(categoryId: string): Promise<ActionResult> {
   const admin = await getAuthorizedAdmin("admin");
-  if (!admin) return NOT_AUTHORIZED;
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.categories");
 
   const id = Number(categoryId);
   if (!Number.isInteger(id)) {
-    return { success: false, message: "Category not found." };
+    return { success: false, message: t("notFound") };
   }
 
   const result = archiveResult(await setArchived("categories", id, false), {
-    done: "Category restored.",
-    notFound: "Category not found.",
-    unavailable: "Archiving isn't set up yet.",
-    failed: "Failed to restore category",
+    done: t("restored"),
+    notFound: t("notFound"),
+    unavailable: (await getTranslations("actions.common"))("archivingUnavailable"),
+    failed: (error) => t("restoreFailed", { error }),
   });
   if (result.success) {
     logAudit(admin.id, "restore", "category", id);

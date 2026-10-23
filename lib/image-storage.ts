@@ -3,15 +3,15 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { imageExtension } from "@/lib/validation/form";
 import { deletableImagePath, newImagePath, type ImageTarget } from "@/lib/storage-path";
 
-// Uploads an image that passed `optionalImage` and returns its public URL. Throws an
-// error whose message can be shown to the user.
+// Uploads an image that passed `optionalImage` and returns its public URL. Throws with
+// the storage error's message (actions wrap it in "actions.common.uploadFailed").
 export async function uploadImage(target: ImageTarget, file: File): Promise<string> {
   const path = newImagePath(target, imageExtension(file));
 
   const { error } = await supabaseAdmin.storage.from(target.bucket).upload(path, file, { contentType: file.type });
   if (error) {
     console.error(`Error uploading an image to '${target.bucket}':`, error);
-    throw new Error(`Failed to upload the image: ${error.message}`);
+    throw new Error(error.message);
   }
 
   return supabaseAdmin.storage.from(target.bucket).getPublicUrl(path).data.publicUrl;

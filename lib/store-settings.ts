@@ -2,21 +2,21 @@ import { z } from "zod";
 
 // Store-wide settings (single row in `store_settings`, see docs/sql/P6-01-store-settings.sql).
 export const storeSettingsSchema = z.object({
-  store_name: z.string().trim().min(1, "Store name is required.").max(100, "Store name is too long."),
-  contact_email: z.email("Enter a valid contact email."),
+  store_name: z.string().trim().min(1, "storeNameRequired").max(100, "storeNameTooLong"),
+  contact_email: z.email("contactEmailInvalid"),
   contact_phone: z
     .string()
     .trim()
-    .max(30, "Phone number is too long.")
+    .max(30, "phoneTooLong")
     .nullish()
     .transform((value) => value || null),
-  address: z.string().trim().max(300, "Address is too long."),
+  address: z.string().trim().max(300, "addressTooLong"),
   low_stock_threshold: z.coerce
-    .number({ error: "Low-stock threshold must be a number." })
-    .int("Low-stock threshold must be a whole number.")
-    .min(0, "Low-stock threshold cannot be negative.")
-    .max(100_000, "Low-stock threshold is too large."),
-  invoice_footer: z.string().trim().max(500, "Invoice footer is too long."),
+    .number({ error: "thresholdNotNumber" })
+    .int("thresholdNotWhole")
+    .min(0, "thresholdNegative")
+    .max(100_000, "thresholdTooLarge"),
+  invoice_footer: z.string().trim().max(500, "invoiceFooterTooLong"),
 });
 
 export type StoreSettings = z.output<typeof storeSettingsSchema>;

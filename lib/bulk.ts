@@ -11,18 +11,18 @@ export function parseBulkIds(ids: unknown): number[] | null {
   return [...new Set(numbers as number[])];
 }
 
-// "1 product", "3 products".
-export function countLabel(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
-}
+// The words bulkResult needs, in the admin's language ("actions.common" in messages).
+export type BulkWords = {
+  nothingToDo: string;
+  failed: (count: number, first: string) => string;
+};
 
-// The toast for a bulk action: what was done, then the first failure and how many
-// others failed. Successful only when nothing failed.
-export function bulkResult(done: string[], failures: string[]): { success: boolean; message: string } {
-  const doneText = done.join(" and ");
-  if (failures.length === 0) return { success: true, message: `${doneText || "Nothing to do"}.` };
+// The toast for a bulk action: each thing done as a sentence, then the first failure and
+// how many failed. Successful only when nothing failed.
+export function bulkResult(done: string[], failures: string[], words: BulkWords): { success: boolean; message: string } {
+  const doneText = done.map((part) => `${part}.`).join(" ");
+  if (failures.length === 0) return { success: true, message: doneText || `${words.nothingToDo}.` };
 
-  const failureText =
-    failures.length === 1 ? `1 failed: ${failures[0]}` : `${failures.length} failed, e.g. ${failures[0]}`;
-  return { success: false, message: doneText ? `${doneText}. ${failureText}` : failureText };
+  const failureText = words.failed(failures.length, failures[0]);
+  return { success: false, message: doneText ? `${doneText} ${failureText}` : failureText };
 }
