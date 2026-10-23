@@ -1,77 +1,29 @@
 'use server'
 
+import { getTranslations } from "next-intl/server";
+import { notAuthorized, parseFormT } from "@/lib/server-messages";
+
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { createClient } from "@/utils/supabase/server";
+import { getAuthorizedAdmin } from "@/lib/auth";
+import { type ActionResult } from "@/lib/action-result";
+import { isRole } from "@/lib/roles";
+import { adminCreateSchema } from "@/lib/validation/admin";
+import { logAudit } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-// Get all team members
-export async function getTeamMembers() {
-  const { data, error } = await supabaseAdmin
-    .from('admins')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error("Error fetching team members:", error);
-    return [];
-  }
-  
-  // Add default role if column doesn't exist yet
-  return (data || []).map(member => ({
-    ...member,
-    role: member.role || 'admin',
-  }));
-}
-
-// Check if current user is super admin
-export async function isSuperAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return false;
-
-  const { data } = await supabaseAdmin
-    .from('admins')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  return data?.role === 'super_admin';
-}
-
-// Get current user's role
-export async function getCurrentUserRole() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
-  const { data } = await supabaseAdmin
-    .from('admins')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  return data?.role || 'viewer';
-}
-
 // Create new admin (super admin only)
-export async function createAdmin(formData: FormData) {
-  // Verify current user is super admin
-  const isSuper = await isSuperAdmin();
-  if (!isSuper) {
-    throw new Error("Only super admins can create new accounts");
-  }
+// Form action (via useFormAction): returns an error to show, or redirects on success.
+export async function createAdmin(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const admin = await getAuthorizedAdmin('super_admin');
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.team");
 
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
-  const fullName = formData.get('fullName') as string;
-  const role = formData.get('role') as string;
-
-  if (!email || !password || !fullName || !role) {
-    throw new Error("All fields are required");
+  const parsed = await parseFormT(adminCreateSchema, formData);
+  if (!parsed.success) {
+    return { success: false, message: parsed.message };
   }
+  const { email, password, fullName, role } = parsed.data;
 
   // Create auth user
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -82,13 +34,13 @@ export async function createAdmin(formData: FormData) {
 
   if (authError) {
     console.error("Error creating auth user:", authError);
-    throw new Error(`Failed to create user: ${authError.message}`);
+    return { success: false, message: t("createUserFailed", { error: authError.message }) };
   }
 
   // Create admin record
+  // `admins` has no email column: the email lives on the auth user created above
   const { error: adminError } = await supabaseAdmin.from('admins').insert({
     id: authData.user.id,
-    email,
     full_name: fullName,
     role,
     is_active: true,
@@ -98,18 +50,33 @@ export async function createAdmin(formData: FormData) {
     console.error("Error creating admin record:", adminError);
     // Clean up auth user if admin creation fails
     await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-    throw new Error(`Failed to create admin: ${adminError.message}`);
+    return { success: false, message: t("createAdminFailed", { error: adminError.message }) };
   }
 
+  logAudit(admin.id, "create", "admin", authData.user.id, { full_name: fullName, role });
   revalidatePath('/team');
   redirect('/team');
 }
 
 // Update admin role (super admin only)
-export async function updateAdminRole(adminId: string, newRole: string) {
-  const isSuper = await isSuperAdmin();
-  if (!isSuper) {
-    throw new Error("Only super admins can change roles");
+export async function updateAdminRole(adminId: string, newRole: string): Promise<ActionResult> {
+  const admin = await getAuthorizedAdmin('super_admin');
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.team");
+
+  if (!isRole(newRole)) {
+    return { success: false, message: t("invalidRole", { role: newRole }) };
+  }
+
+  // Prevent a super admin from demoting themselves (and leaving no super admin)
+  if (admin.id === adminId) {
+    return { success: false, message: t("ownRole") };
+  }
+
+  // The previous role, for the audit log
+  const { data: target } = await supabaseAdmin.from('admins').select('role').eq('id', adminId).maybeSingle();
+  if (!target) {
+    return { success: false, message: t("notFound") };
   }
 
   const { error } = await supabaseAdmin
@@ -119,24 +86,23 @@ export async function updateAdminRole(adminId: string, newRole: string) {
 
   if (error) {
     console.error("Error updating role:", error);
-    throw new Error(`Failed to update role: ${error.message}`);
+    return { success: false, message: t("roleUpdateFailed", { error: error.message }) };
   }
 
+  logAudit(admin.id, "role_change", "admin", adminId, { role: { from: target.role, to: newRole } });
   revalidatePath('/team');
+  return { success: true, message: t("roleUpdated") };
 }
 
 // Deactivate admin (super admin only)
-export async function deactivateAdmin(adminId: string) {
-  const isSuper = await isSuperAdmin();
-  if (!isSuper) {
-    throw new Error("Only super admins can deactivate accounts");
-  }
+export async function deactivateAdmin(adminId: string): Promise<ActionResult> {
+  const admin = await getAuthorizedAdmin('super_admin');
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.team");
 
   // Prevent deactivating yourself
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user?.id === adminId) {
-    throw new Error("You cannot deactivate your own account");
+  if (admin.id === adminId) {
+    return { success: false, message: t("ownDeactivate") };
   }
 
   const { error } = await supabaseAdmin
@@ -146,17 +112,41 @@ export async function deactivateAdmin(adminId: string) {
 
   if (error) {
     console.error("Error deactivating admin:", error);
-    throw new Error(`Failed to deactivate: ${error.message}`);
+    return { success: false, message: t("deactivateFailed", { error: error.message }) };
   }
 
+  logAudit(admin.id, "deactivate", "admin", adminId);
+
+  // Also block the account from signing in anywhere (~100 years; undone on reactivate).
+  // If this fails the admin is still locked out of the dashboard by `is_active`.
+  const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(adminId, {
+    ban_duration: '876000h',
+  });
+
   revalidatePath('/team');
+
+  if (banError) {
+    console.error("Error banning deactivated admin:", banError);
+    return { success: false, message: t("banFailed", { error: banError.message }) };
+  }
+
+  return { success: true, message: t("deactivated") };
 }
 
 // Reactivate admin (super admin only)
-export async function reactivateAdmin(adminId: string) {
-  const isSuper = await isSuperAdmin();
-  if (!isSuper) {
-    throw new Error("Only super admins can reactivate accounts");
+export async function reactivateAdmin(adminId: string): Promise<ActionResult> {
+  const admin = await getAuthorizedAdmin('super_admin');
+  if (!admin) return notAuthorized();
+  const t = await getTranslations("actions.team");
+
+  // Lift the sign-in ban first, so a failure leaves the account fully deactivated
+  const { error: unbanError } = await supabaseAdmin.auth.admin.updateUserById(adminId, {
+    ban_duration: 'none',
+  });
+
+  if (unbanError) {
+    console.error("Error lifting ban on admin:", unbanError);
+    return { success: false, message: t("reactivateFailed", { error: unbanError.message }) };
   }
 
   const { error } = await supabaseAdmin
@@ -166,8 +156,10 @@ export async function reactivateAdmin(adminId: string) {
 
   if (error) {
     console.error("Error reactivating admin:", error);
-    throw new Error(`Failed to reactivate: ${error.message}`);
+    return { success: false, message: t("reactivateFailed", { error: error.message }) };
   }
 
+  logAudit(admin.id, "reactivate", "admin", adminId);
   revalidatePath('/team');
+  return { success: true, message: t("reactivated") };
 }

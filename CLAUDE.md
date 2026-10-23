@@ -1,0 +1,163 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+BW Tools Dashboard: an admin panel (products, brands, categories, orders, customers, team) for an e-commerce mobile app. The backend is Supabase. Prices are in DZD (formatted with `Intl.NumberFormat("fr-DZ", { currency: "DZD" })`). Production runs at https://b-wtools.vercel.app (Vercel deploys from `master`).
+
+Project docs:
+- [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md): known security issues, bugs and missing features.
+- [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md): the ordered task list. Each task has a checkbox, its dependencies, files to change, steps and a "Done when" check.
+
+## Workflow: plan first, one task at a time
+
+Follow this for every feature, fix or refactor bigger than a one-line change.
+
+1. **Plan before editing.** Read the relevant code first. If the work is not already in `docs/IMPLEMENTATION_PLAN.md`, add it as task blocks using the template at the end of that file, in the right phase. Show the user the plan (task IDs, files, steps) and wait for approval before writing code. Use plan mode when it is available.
+2. **Keep a task list.** Split the work into small tasks that can each be checked on their own, and track them with the todo/task list tool as you go.
+3. **Implement one task at a time.** Change only what the current task needs. If you notice something else, add it to the plan as a new task instead of doing it now. When asked for "the next task", take the first unchecked box in file order, after checking its **Depends on** line.
+4. **Verify before moving on.** Run `npm run typecheck`, `npm run lint` and `npm test`. Add a `*.test.ts` for any new pure helper. Run `npm run build` at the end of each phase. For UI changes, run `npm run dev` and check the page. A task is not done until its "Done when" check passes.
+5. **Update the plan.** Tick the task's checkbox, and add a short note under the task if something was deferred or found along the way.
+6. **Report, then stop.** Summarise what changed, how it was verified, and what the next task is. If the user asked for a whole phase or feature, carry on to the next task only after the current one is verified.
+7. **Database changes go through migrations.** Write SQL as a new file in `supabase/migrations/` (`<UTC timestamp>_<task-id>-<name>.sql`) and ask the user to apply it. The older files in `docs/sql/` are still pending with the owner. Never run DDL or data changes against the production Supabase project yourself.
+8. **Commit only when asked**: one commit per task, with the task ID in the message (for example `P1-03: only active admins can sign in`).
+
+**Never create artifacts.** Don't publish claude.ai Artifacts or Claude Docs, and don't use any artifact or docs tool, even for reports, plans, dashboards or anything else meant to be shared. Write every report, plan, analysis or write-up as a Markdown file in `docs/` in this repo, then summarise it in chat.
+
+## Commands
+
+```bash
+npm run dev        # dev server on http://localhost:3000
+npm run build      # production build
+npm run start      # serve the production build
+npm run typecheck  # next typegen && tsc --noEmit (typegen writes the gitignored next-env.d.ts)
+npm run lint       # eslint . (flat config in eslint.config.mjs; warnings are allowed, errors are not)
+npm test           # vitest run (unit tests, *.test.ts next to the code)
+npx vitest run lib/roles.test.ts   # a single test file
+npx vitest run -t "hasRole"        # tests whose name matches
+```
+
+Unit tests cover pure helpers in `lib/` and use explicit imports (`import { describe, it, expect } from "vitest"`), not globals. The ESLint toolchain has a known dev-only `braces` advisory with no fix released, so use `npm audit --omit=dev` to check what ships.
+
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs `npm ci`, typecheck, lint, test, build and the production audit on every push and pull request, with placeholder Supabase variables. Keep the build working without real credentials: don't make module-level code require a live Supabase connection.
+
+The app needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. Optionally set `NEXT_PUBLIC_SITE_URL`, the public origin used in password-reset links; without it the request host is used. Password reset: `/forgot-password` → email → `/auth/confirm` (route handler) → `/reset-password`. The `/auth/confirm` URLs must be on Supabase's redirect allow-list. The database schema (tables, RLS policies, grants) is versioned in `supabase/migrations/`, starting from a dump of the live project (P2-06, refresh with `npx supabase db dump --linked`, which needs Docker). Storage buckets and auth settings still live only in the Supabase project.
+
+## Stack
+
+Next.js 16 (App Router) with React 19 and the React Compiler enabled (`reactCompiler: true`). Colours come from the tokens in `app/globals.css`. The brand blue is `primary` (`bg-primary`, `text-primary`, `focus:ring-primary`) and its hover shade is `primary-strong`; never hard-code `#0B1DFF`. Light and dark themes come from the same tokens (`:root` and `.dark` in `globals.css`); next-themes follows the device unless the admin picks one in the sidebar (`ThemePicker`). Use token classes (`bg-card`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-muted`), never `bg-white` or `text-gray-*`; for status colours use translucent tints (`bg-red-500/10`) and a `dark:` text shade. Next 16 differs from older Next.js in several places, such as `middleware` being renamed to `proxy`. Check the version-matched docs bundled at `node_modules/next/dist/docs/` before using a Next.js API. `AGENTS.md` is generated by Next.js and says the same; leave it as it is. Tailwind CSS v4 is configured CSS-first in [app/globals.css](app/globals.css) (`@theme inline`), with no `tailwind.config`. UI primitives are shadcn/ui (new-york style) in `components/ui/`. The app also uses TanStack Table, Tiptap ([components/editor.tsx](components/editor.tsx)), Recharts, sonner for toasts and next-themes. Server Actions accept bodies up to 10 MB so image uploads work.
+
+## Architecture
+
+### Supabase clients: pick the right one
+
+| Client | File | Used for |
+|---|---|---|
+| `supabaseAdmin` | [lib/supabaseAdmin.ts](lib/supabaseAdmin.ts) | Service-role key, **bypasses RLS**. Most reads and writes in server actions and server pages, plus `auth.admin.*` and storage uploads. |
+| `createClient()` (server) | [utils/supabase/server.ts](utils/supabase/server.ts) | Cookie-bound SSR client. Login/logout and `auth.getUser()` to identify the current admin; some newer actions (categories, settings, profile) also query with it. |
+
+There is no plain anon client any more. Don't add one: the anon key is public (it ships in the mobile app), so anything it can read is readable by anyone.
+
+`supabaseAdmin` skips RLS, so **every exported function in a `'use server'` file must check permissions itself**. Each export is a public endpoint, even if no UI calls it. Use the helpers in [lib/auth.ts](lib/auth.ts), with roles from [lib/roles.ts](lib/roles.ts) (`super_admin` > `admin` > `viewer`):
+
+- `await requireAdmin("admin")` as the first line of actions that throw on error. The call returns the admin; use `admin.id` for "changed by" fields instead of calling `auth.getUser()` again.
+- `if (!(await getAuthorizedAdmin("admin"))) return { success: false, message: "Not authorized" }` in actions that return result objects.
+- `await requireAdminPage()` in pages and layouts, which redirects non-admins to `/login?error=unauthorized`.
+- `getCurrentAdmin()` is cached per request. It returns `null` without a session, without an `admins` row, or for an inactive admin. A missing role is treated as `viewer`.
+
+Minimum roles: catalogue, orders and customers need `admin`; team management needs `super_admin`; own profile, password and notifications need `viewer`. In the UI, wrap controls a viewer can't use in `<Can minRole="admin">` from [components/admin-provider.tsx](components/admin-provider.tsx) (the layout provides the role; `useAdmin()` reads it). Server pages can check `hasRole((await getCurrentAdmin())?.role, "admin")`. Hiding is only for UX: the action must still check the role. Order statuses are listed in [lib/orders.ts](lib/orders.ts).
+
+After the role check, validate input before touching the database. Add a zod schema in [lib/validation/](lib/validation/) (one file per entity; messages are keys in the `validation` namespace of `messages/*.json`) and call `await parseFormT(schema, formData)` from [lib/server-messages.ts](lib/server-messages.ts). It returns `{ success, data }` or `{ success: false, message }` with the first problem as a translated sentence. For image uploads, use `optionalImage` (JPEG/PNG/WebP, 5 MB max) and name the stored file with `imageExtension(file)`, never the client's file name. Don't read raw `formData.get(...)` values into queries.
+
+**Known gap:** production still runs the old code until Phase 1 of the plan is deployed. In the old code, any Supabase account can sign in, and any signed-in user can make themselves `super_admin`.
+
+### Auth and roles
+
+- [proxy.ts](proxy.ts) (Next 16's name for middleware, on the Node.js runtime) calls `updateSession` in [utils/supabase/middleware.ts](utils/supabase/middleware.ts). It refreshes the Supabase session cookie and redirects to `/login` when there is no session, or to `/login?error=unauthorized` when the user is not an active admin (`findActiveAdmin()`). `/login` and `/auth` are exempt, and the matcher skips static assets, images and `robots.txt`. The proxy runs on every request, including client navigations and server-action calls, which is why the admin check lives there and not only in layouts. Keep the returned `supabaseResponse` cookies intact if you change this.
+- Login ([app/login/actions.ts](app/login/actions.ts)) signs the user straight back out unless they have an active `admins` row.
+- Admin users are rows in the `admins` table, keyed by the auth user id, with `role` (`super_admin` | `admin` | `viewer`) and `is_active`. Creating a team member creates both the auth user and the `admins` row, and rolls back the auth user if the insert fails.
+- [components/AuthProvider.tsx](components/AuthProvider.tsx), [components/ProtectedRoute.tsx](components/ProtectedRoute.tsx) and [utils/supabase/client.ts](utils/supabase/client.ts) are unused leftovers (the first two are a localStorage mock). Don't build on them.
+
+### Routing layout
+
+- `app/(dashboard)/` is a route group. Its [layout.tsx](app/(dashboard)/layout.tsx) fetches the admin profile and notifications on the server and renders the `Sidebar` (wrapped for mobile). Pages use `ps-16 lg:ps-4` to leave room for the mobile sidebar toggle.
+- `app/login`, `app/logout` and `app/invoice/[id]` (printable invoice) sit outside the dashboard layout.
+- **Reads** live in [lib/data/](lib/data/), one module per entity (`import "server-only"`, typed by the generated `Database` types): `dashboard` (stats cached 60s with `unstable_cache`, revenue, recent orders, low stock), `products`, `orders` (list, `getOrderWithDetails` for the order page and invoice, timeline, notes), `brands`, `categories`, `customers`, `admins`, `notifications`. Pages and layouts call these; no page imports `supabaseAdmin`. Don't put reads in `'use server'` files: every export there is a public endpoint. They need no guard of their own because only server components behind the layout and proxy call them.
+- **Writes** are server actions in each feature folder's `actions.ts` (see Auth and roles).
+- **Audit log (P7-01):** after a successful change, call `logAudit(admin.id, action, entity, id, changes)` from [lib/audit.ts](lib/audit.ts). Build `changes` with `diffChanges(before, after)` from [lib/audit-changes.ts](lib/audit-changes.ts), so keep the guard's `admin` and read the "before" row when needed. It writes after the response and does nothing until `audit_log` exists (`docs/sql/P7-01-audit-log.sql`). Log which customer fields changed, never their values. Super admins read it at `/audit`.
+
+### Languages and right-to-left (P7-04)
+
+- [next-intl](https://next-intl.dev) 4 without locale URLs. [i18n/request.ts](i18n/request.ts) picks the language: the `NEXT_LOCALE` cookie (set by `setLocale` in [app/locale/actions.ts](app/locale/actions.ts), a deliberately public action like login), then `Accept-Language`, then English.
+  - The root layout sets `<html lang dir>` and wraps everything in `NextIntlClientProvider`.
+  - Locales and helpers live in [lib/i18n.ts](lib/i18n.ts). `LanguagePicker` sits in the sidebar and on the sign-in pages.
+- Strings live in [messages/en.json](messages/en.json), `fr.json` and `ar.json`, by namespace (`common`, `nav`, `table`, `auth`, `errors`, …).
+  - Keys are typed from `en.json` ([global.d.ts](global.d.ts)), so a missing English key fails `typecheck`.
+  - [lib/messages.test.ts](lib/messages.test.ts) fails when `fr` or `ar` lacks a key or a placeholder, or a message doesn't format.
+  - Add every new string to all three files, and use ICU plurals (Arabic has zero/one/two/few/many/other).
+  - Use `useTranslations("ns")` in client components and `await getTranslations("ns")` in async server code.
+- Server messages are translated too (P7-04d):
+  - zod schemas use keys from the `validation` namespace as messages (`.min(1, "productNameRequired")`), never English.
+  - Actions validate with `await parseFormT(schema, input)` and deny with `return notAuthorized();` (both in [lib/server-messages.ts](lib/server-messages.ts)).
+  - Actions word their results with `getTranslations("actions.<feature>")`, passing raw database errors in as `{error}`.
+  - Client components run actions through `useRunWithToast()`.
+- Arabic is laid out right to left. In class names, use logical utilities only: `ps-`/`pe-`, `ms-`/`me-`, `start-`/`end-`, `text-start`/`text-end`, `border-s`/`border-e`, `rounded-s`/`rounded-e`. Never use `pl-`, `ml-`, `left-` or `text-left`.
+  - Give arrows and chevrons that point "forward" or "back" `rtl:rotate-180`.
+  - Keep the centring of dialogs (`left-[50%] translate-x-[-50%]`) physical.
+  - The revenue chart and the printed invoice are `dir="ltr"` on purpose.
+  - Fonts: Outfit for Latin, with Noto Sans Arabic as the fallback for Arabic letters (`--font-sans` in `globals.css`).
+
+### Feature module pattern
+
+Each feature folder (`product`, `brand`, `categories`, `customers`, `order`, `team`, …) normally has:
+
+- `page.tsx`: an async server component that reads `searchParams` (`page`, `search`, `status`, `add`, `edit`) and fetches data.
+- `columns.tsx`: a `"use client"` file with TanStack `ColumnDef`s. Row actions call server actions directly.
+- Optional `bulk-actions.tsx` (P7-03): a client component passed to `DataTable` as `bulkActions`; only pass it to admins. `DataTable` then adds row checkboxes (rows are identified by `id`) and shows the component in a bar while rows are selected. It reads the ids with `useTableSelection()`. The matching server action takes the id list, validates it with `parseBulkIds` (at most `MAX_BULK`), handles each item through the same helper as the single-row action (so history and audit entries stay per item), and reports with `bulkResult` from [lib/bulk.ts](lib/bulk.ts).
+- `actions.ts`: `'use server'` functions.
+
+**Lists** use server-side pagination. Queries use `.range(from, to)` with `{ count: "exact" }`, and the page passes `pageCount` and `isServerSide` to [components/data-table.tsx](components/data-table.tsx), which writes page, search and filter changes back into the URL.
+
+**Add/edit** is driven by the URL rather than separate routes. `?add=true` or `?edit=<id>` makes the page render `<Modal returnUrl=…>` ([components/Modal.tsx](components/Modal.tsx)) around a form whose `action` is a server action (for edits, bound with the id via `.bind(null, id)`).
+
+**After a mutation**, actions call `revalidatePath(...)`. Add/edit forms that navigate away still `redirect(...)` with `?toast=success`, and [components/toast-listener.tsx](components/toast-listener.tsx) in the root layout shows the toast and strips the param.
+
+Everything else returns an `ActionResult` (`{ success, message }`, from [lib/action-result.ts](lib/action-result.ts)) instead of throwing, because Next.js hides thrown messages in production. On the client:
+- call it through `runWithToast(() => action(...))` ([lib/toast-action.ts](lib/toast-action.ts));
+- for anything destructive, use [components/confirm-dialog.tsx](components/confirm-dialog.tsx), with a `trigger`, or controlled with `open`/`onOpenChange` when opened from a dropdown menu;
+- for forms, give the action the signature `(prevState: ActionResult | null, formData: FormData) => Promise<ActionResult>` (bind ids first) and use `useFormAction(action)` from [lib/use-form-action.ts](lib/use-form-action.ts). It returns `{ state, isPending, onSubmit }`: show `state.message` inline when `!state.success`. Don't use `<form action={serverAction}>` for forms that can fail validation, because React resets the fields after the action and the user loses their input.
+
+For deletes, return a friendly message for `isForeignKeyViolation(error)`, and `.select()` the deleted rows to detect "nothing was deleted".
+
+Each feature's mutations live next to its page: [app/(dashboard)/product/actions.ts](app/(dashboard)/product/actions.ts), [categories/actions.ts](app/(dashboard)/categories/actions.ts), [brand/actions.ts](app/(dashboard)/brand/actions.ts), and so on. The old standalone add/edit pages (`/addproduct`, `/editproduct/[id]`, `/addcategory`, `/editcategory/[id]`) were removed in favour of the modals.
+
+### Orders
+
+Status changes go through `updateOrderStatus` in [app/(dashboard)/order/actions.ts](app/(dashboard)/order/actions.ts), which also writes an `order_status_history` row recording who made the change. Admins can attach internal notes (`order_notes`). Notifications (`notifications` table, one row per admin) are created by `createNotification` / `notifyNewOrder` in [app/(dashboard)/notifications/actions.ts](app/(dashboard)/notifications/actions.ts).
+
+## Database schema
+
+The schema lives in the Supabase project (ref `gfyxqvkwjlqfripwdobi`, linked through `supabase/`). [types/supabase.ts](types/supabase.ts) is generated from it, and all three clients are typed with `Database`. After any schema change, regenerate it with `npm run db:types`, then run `npm run typecheck`. Don't edit the generated file by hand, and prefer its types over `any`. Primary keys are numbers except `admins.id` and `profiles.id`, which are auth user UUIDs, so convert URL and form IDs with `Number()` and check them with `Number.isInteger()`.
+
+Several names are misspelled or unusually cased. Use them exactly as written:
+
+- `products`: `product_id`, `product_name`, `unite_price`, `in_stock_vailable` (nullable), `Category_id` (capital C), `brand_id` (nullable), `product_link` (image URL), `description`
+- `categories`: `categorie_id`, `categorie_name`, `cat_image_url`
+- `brands`: `brand_id`, `brand_name`, `brand_image_url`
+- `admins`: `id`, `full_name`, `role`, `is_active`, `created_at`, `updated_at`. **There is no `email` column**; the email lives on the auth user.
+- `orders`: `id`, `user_id`, `address_id` (→ `addresses`), `status`, `total`, `created_at`. There are no customer-name or address columns: the customer comes from `profiles` / `profiles_with_email` via `user_id`, and the shipping address from `addresses` via `address_id`.
+- `order_items`: `order_id`, `product_id`, `quantity`, `unit_price` (the price paid; not the product's current `unite_price`)
+- `profiles`: `id`, `username`, `full_name`, `avatar_url`, `website`. The `profiles_with_email` view adds `email` and `phone` from auth.
+- Order statuses: `New`, `processing` (lowercase), `Delivering`, `Delivered`, `Cancelled` (see `lib/orders.ts`)
+- Storage buckets: `products` (product images), `StaticAssests` (category images, misspelled; also holds files the mobile app uses). Upload with `uploadImage` and clean up with `removeUnusedImage` from [lib/image-storage.ts](lib/image-storage.ts), passing `PRODUCT_IMAGES` or `CATEGORY_IMAGES` from [lib/storage-path.ts](lib/storage-path.ts).
+  - **Cleanup timing:** call `removeUnusedImage` inside `after()`, once the row no longer points at the image.
+  - **What it may delete:** only files in the target's own folder (category images go under `categories/`, so `StaticAssests` root files are never deleted), and only when no product, category or brand row still uses the URL.
+  - **Old URL:** read it from the database. `existingImageUrl` from the form is only a keep/remove flag.
+- `addresses`, `favorites` and `saved_orders` belong to the mobile app; the dashboard doesn't use them yet.
+- `store_settings` (single row, `id = 1`): store name, contact details, address, `low_stock_threshold` and invoice footer. Created by `docs/sql/P6-01-store-settings.sql`. Until it exists, `getStoreSettings()` returns `DEFAULT_STORE_SETTINGS` from `lib/store-settings.ts`. Read it through `lib/data/settings.ts` and never hard-code store details.
+- Soft delete (P6-08, `docs/sql/P6-08-soft-delete.sql`): `products`, `brands` and `categories` get `is_archived`, which may not exist yet.
+  - **Lists:** query through `queryByArchived` in [lib/archive.ts](lib/archive.ts), which re-runs without the filter while the column is missing (`42703`). Don't combine the filter with `head: true`.
+  - **Writes:** archive and restore with `setArchived`.
+  - **Past orders:** keep showing archived products; filter only catalogue lists, pickers and counts.
+- SQL functions written for the owner but possibly not applied yet: `set_order_status` (P6-05), `dashboard_stats` / `revenue_series` (P6-06) and `period_totals` / `sales_by` (P7-02, read by [lib/data/reports.ts](lib/data/reports.ts) for `/reports` and the stat cards' change). "Sales" means order lines (quantity × `unit_price`), which exclude delivery, so they are lower than "revenue" (order totals). They aren't in the generated types, so they are called through `supabaseAdmin as unknown as SupabaseClient`. The code falls back to plain queries when PostgREST answers `PGRST202` (function missing); a missing table is `PGRST205`. Keep that fallback until the owner confirms the SQL is applied.

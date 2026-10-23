@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface MobileSidebarWrapperProps {
   children: React.ReactNode;
@@ -11,12 +12,15 @@ interface MobileSidebarWrapperProps {
 
 export function MobileSidebarWrapper({ children }: MobileSidebarWrapperProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const t = useTranslations("nav");
   const pathname = usePathname();
+  const [lastPathname, setLastPathname] = useState(pathname);
 
-  // Close sidebar on route change
-  useEffect(() => {
+  // Close sidebar on route change (adjusting state during render, not in an effect)
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
     setIsOpen(false);
-  }, [pathname]);
+  }
 
   // Close on escape key
   useEffect(() => {
@@ -33,8 +37,10 @@ export function MobileSidebarWrapper({ children }: MobileSidebarWrapperProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden bg-white/80 backdrop-blur-sm shadow-sm border"
+        className="fixed top-4 start-4 z-50 lg:hidden bg-white/80 backdrop-blur-sm shadow-sm border"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? t("closeMenu") : t("openMenu")}
+        aria-expanded={isOpen}
       >
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
@@ -50,9 +56,9 @@ export function MobileSidebarWrapper({ children }: MobileSidebarWrapperProps) {
       {/* Sidebar Container */}
       <div
         className={`
-          fixed lg:static inset-y-0 left-0 z-40
+          fixed lg:static inset-y-0 start-0 z-40
           transform transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          ${isOpen ? "translate-x-0" : "-translate-x-full rtl:max-lg:translate-x-full lg:translate-x-0"}
         `}
       >
         {children}

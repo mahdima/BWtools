@@ -2,26 +2,36 @@
 
 import React, { useState, useRef } from "react";
 import { Trash2, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface ProductImageUploadProps {
   defaultValue?: string | null;
   name?: string;
+  label?: string;
+  // Size of the preview box (default 300px tall)
+  previewClassName?: string;
 }
 
 export const ProductImageUpload = ({
   defaultValue,
   name = "productImage",
+  label,
+  previewClassName = "h-[300px]",
 }: ProductImageUploadProps) => {
+  const t = useTranslations("image");
   const [preview, setPreview] = useState<string | null>(defaultValue || null);
   const [existingUrl, setExistingUrl] = useState<string | null>(
     defaultValue || null
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [lastDefaultValue, setLastDefaultValue] = useState(defaultValue);
 
-  React.useEffect(() => {
+  // Reset when a different product's image is passed in (adjusting state during render)
+  if (defaultValue !== lastDefaultValue) {
+    setLastDefaultValue(defaultValue);
     setPreview(defaultValue || null);
     setExistingUrl(defaultValue || null);
-  }, [defaultValue]);
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,11 +59,11 @@ export const ProductImageUpload = ({
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full h-[300px] rounded-xl mb-4 overflow-hidden bg-muted/20 flex items-center justify-center border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 transition-colors relative group glass-card">
+      <div className={`w-full ${previewClassName} rounded-xl mb-4 overflow-hidden bg-muted/20 flex items-center justify-center border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 transition-colors relative group glass-card`}>
         {preview ? (
           <img
             src={preview}
-            alt="Preview"
+            alt={t("preview")}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -62,7 +72,7 @@ export const ProductImageUpload = ({
             onClick={handleTriggerClick}
           >
             <Plus className="h-10 w-10 mb-2" />
-            <span className="text-sm font-medium">Select Product Image</span>
+            <span className="text-sm font-medium">{label ?? t("selectProductImage")}</span>
           </div>
         )}
 
@@ -90,7 +100,7 @@ export const ProductImageUpload = ({
               onClick={handleTriggerClick}
               className="flex items-center gap-2 px-4 py-2 bg-background/80 backdrop-blur-sm border border-border rounded-md text-sm font-medium text-foreground hover:bg-accent transition-colors shadow-sm"
             >
-              Change Image
+              {t("change")}
             </button>
             <button
               type="button"
@@ -98,7 +108,7 @@ export const ProductImageUpload = ({
               className="flex items-center gap-2 px-4 py-2 bg-destructive/10 border border-destructive/20 rounded-md text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors shadow-sm"
             >
               <Trash2 className="h-4 w-4" />
-              Remove
+              {t("remove")}
             </button>
           </>
         )}

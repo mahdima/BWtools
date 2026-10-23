@@ -1,20 +1,38 @@
 "use client";
 
-import { useActionState } from "react";
+import { use, useActionState } from "react";
 import { login } from "./actions";
 import material from "../../img/material.jpg";
 import logo from "../../img/Asset 3.png";
 import Image from "next/image";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { LanguagePicker } from "@/components/language-picker";
 
 const initialState = {
   error: "",
 };
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const [state, formAction, isPending] = useActionState(login, initialState);
+  const { error: redirectError } = use(searchParams);
+  const errorMessage =
+    state?.error ||
+    (redirectError === "unauthorized"
+      ? t("noAccess")
+      : redirectError === "reset_link"
+        ? t("resetLinkInvalid")
+        : "");
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="relative flex min-h-screen bg-card">
+      <LanguagePicker className="absolute top-4 end-4 z-10" />
       {/* Left Side - Login Form */}
       <div className="w-full mt-20 lg:w-1/2 flex  justify-center p-8 lg:p-16">
         <div className="w-full max-w-md space-y-8">
@@ -23,12 +41,12 @@ export default function LoginPage() {
               <Image
                 src={logo}
                 alt="WBtools Logo"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain dark:brightness-0 dark:invert"
                 priority
               />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 tracking-tight text-center">
-              Welcome back to WBtools
+            <h2 className="text-3xl font-bold text-foreground tracking-tight text-center">
+              {t("welcome")}
             </h2>
           </div>
 
@@ -37,9 +55,9 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground/80"
                 >
-                  Email address
+                  {tc("emailAddress")}
                 </label>
                 <div className="mt-1">
                   <input
@@ -48,8 +66,8 @@ export default function LoginPage() {
                     type="email"
                     autoComplete="email"
                     required
-                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#0B1DFF] focus:border-[#0B1DFF] sm:text-sm transition duration-200"
-                    placeholder="Enter your email"
+                    className="appearance-none block w-full px-3 py-3 border border-border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-200"
+                    placeholder={tc("emailPlaceholder")}
                   />
                 </div>
               </div>
@@ -57,9 +75,9 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground/80"
                 >
-                  Password
+                  {t("password")}
                 </label>
                 <div className="mt-1">
                   <input
@@ -68,16 +86,16 @@ export default function LoginPage() {
                     type="password"
                     autoComplete="current-password"
                     required
-                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#0B1DFF] focus:border-[#0B1DFF] sm:text-sm transition duration-200"
+                    className="appearance-none block w-full px-3 py-3 border border-border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition duration-200"
                     placeholder="••••••••"
                   />
                 </div>
               </div>
             </div>
 
-            {state?.error && (
-              <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md border border-red-200">
-                {state.error}
+            {errorMessage && (
+              <div className="text-red-500 text-sm bg-red-500/10 p-3 rounded-md border border-red-500/20">
+                {errorMessage}
               </div>
             )}
 
@@ -85,29 +103,26 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#0B1DFF] hover:bg-[#000ECC] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0B1DFF] transition duration-200 transform hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-strong focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-200 transform hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isPending ? "Signing in..." : "Sign in"}
+                {isPending ? t("signingIn") : t("signIn")}
               </button>
             </div>
 
             <div className="text-center mt-4">
-              <span className="text-sm text-gray-600">
-                Don't have an account?{" "}
-              </span>
-              <a
-                href="#"
-                className="font-medium text-[#0B1DFF] hover:text-[#000ECC] text-sm"
+              <Link
+                href="/forgot-password"
+                className="font-medium text-primary hover:text-primary-strong text-sm"
               >
-                Contact Support
-              </a>
+                {t("forgotPassword")}
+              </Link>
             </div>
           </form>
         </div>
       </div>
 
       {/* Right Side - Image */}
-      <div className="hidden lg:block lg:w-1/2 relative bg-gray-100">
+      <div className="hidden lg:block lg:w-1/2 relative bg-muted">
         <Image
           src={material}
           alt="Login Background"

@@ -1,40 +1,35 @@
 import React, { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
 import { DataTable } from "@/components/data-table";
-import { columns, Customer } from "./columns";
-import { supabase } from "@/lib/supabaseClient";
+import { columns } from "./columns";
+import { getCustomers } from "@/lib/data/customers";
 
-async function getData(): Promise<Customer[]> {
-  const { data, error } = await supabase
-    .from("profiles_with_email")
-    .select("*");
-
-  if (error) {
-    console.error("Error fetching CUSTOMERS:", error);
-    return [];
-  }
-
-  // Map the database columns to the Product interface
-  // Assuming the DB has a 'name' column for the product name to match the 'product' field in the table
-  return (data || []).map((item: any) => ({
-    id: item.id,
-    username: item.username, // Allow nulls
-    email: item.email,
-    phone: item.phone,
-  }));
+interface CustomersPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-const CustomersPage = async () => {
-  const data = await getData();
+const CustomersPage = async ({ searchParams }: CustomersPageProps) => {
+  const params = await searchParams;
+  const t = await getTranslations("customers");
+  const page = typeof params.page === "string" ? parseInt(params.page) : 1;
+  const search = typeof params.search === "string" ? params.search : "";
+  const limit = 20;
+
+  const { data, count } = await getCustomers({ page, limit, search });
+  const pageCount = Math.ceil(count / limit);
 
   return (
-    <div className="flex flex-col h-full p-4 pl-16 lg:pl-4 w-full overflow-auto">
-      <Suspense fallback={<div>Loading...</div>}>
+    <div className="flex flex-col h-full p-4 ps-16 lg:ps-4 w-full overflow-auto">
+      <Suspense fallback={null}>
         <DataTable
           columns={columns}
           data={data}
           searchKey="username"
-          title="Customers"
-          description="View and manage customer details"
+          searchPlaceholder={t("searchPlaceholder")}
+          title={t("title")}
+          description={t("subtitle")}
+          pageCount={pageCount}
+          isServerSide={true}
         />
       </Suspense>
     </div>

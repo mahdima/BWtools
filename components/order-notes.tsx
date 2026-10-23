@@ -4,18 +4,25 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Send } from "lucide-react";
 import { addOrderNote } from "@/app/(dashboard)/order/actions";
+import { useRunWithToast } from "@/lib/use-toast-action";
+import { Can } from "@/components/admin-provider";
+import { useLocale, useTranslations } from "next-intl";
+import { formatDate } from "@/lib/i18n";
 
 interface OrderNotesProps {
-  orderId: string;
+  orderId: number;
   notes: {
     id: number;
     note: string;
-    created_at: string;
-    admins: { full_name: string } | null;
+    created_at: string | null;
+    admins: { full_name: string | null } | null;
   }[];
 }
 
 export function OrderNotes({ orderId, notes }: OrderNotesProps) {
+  const t = useTranslations("orders.notes");
+  const runToast = useRunWithToast();
+  const locale = useLocale();
   const [newNote, setNewNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -24,59 +31,60 @@ export function OrderNotes({ orderId, notes }: OrderNotesProps) {
     if (!newNote.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    try {
-      await addOrderNote(orderId, newNote.trim());
+    // Keep the text if it fails, so nothing typed is lost
+    if (await runToast(() => addOrderNote(orderId, newNote.trim()))) {
       setNewNote("");
-    } catch (error) {
-      console.error("Failed to add note:", error);
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-        <h2 className="font-semibold text-gray-900 flex items-center">
-          <MessageSquare className="h-5 w-5 mr-2 text-[#0B1DFF]" />
-          Internal Notes
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-border bg-muted/40">
+        <h2 className="font-semibold text-foreground flex items-center">
+          <MessageSquare className="h-5 w-5 me-2 text-primary" />
+          {t("title")}
         </h2>
       </div>
       <div className="p-6">
-        {/* Add Note Form */}
+        {/* Add Note Form (viewers only read notes) */}
+        <Can minRole="admin">
         <form onSubmit={handleSubmit} className="mb-4">
           <div className="flex gap-2">
             <input
               type="text"
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Add a note..."
-              className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:border-[#0B1DFF] focus:ring-1 focus:ring-[#0B1DFF] outline-none text-sm"
+              placeholder={t("placeholder")}
+              aria-label={t("placeholder")}
+              className="flex-1 px-4 py-2 rounded-lg border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm"
             />
             <Button
               type="submit"
               disabled={!newNote.trim() || isSubmitting}
-              className="bg-[#0B1DFF] hover:bg-blue-700"
+              className="bg-primary hover:bg-primary-strong"
+              aria-label={t("send")}
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-4 w-4 rtl:-scale-x-100" />
             </Button>
           </div>
         </form>
+        </Can>
 
         {/* Notes List */}
         <div className="space-y-3 max-h-64 overflow-y-auto">
           {notes.length === 0 ? (
-            <p className="text-sm text-gray-500 italic">No notes yet</p>
+            <p className="text-sm text-muted-foreground italic">{t("none")}</p>
           ) : (
             notes.map((note) => (
               <div
                 key={note.id}
-                className="p-3 rounded-lg bg-gray-50 border border-gray-100"
+                className="p-3 rounded-lg bg-muted/60 border border-border"
               >
-                <p className="text-sm text-gray-800">{note.note}</p>
-                <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-                  <span>{note.admins?.full_name || "Admin"}</span>
-                  <span>{new Date(note.created_at).toLocaleString()}</span>
+                <p className="text-sm text-foreground">{note.note}</p>
+                <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
+                  <span>{note.admins?.full_name || t("admin")}</span>
+                  <span>{note.created_at && formatDate(note.created_at, locale, true)}</span>
                 </div>
               </div>
             ))

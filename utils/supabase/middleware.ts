@@ -1,12 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
+import type { Database } from '@/types/supabase'
 import { NextResponse, type NextRequest } from 'next/server'
+import { findActiveAdmin } from '@/lib/auth'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -46,14 +48,25 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
+  // Pages that work without a session (sign in, password reset request, email links)
+  const isPublicPath =
+    request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/forgot-password') ||
+    request.nextUrl.pathname.startsWith('/auth')
+
+  if (!user && !isPublicPath) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Signed in is not enough: every protected request (pages, client navigations and
+  // server actions) also needs an active admin record.
+  if (user && !isPublicPath && !(await findActiveAdmin(user.id))) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.search = '?error=unauthorized'
     return NextResponse.redirect(url)
   }
 

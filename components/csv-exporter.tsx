@@ -1,44 +1,48 @@
 "use client";
 
+import { useTransition } from "react";
+import { Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import type { CsvExportResult } from "@/lib/csv";
+import { useTranslations } from "next-intl";
 
 interface CsvExporterProps {
-  data: any[];
-  filename?: string;
+  // A server action (bound to the current filters) that builds the whole file
+  action: () => Promise<CsvExportResult>;
 }
 
-export function CsvExporter({
-  data,
-  filename = "export.csv",
-}: CsvExporterProps) {
+// Saves CSV text as a file in the browser (also used for the import template).
+export function downloadCsv(csv: string, filename: string) {
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function CsvExporter({ action }: CsvExporterProps) {
+  const t = useTranslations("orders");
+  const [isPending, startTransition] = useTransition();
+
   const handleExport = () => {
-    if (!data || !data.length) return;
-
-    const headers = Object.keys(data[0]);
-    const csvContent = [
-      headers.join(","),
-      ...data.map((row) =>
-        headers
-          .map((header) => {
-            const value = row[header];
-            if (typeof value === "string" && value.includes(",")) {
-              return `"${value}"`; // Quote strings with commas
-            }
-            return value;
-          })
-          .join(",")
-      ),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    startTransition(async () => {
+      try {
+        const result = await action();
+        if (!result.success || result.csv === undefined) {
+          toast.error(result.message);
+          return;
+        }
+        downloadCsv(result.csv, result.filename ?? "export.csv");
+        toast.success(result.message);
+      } catch (error) {
+        console.error(error);
+        toast.error(t("exportFailed"));
+      }
+    });
   };
 
   return (
@@ -47,9 +51,14 @@ export function CsvExporter({
       size="sm"
       className="h-8 gap-1 bg-background"
       onClick={handleExport}
+      disabled={isPending}
     >
-      <Download className="h-3.5 w-3.5" />
-      Export CSV
+      {isPending ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <Download className="h-3.5 w-3.5" />
+      )}
+      {t("exportCsv")}
     </Button>
   );
 }

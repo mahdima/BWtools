@@ -10,6 +10,8 @@ import {
   getSortedRowModel,
   useReactTable,
   ColumnFiltersState,
+  OnChangeFn,
+  RowSelectionState,
   SortingState,
 } from "@tanstack/react-table";
 import {
@@ -30,6 +32,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "./ui/input";
+import { SelectCheckbox, TableSelectionContext } from "./table-selection";
+import { useTranslations } from "next-intl";
 import {
   Pagination,
   PaginationContent,
@@ -44,6 +48,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   searchKey?: string;
+  searchPlaceholder?: string;
   headerActions?: React.ReactNode;
   filterTabs?: {
     column: string;
@@ -54,12 +59,17 @@ interface DataTableProps<TData, TValue> {
   description?: string;
   pageCount?: number;
   isServerSide?: boolean;
+  // Bulk-action buttons (P7-03). When given, rows get checkboxes and these show in a bar
+  // above the table while rows are selected; they read the selection with
+  // useTableSelection(). Rows are identified by their `id`.
+  bulkActions?: React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
+  searchPlaceholder,
   headerActions,
   filterTabs,
   rowLinkPath,
@@ -67,17 +77,48 @@ export function DataTable<TData, TValue>({
   description,
   pageCount,
   isServerSide = false,
+  bulkActions,
 }: DataTableProps<TData, TValue>) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations("table");
 
   const page = searchParams.get("page");
   const initialPageIndex = page ? parseInt(page) - 1 : 0;
 
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+  // Server-side tables keep their filter tabs in the URL (the single source of truth),
+  // so a reload or the Back button keeps the selected filter.
+  const [localColumnFilters, setLocalColumnFilters] =
+    React.useState<ColumnFiltersState>([]);
+  const columnFilters: ColumnFiltersState =
+    isServerSide && filterTabs
+      ? filterTabs.flatMap((group) => {
+          const value = searchParams.get(group.column);
+          return value ? [{ id: group.column, value }] : [];
+        })
+      : localColumnFilters;
+
+  const onColumnFiltersChange: OnChangeFn<ColumnFiltersState> = (updater) => {
+    const next =
+      typeof updater === "function" ? updater(columnFilters) : updater;
+    if (!isServerSide || !filterTabs) {
+      setLocalColumnFilters(next);
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    filterTabs.forEach((group) => {
+      const active = next.find((f) => f.id === group.column);
+      if (active?.value) {
+        params.set(group.column, String(active.value));
+      } else {
+        params.delete(group.column);
+      }
+    });
+    params.delete("page"); // Back to the first page on filter change
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
     pageIndex: initialPageIndex,
@@ -111,12 +152,48 @@ export function DataTable<TData, TValue>({
     }
   }, [searchParams]);
 
+  // Selection is per list: new data (another page, a filter, or a refresh after a bulk
+  // action) starts with nothing selected
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [selectionData, setSelectionData] = React.useState(data);
+  if (selectionData !== data) {
+    setSelectionData(data);
+    setRowSelection({});
+  }
+
+  const selectColumn: ColumnDef<TData, TValue> = {
+    id: "select",
+    header: ({ table }) => (
+      <SelectCheckbox
+        label={t("selectAll")}
+        checked={table.getIsAllPageRowsSelected()}
+        indeterminate={table.getIsSomePageRowsSelected()}
+        onChange={(checked) => table.toggleAllPageRowsSelected(checked)}
+      />
+    ),
+    cell: ({ row }) => (
+      <SelectCheckbox
+        label={t("selectRow", { id: row.id })}
+        checked={row.getIsSelected()}
+        onChange={(checked) => row.toggleSelected(checked)}
+      />
+    ),
+    enableSorting: false,
+  };
+  const allColumns = bulkActions !== undefined ? [selectColumn, ...columns] : columns;
+
   const table = useReactTable({
     data,
-    columns,
+    columns: allColumns,
+    getRowId: (row, index) => {
+      const id = (row as { id?: unknown }).id;
+      return id === undefined || id === null ? String(index) : String(id);
+    },
+    enableRowSelection: bulkActions !== undefined,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onColumnFiltersChange: setColumnFilters,
+    onColumnFiltersChange,
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
@@ -129,8 +206,11 @@ export function DataTable<TData, TValue>({
       columnFilters,
       sorting,
       pagination,
+      rowSelection,
     },
   });
+
+  const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
 
   // Debounce search update
   const [searchValue, setSearchValue] = React.useState(
@@ -157,32 +237,6 @@ export function DataTable<TData, TValue>({
     return () => clearTimeout(timeout);
   }, [searchValue, isServerSide, pathname, router, searchParams]);
 
-  // Sync column filters to URL (for server-side)
-  React.useEffect(() => {
-    if (!isServerSide || !filterTabs) return;
-
-    const params = new URLSearchParams(searchParams.toString());
-    let hasChanges = false;
-
-    filterTabs.forEach((group) => {
-      const activeFilter = columnFilters.find((f) => f.id === group.column);
-      const currentParam = params.get(group.column);
-
-      if (activeFilter && activeFilter.value !== currentParam) {
-        params.set(group.column, activeFilter.value as string);
-        hasChanges = true;
-      } else if (!activeFilter && currentParam) {
-        params.delete(group.column);
-        hasChanges = true;
-      }
-    });
-
-    if (hasChanges) {
-      params.set("page", "1"); // Reset to page 1 on filter change
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  }, [columnFilters, isServerSide, filterTabs, pathname, router, searchParams]);
-
   return (
     <div className="flex flex-col h-full space-y-2">
       {/* Filters & Actions */}
@@ -190,14 +244,14 @@ export function DataTable<TData, TValue>({
         {/* Title & Filter Tabs (Left Side) */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           {(title || description) && (
-            <div className="lg:mr-8">
+            <div className="lg:me-8">
               {title && (
-                <h1 className="text-2xl font-bold text-gray-900 leading-none">
+                <h1 className="text-2xl font-bold text-foreground leading-none">
                   {title}
                 </h1>
               )}
               {description && (
-                <p className="text-sm text-gray-500 mt-1">{description}</p>
+                <p className="text-sm text-muted-foreground mt-1">{description}</p>
               )}
             </div>
           )}
@@ -217,7 +271,7 @@ export function DataTable<TData, TValue>({
                       variant={isSelected ? "default" : "outline"}
                       className={`h-8 border-dashed ${
                         isSelected
-                          ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          ? "bg-primary hover:bg-primary-strong text-white"
                           : "text-muted-foreground"
                       }`}
                       onClick={() => {
@@ -245,7 +299,7 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center gap-2">
           {searchKey && (
             <Input
-              placeholder="Filter..."
+              placeholder={searchPlaceholder ?? t("filterPlaceholder")}
               value={
                 isServerSide
                   ? searchValue
@@ -267,6 +321,23 @@ export function DataTable<TData, TValue>({
           {headerActions}
         </div>
       </div>
+
+      {/* Bulk actions for the selected rows */}
+      {bulkActions !== undefined && selectedIds.length > 0 && (
+        <TableSelectionContext.Provider value={{ selectedIds, clear: () => setRowSelection({}) }}>
+          <div
+            role="region"
+            aria-label={t("bulkActions")}
+            className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm"
+          >
+            <span className="font-medium text-foreground">{t("selected", { count: selectedIds.length })}</span>
+            {bulkActions}
+            <Button variant="ghost" size="sm" className="ms-auto h-8" onClick={() => setRowSelection({})}>
+              {t("clearSelection")}
+            </Button>
+          </div>
+        </TableSelectionContext.Provider>
+      )}
 
       {/* Table */}
       <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border relative glass-card">
@@ -321,10 +392,10 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={allColumns.length}
                   className="h-18 text-center"
                 >
-                  No results.
+                  {t("noResults")}
                 </TableCell>
               </TableRow>
             )}
@@ -342,8 +413,8 @@ export function DataTable<TData, TValue>({
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to first page</span>
-                <ChevronsLeft className="h-4 w-4" />
+                <span className="sr-only">{t("firstPage")}</span>
+                <ChevronsLeft className="h-4 w-4 rtl:rotate-180" />
               </Button>
             </PaginationItem>
             <PaginationItem>
@@ -353,15 +424,17 @@ export function DataTable<TData, TValue>({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to previous page</span>
-                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">{t("previousPage")}</span>
+                <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
               </Button>
             </PaginationItem>
 
             <PaginationItem>
               <div className="flex items-center justify-center text-sm font-medium w-[100px]">
-                Page {table.getState().pagination.pageIndex + 1} of{" "}
-                {table.getPageCount()}
+                {t("pageOf", {
+                  page: table.getState().pagination.pageIndex + 1,
+                  count: table.getPageCount(),
+                })}
               </div>
             </PaginationItem>
 
@@ -372,8 +445,8 @@ export function DataTable<TData, TValue>({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to next page</span>
-                <ChevronRight className="h-4 w-4" />
+                <span className="sr-only">{t("nextPage")}</span>
+                <ChevronRight className="h-4 w-4 rtl:rotate-180" />
               </Button>
             </PaginationItem>
             <PaginationItem>
@@ -383,8 +456,8 @@ export function DataTable<TData, TValue>({
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to last page</span>
-                <ChevronsRight className="h-4 w-4" />
+                <span className="sr-only">{t("lastPage")}</span>
+                <ChevronsRight className="h-4 w-4 rtl:rotate-180" />
               </Button>
             </PaginationItem>
           </PaginationContent>

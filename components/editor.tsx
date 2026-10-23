@@ -11,6 +11,7 @@ import {
   Underline as UnderlineIcon,
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
+import { useTranslations } from "next-intl";
 
 interface EditorProps {
   value: string;
@@ -18,6 +19,7 @@ interface EditorProps {
 }
 
 const Editor = ({ value, onChange }: EditorProps) => {
+  const t = useTranslations("editor");
   const editor = useEditor({
     extensions: [StarterKit, Underline],
     content: value,
@@ -42,6 +44,7 @@ const Editor = ({ value, onChange }: EditorProps) => {
       <div className="flex items-center gap-1 rounded-md border bg-muted/50 p-1">
         <Toggle
           size="sm"
+          aria-label={t("bold")}
           pressed={editor.isActive("bold")}
           onPressedChange={() => editor.chain().focus().toggleBold().run()}
         >
@@ -49,6 +52,7 @@ const Editor = ({ value, onChange }: EditorProps) => {
         </Toggle>
         <Toggle
           size="sm"
+          aria-label={t("italic")}
           pressed={editor.isActive("italic")}
           onPressedChange={() => editor.chain().focus().toggleItalic().run()}
         >
@@ -56,6 +60,7 @@ const Editor = ({ value, onChange }: EditorProps) => {
         </Toggle>
         <Toggle
           size="sm"
+          aria-label={t("underline")}
           pressed={editor.isActive("underline")}
           onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
         >
@@ -64,6 +69,7 @@ const Editor = ({ value, onChange }: EditorProps) => {
         <div className="w-px h-6 bg-border mx-1" />
         <Toggle
           size="sm"
+          aria-label={t("bulletList")}
           pressed={editor.isActive("bulletList")}
           onPressedChange={() =>
             editor.chain().focus().toggleBulletList().run()
@@ -73,6 +79,7 @@ const Editor = ({ value, onChange }: EditorProps) => {
         </Toggle>
         <Toggle
           size="sm"
+          aria-label={t("numberedList")}
           pressed={editor.isActive("orderedList")}
           onPressedChange={() =>
             editor.chain().focus().toggleOrderedList().run()

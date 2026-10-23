@@ -1,10 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { Pencil, Loader2, X } from "lucide-react";
-import { useFormStatus } from "react-dom";
+import { useState } from "react";
+import { Pencil, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { updateCustomer } from "@/app/(dashboard)/customers/actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useFormAction } from "@/lib/use-form-action";
+import { useTranslations } from "next-intl";
 
 interface CustomerFormProps {
   customer: {
@@ -16,136 +24,119 @@ interface CustomerFormProps {
   trigger?: React.ReactNode;
 }
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      disabled={pending}
-      type="submit"
-      className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-    >
-      {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-      Update Customer
-    </button>
-  );
-}
+const inputClass =
+  "w-full h-10 px-3 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-all text-sm";
 
 export function CustomerForm({ customer, trigger }: CustomerFormProps) {
+  const t = useTranslations("customers.form");
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  async function clientAction(formData: FormData) {
-    setMessage(null);
-    const result = await updateCustomer(formData);
-
-    if (result.success) {
-      setIsOpen(false);
-    } else {
-      setMessage(result.message);
-    }
-  }
 
   return (
-    <>
-      <div onClick={() => setIsOpen(true)}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
         {trigger || (
-          <button className="text-gray-500 hover:text-blue-600">
+          <button className="text-muted-foreground hover:text-primary" aria-label={t("title")}>
             <Pencil className="h-4 w-4" />
           </button>
         )}
-      </div>
+      </DialogTrigger>
+      {/* Radix mounts the content on open, so each open starts without an old error */}
+      <DialogContent className="sm:max-w-md bg-card" aria-describedby={undefined}>
+        <CustomerFormBody customer={customer} onDone={() => setIsOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-      {isOpen &&
-        mounted &&
-        createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
-            <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                <h3 className="font-semibold text-lg text-gray-900">
-                  Edit Customer
-                </h3>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsOpen(false);
-                  }}
-                  className="p-1 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-                  type="button"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+function CustomerFormBody({
+  customer,
+  onDone,
+}: {
+  customer: CustomerFormProps["customer"];
+  onDone: () => void;
+}) {
+  const t = useTranslations("customers.form");
+  const tc = useTranslations("common");
+  const { state, isPending, onSubmit } = useFormAction(async (_prev, formData) => {
+    const result = await updateCustomer(formData);
+    if (result.success) {
+      onDone();
+      toast.success(result.message);
+    }
+    return result;
+  });
 
-              <form action={clientAction} className="p-6 space-y-4">
-                <input type="hidden" name="id" value={customer.id} />
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{t("title")}</DialogTitle>
+      </DialogHeader>
 
-                {message && (
-                  <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
-                    {message}
-                  </div>
-                )}
+      <form onSubmit={onSubmit} className="space-y-4">
+        <input type="hidden" name="id" value={customer.id} />
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Email (Read-only)
-                  </label>
-                  <input
-                    disabled
-                    defaultValue={customer.email}
-                    className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 text-sm"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Username
-                  </label>
-                  <input
-                    name="username"
-                    defaultValue={customer.username || ""}
-                    className="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-sm"
-                    placeholder="Username"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Phone
-                  </label>
-                  <input
-                    name="phone"
-                    defaultValue={customer.phone || ""}
-                    className="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-sm"
-                    placeholder="+213..."
-                  />
-                </div>
-
-                <div className="pt-4 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsOpen(false);
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <SubmitButton />
-                </div>
-              </form>
-            </div>
-          </div>,
-          document.body
+        {state && !state.success && (
+          <div role="alert" className="p-3 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 text-sm">
+            {state.message}
+          </div>
         )}
+
+        <div className="space-y-2">
+          <label htmlFor="customer-email" className="text-sm font-medium text-foreground/80">
+            {t("emailReadOnly")}
+          </label>
+          <input
+            id="customer-email"
+            disabled
+            defaultValue={customer.email}
+            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/60 text-muted-foreground text-sm"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="customer-username" className="text-sm font-medium text-foreground/80">
+            {t("username")}
+          </label>
+          <input
+            id="customer-username"
+            name="username"
+            defaultValue={customer.username || ""}
+            className={inputClass}
+            placeholder={t("usernamePlaceholder")}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="customer-phone" className="text-sm font-medium text-foreground/80">
+            {t("phone")}
+          </label>
+          <input
+            id="customer-phone"
+            name="phone"
+            defaultValue={customer.phone || ""}
+            className={inputClass}
+            placeholder="+213..."
+          />
+        </div>
+
+        <div className="pt-4 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onDone}
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+          >
+            {tc("cancel")}
+          </button>
+          <button
+            disabled={isPending}
+            type="submit"
+            className="bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-primary-strong disabled:opacity-50 flex items-center gap-2"
+          >
+            {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            {t("update")}
+          </button>
+        </div>
+      </form>
     </>
   );
 }

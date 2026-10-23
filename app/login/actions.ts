@@ -3,34 +3,36 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { findActiveAdmin } from '@/lib/auth'
+import { getTranslations } from 'next-intl/server'
 
 export async function login(prevState: any, formData: FormData) {
-  console.log("Login action started");
-  console.log("URL present:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log("Key present:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
+  const t = await getTranslations('actions')
   try {
       const supabase = await createClient()
-      
+
       const email = formData.get('email') as string
       const password = formData.get('password') as string
 
-      console.log("Attempting sign in for:", email);
-
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
-        console.error("Sign in error:", error.message);
-        return { error: error.message }
+        // Supabase's own wording otherwise (rate limits, unconfirmed email, ...)
+        return { error: error.code === 'invalid_credentials' ? t('auth.invalidCredentials') : error.message }
       }
-      
-      console.log("Sign in successful");
+
+      // A valid Supabase account is not enough: only active admins may use the dashboard.
+      const admin = await findActiveAdmin(data.user.id)
+      if (!admin) {
+        await supabase.auth.signOut()
+        return { error: (await getTranslations('auth'))('noAccess') }
+      }
   } catch (err) {
       console.error("Unexpected error in login action:", err);
-      return { error: "An unexpected error occurred" };
+      return { error: t('common.unexpected') };
   }
 
   revalidatePath('/', 'layout')
