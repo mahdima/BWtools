@@ -20,6 +20,10 @@ import { OrderTimeline } from "@/components/order-timeline";
 import { OrderNotes } from "@/components/order-notes";
 import { OrderStatusActions } from "@/components/order-status-actions";
 import { Can } from "@/components/admin-provider";
+import { getLocale, getTranslations } from "next-intl/server";
+import { formatDate } from "@/lib/i18n";
+import { formatPrice } from "@/lib/money";
+import { isOrderStatus } from "@/lib/orders";
 
 interface OrderDetailsPageProps {
   params: Promise<{ id: string }>;
@@ -30,10 +34,14 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
   const orderId = Number(id);
   if (!Number.isInteger(orderId)) notFound();
 
-  const [order, timeline, notes] = await Promise.all([
+  const [order, timeline, notes, t, tOrders, statuses, locale] = await Promise.all([
     getOrderWithDetails(orderId),
     getOrderTimeline(orderId),
     getOrderNotes(orderId),
+    getTranslations("orders.detail"),
+    getTranslations("orders"),
+    getTranslations("orderStatus"),
+    getLocale(),
   ]);
 
   if (!order) notFound();
@@ -61,16 +69,16 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
           href="/order"
           className="inline-flex items-center text-sm text-gray-500 hover:text-primary mb-4 transition-colors"
         >
-          <ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" /> Back to Orders
+          <ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" /> {t("back")}
         </Link>
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Order #{order.id}
+              {t("title", { id: order.id })}
             </h1>
             <div className="flex items-center text-gray-500 text-sm">
               <Calendar className="h-4 w-4 me-2" />
-              {new Date(order.createdAt).toLocaleString()}
+              {formatDate(order.createdAt, locale, true)}
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -80,12 +88,12 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
             >
               <CreditCard className="h-4 w-4" />
-              Print Invoice
+              {tOrders("printInvoice")}
             </Link>
             <span
               className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${currentStatusColor}`}
             >
-              {order.status}
+              {isOrderStatus(order.status) ? statuses(order.status) : order.status}
             </span>
           </div>
         </div>
@@ -98,10 +106,10 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
               <h2 className="font-semibold text-gray-900 flex items-center">
                 <ShoppingBag className="h-5 w-5 me-2 text-primary" />
-                Order Items
+                {t("items")}
               </h2>
               <span className="text-sm text-gray-500">
-                {items.length} items
+                {t("itemsCount", { count: items.length })}
               </span>
             </div>
             <div className="p-6">
@@ -128,12 +136,12 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                           {item.productName}
                         </p>
                         <p className="text-sm text-gray-500">
-                          Qty: {item.quantity} × {item.unitPrice.toLocaleString()} DZD
+                          {t("qty", { quantity: item.quantity, price: formatPrice(item.unitPrice) })}
                         </p>
                       </div>
                     </div>
                     <div className="font-semibold text-gray-900">
-                      {item.lineTotal.toLocaleString()} DZD
+                      {formatPrice(item.lineTotal)}
                     </div>
                   </li>
                 ))}
@@ -142,13 +150,15 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                 <div className="text-end">
                   {order.itemsTotal !== order.total && (
                     <p className="text-sm text-gray-500 mb-1">
-                      Items {order.itemsTotal.toLocaleString()} DZD + other
-                      charges {(order.total - order.itemsTotal).toLocaleString()} DZD
+                      {t("itemsAndCharges", {
+                        items: formatPrice(order.itemsTotal),
+                        charges: formatPrice(order.total - order.itemsTotal),
+                      })}
                     </p>
                   )}
-                  <p className="text-sm text-gray-500 mb-1">Total Amount</p>
+                  <p className="text-sm text-gray-500 mb-1">{t("totalAmount")}</p>
                   <p className="text-2xl font-bold text-primary">
-                    {order.total.toLocaleString()} DZD
+                    {formatPrice(order.total)}
                   </p>
                 </div>
               </div>
@@ -169,7 +179,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
               <h2 className="font-semibold text-gray-900 flex items-center">
                 <User className="h-5 w-5 me-2 text-primary" />
-                Customer Details
+                {t("customerDetails")}
               </h2>
             </div>
             <div className="p-6 space-y-4">
@@ -177,15 +187,15 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                 <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden">
                   <Image
                     src={man}
-                    alt="User"
+                    alt=""
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div>
                   <p className="font-bold text-gray-900">
-                    {customer?.name || "Guest User"}
+                    {customer?.name || t("guest")}
                   </p>
-                  <p className="text-xs text-gray-500">Customer</p>
+                  <p className="text-xs text-gray-500">{t("customer")}</p>
                 </div>
               </div>
 
@@ -195,7 +205,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                     <Phone className="h-4 w-4 text-gray-400 mt-1" />
                     <div className="flex-1">
                       <p className="text-xs text-gray-500 uppercase">
-                        Phone Number
+                        {t("phoneNumber")}
                       </p>
                       <a
                         href={`tel:${customer.phone}`}
@@ -210,9 +220,9 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                 <div className="flex items-start gap-3">
                   <Mail className="h-4 w-4 text-gray-400 mt-1" />
                   <div className="flex-1">
-                    <p className="text-xs text-gray-500 uppercase">Email</p>
+                    <p className="text-xs text-gray-500 uppercase">{t("email")}</p>
                     <p className="text-sm text-gray-700 break-all">
-                      {customer?.email || "No email provided"}
+                      {customer?.email || t("noEmail")}
                     </p>
                   </div>
                 </div>
@@ -221,7 +231,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                   <MapPin className="h-4 w-4 text-gray-400 mt-1" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 uppercase">
-                      Shipping Address
+                      {t("shippingAddress")}
                     </p>
                     {shippingAddress ? (
                       <>
@@ -237,12 +247,12 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                             href={`tel:${shippingAddress.phone}`}
                             className="text-sm text-blue-600 font-medium hover:underline block mt-1"
                           >
-                            Delivery phone: {shippingAddress.phone}
+                            {t("deliveryPhone", { phone: shippingAddress.phone })}
                           </a>
                         )}
                       </>
                     ) : (
-                      <p className="text-sm text-gray-500">No address on this order</p>
+                      <p className="text-sm text-gray-500">{t("noAddress")}</p>
                     )}
                   </div>
                 </div>
@@ -254,7 +264,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
                     href={`tel:${callPhone}`}
                     className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors"
                   >
-                    <Phone className="h-4 w-4" /> Call Customer
+                    <Phone className="h-4 w-4" /> {t("callCustomer")}
                   </a>
                 </div>
               )}
@@ -265,7 +275,7 @@ const OrderDetailsPage = async ({ params }: OrderDetailsPageProps) => {
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h2 className="font-semibold text-gray-900 mb-4 flex items-center">
                 <Truck className="h-5 w-5 me-2 text-primary" />
-                Update Status
+                {t("updateStatus")}
               </h2>
               <OrderStatusActions orderId={orderId} currentStatus={order.status} />
             </div>

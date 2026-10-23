@@ -5,7 +5,9 @@
     "confirm": "Confirmer",
     "goToDashboard": "Aller au tableau de bord",
     "emailAddress": "Adresse e-mail",
-    "emailPlaceholder": "Saisissez votre e-mail"
+    "emailPlaceholder": "Saisissez votre e-mail",
+    "loading": "Chargement...",
+    "close": "Fermer"
   },
   "nav": {
     "dashboard": "Tableau de bord",
@@ -286,5 +288,256 @@
     "unread": "Notifications ({count} non lues)",
     "markAllRead": "Tout marquer comme lu",
     "none": "Aucune notification pour le moment"
+  },
+  "archive": {
+    "archived": "Archivés",
+    "backToActive": "Retour aux actifs",
+    "restore": "Restaurer",
+    "restoreName": "Restaurer {name}",
+    "restoring": "Restauration..."
+  },
+  "image": {
+    "selectProductImage": "Choisir l'image du produit",
+    "selectCategoryImage": "Choisir l'image de la catégorie",
+    "change": "Changer l'image",
+    "remove": "Supprimer",
+    "preview": "Aperçu"
+  },
+  "editor": {
+    "bold": "Gras",
+    "italic": "Italique",
+    "underline": "Souligné",
+    "bulletList": "Liste à puces",
+    "numberedList": "Liste numérotée"
+  },
+  "products": {
+    "title": "Produits",
+    "archivedTitle": "Produits archivés",
+    "subtitle": "Gérez votre catalogue de produits",
+    "archivedSubtitle": "Masqués du catalogue, conservés pour les commandes passées",
+    "lowStockOnly": "Stock faible uniquement",
+    "showAll": "Afficher tous les produits",
+    "addProduct": "Ajouter un produit",
+    "importLabel": "Importer",
+    "import": {
+      "title": "Importer des produits",
+      "back": "Produits",
+      "intro1": "Envoyez un fichier CSV (séparé par des virgules ou des points-virgules, comme l'enregistre Excel) dont la première ligne nomme les colonnes : name, price, category et brand sont obligatoires ; quantity et description sont facultatives. Les en-têtes français (nom, prix, stock, catégorie, marque) fonctionnent aussi.",
+      "intro2": "Indiquez une catégorie ou une marque par son nom ou son identifiant ; elle doit déjà exister. Les produits dont le nom existe déjà dans le catalogue sont ignorés. {max} lignes au maximum par fichier. Ajoutez les images ensuite en modifiant chaque produit.",
+      "chooseFile": "Choisir un fichier CSV",
+      "chooseAnother": "Choisir un autre fichier",
+      "downloadTemplate": "Télécharger le modèle",
+      "tooLarge": "Le fichier est trop volumineux (1 Mo au maximum).",
+      "checkFailed": "Le fichier n'a pas pu être vérifié. Veuillez réessayer.",
+      "preview": "Aperçu",
+      "skippedHint": "Les lignes comportant des problèmes sont ignorées ; corrigez-les et importez-les plus tard.",
+      "importButton": "Importer {count, plural, one {# produit} other {# produits}}",
+      "row": "Ligne",
+      "name": "Nom",
+      "category": "Catégorie",
+      "brand": "Marque",
+      "price": "Prix",
+      "stock": "Stock",
+      "status": "Statut",
+      "ready": "Prêt",
+      "exampleCategory": "Nom de la catégorie",
+      "exampleBrand": "Nom de la marque"
+    },
+    "editTitle": "Modifier le produit",
+    "addTitle": "Nouveau produit",
+    "columns": {
+      "number": "N°",
+      "id": "ID produit",
+      "product": "Produit",
+      "category": "Catégorie",
+      "brand": "Marque",
+      "price": "Prix",
+      "stock": "Stock",
+      "action": "Action"
+    },
+    "outOfStock": "Rupture de stock",
+    "inStock": "{count} en stock",
+    "edit": "Modifier {name}",
+    "delete": "Supprimer {name}",
+    "deleteTitle": "Supprimer « {name} » ?",
+    "deleteText": "Le produit sera définitivement retiré du catalogue. Un produit utilisé par des commandes ou des favoris est archivé à la place et peut être restauré depuis Archivés.",
+    "deleteConfirm": "Supprimer",
+    "bulkDeleteTitle": "Supprimer {count, plural, one {# produit} other {# produits}} ?",
+    "bulkDeleteText": "Les produits qu'aucune commande ni aucun favori n'utilise sont définitivement supprimés. Les autres sont archivés et peuvent être restaurés depuis Archivés.",
+    "bulkRestoreTitle": "Restaurer {count, plural, one {# produit} other {# produits}} ?",
+    "bulkRestoreText": "Ils reviennent dans le catalogue et dans les listes de choix des produits.",
+    "form": {
+      "name": "Nom du produit",
+      "namePlaceholder": "Saisissez le nom du produit",
+      "category": "Catégorie",
+      "selectCategory": "Choisissez une catégorie",
+      "price": "Prix",
+      "quantity": "Quantité",
+      "brand": "Marque",
+      "selectBrand": "Choisissez une marque",
+      "description": "Description",
+      "image": "Image du produit",
+      "update": "Mettre à jour le produit",
+      "save": "Enregistrer le produit"
+    }
+  },
+  "brands": {
+    "title": "Marques",
+    "archivedTitle": "Marques archivées",
+    "subtitle": "Gérez les marques des produits",
+    "archivedSubtitle": "Utilisées uniquement par des produits archivés",
+    "addBrand": "Ajouter une marque",
+    "editTitle": "Modifier la marque",
+    "addTitle": "Nouvelle marque",
+    "columns": {
+      "number": "N°",
+      "id": "ID marque",
+      "name": "Nom de la marque",
+      "action": "Action"
+    },
+    "edit": "Modifier {name}",
+    "delete": "Supprimer {name}",
+    "deleteTitle": "Supprimer la marque « {name} » ?",
+    "deleteText": "La marque sera définitivement supprimée. Une marque qui a encore des produits ne peut pas être supprimée ; une marque utilisée uniquement par des produits archivés est archivée à la place.",
+    "deleteConfirm": "Supprimer",
+    "form": {
+      "name": "Nom de la marque",
+      "namePlaceholder": "Saisissez le nom de la marque",
+      "update": "Mettre à jour la marque",
+      "save": "Enregistrer la marque"
+    }
+  },
+  "categories": {
+    "title": "Catégories",
+    "archivedTitle": "Catégories archivées",
+    "subtitle": "Gérez les catégories de produits",
+    "archivedSubtitle": "Utilisées uniquement par des produits archivés",
+    "addCategory": "Ajouter une catégorie",
+    "editTitle": "Modifier la catégorie",
+    "addTitle": "Nouvelle catégorie",
+    "columns": {
+      "id": "ID",
+      "image": "Image",
+      "category": "Catégorie",
+      "action": "Action"
+    },
+    "edit": "Modifier {name}",
+    "delete": "Supprimer {name}",
+    "deleteTitle": "Supprimer la catégorie « {name} » ?",
+    "deleteText": "La catégorie sera définitivement supprimée. Une catégorie qui a encore des produits ne peut pas être supprimée ; une catégorie utilisée uniquement par des produits archivés est archivée à la place.",
+    "deleteConfirm": "Supprimer",
+    "form": {
+      "name": "Nom de la catégorie",
+      "namePlaceholder": "ex. : Outillage",
+      "image": "Image",
+      "update": "Mettre à jour la catégorie",
+      "add": "Ajouter la catégorie"
+    }
+  },
+  "orders": {
+    "title": "Commandes",
+    "subtitle": "Gérez et suivez les commandes des clients",
+    "searchPlaceholder": "N° de commande, client, e-mail ou téléphone",
+    "all": "Toutes",
+    "columns": {
+      "id": "ID",
+      "total": "Total",
+      "status": "Statut",
+      "createdAt": "Créée le"
+    },
+    "openMenu": "Ouvrir le menu",
+    "actions": "Actions",
+    "copyId": "Copier le n° de commande",
+    "printInvoice": "Imprimer la facture",
+    "fromDate": "Date de début",
+    "toDate": "Date de fin",
+    "clearDates": "Effacer les dates",
+    "exportCsv": "Exporter en CSV",
+    "exportFailed": "L'export a échoué. Veuillez réessayer.",
+    "bulk": {
+      "setStatus": "Changer le statut",
+      "choose": "Choisir…",
+      "apply": "Appliquer",
+      "title": "Passer {count, plural, one {# commande} other {# commandes}} au statut « {status} » ?",
+      "text": "L'historique de chaque commande enregistre le changement et son auteur.",
+      "confirm": "Changer le statut"
+    },
+    "detail": {
+      "back": "Retour aux commandes",
+      "title": "Commande n° {id}",
+      "items": "Articles de la commande",
+      "itemsCount": "{count, plural, one {# article} other {# articles}}",
+      "qty": "Qté : {quantity} × {price}",
+      "itemsAndCharges": "Articles {items} + autres frais {charges}",
+      "totalAmount": "Montant total",
+      "customerDetails": "Informations client",
+      "guest": "Client invité",
+      "customer": "Client",
+      "phoneNumber": "Téléphone",
+      "email": "E-mail",
+      "noEmail": "Aucun e-mail renseigné",
+      "shippingAddress": "Adresse de livraison",
+      "deliveryPhone": "Téléphone de livraison : {phone}",
+      "noAddress": "Aucune adresse pour cette commande",
+      "callCustomer": "Appeler le client",
+      "updateStatus": "Changer le statut"
+    },
+    "notes": {
+      "title": "Notes internes",
+      "placeholder": "Ajouter une note...",
+      "send": "Ajouter la note",
+      "none": "Aucune note pour le moment",
+      "admin": "Administrateur"
+    },
+    "timeline": {
+      "title": "Historique des statuts",
+      "none": "Aucun changement de statut enregistré",
+      "system": "Système"
+    },
+    "statusActions": {
+      "mark": "Marquer comme « {status} »",
+      "cancelTitle": "Annuler la commande n° {id} ?",
+      "cancelText": "La commande sera marquée comme annulée et exclue du chiffre d'affaires. Vous pourrez modifier le statut plus tard.",
+      "cancelConfirm": "Annuler la commande"
+    }
+  },
+  "customers": {
+    "title": "Clients",
+    "subtitle": "Consultez et gérez les informations des clients",
+    "searchPlaceholder": "Nom d'utilisateur, e-mail ou téléphone",
+    "columns": {
+      "username": "Nom d'utilisateur",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "action": "Action"
+    },
+    "viewCustomer": "Voir le client",
+    "edit": "Modifier {name}",
+    "editFallback": "le client",
+    "form": {
+      "title": "Modifier le client",
+      "emailReadOnly": "E-mail (lecture seule)",
+      "username": "Nom d'utilisateur",
+      "usernamePlaceholder": "Nom d'utilisateur",
+      "phone": "Téléphone",
+      "update": "Mettre à jour le client"
+    },
+    "detail": {
+      "back": "Retour aux clients",
+      "fallbackTitle": "Client",
+      "orders": "Commandes",
+      "totalSpent": "Total dépensé",
+      "lastOrder": "Dernière commande",
+      "noOrders": "Aucune commande pour le moment.",
+      "order": "Commande",
+      "date": "Date",
+      "status": "Statut",
+      "total": "Total",
+      "contact": "Contact",
+      "noEmail": "Aucun e-mail",
+      "addresses": "Adresses",
+      "noAddresses": "Aucune adresse enregistrée.",
+      "default": "Par défaut"
+    }
   }
 }

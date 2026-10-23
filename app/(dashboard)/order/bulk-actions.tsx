@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useTableSelection } from "@/components/table-selection";
-import { countLabel } from "@/lib/bulk";
+import { useTranslations } from "next-intl";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/orders";
 import { updateOrdersStatus } from "./actions";
 
@@ -13,12 +13,13 @@ import { updateOrdersStatus } from "./actions";
 export function OrderBulkActions() {
   const { selectedIds } = useTableSelection();
   const [status, setStatus] = useState<OrderStatus | "">("");
-  const orders = countLabel(selectedIds.length, "order");
+  const t = useTranslations("orders.bulk");
+  const statuses = useTranslations("orderStatus");
 
   return (
     <div className="flex items-center gap-2">
       <label htmlFor="bulk-status" className="text-gray-600">
-        Set status
+        {t("setStatus")}
       </label>
       <select
         id="bulk-status"
@@ -26,22 +27,22 @@ export function OrderBulkActions() {
         onChange={(event) => setStatus(event.target.value as OrderStatus | "")}
         className="h-8 rounded-md border border-gray-200 bg-white px-2 text-sm"
       >
-        <option value="">Choose…</option>
+        <option value="">{t("choose")}</option>
         {ORDER_STATUSES.map((value) => (
           <option key={value} value={value}>
-            {value.charAt(0).toUpperCase() + value.slice(1)}
+            {statuses(value)}
           </option>
         ))}
       </select>
       <ConfirmDialog
-        title={`Mark ${orders} as ${status}?`}
-        description="Each order's status history records the change and who made it."
-        confirmLabel="Change status"
+        title={t("title", { count: selectedIds.length, status: status ? statuses(status) : "" })}
+        description={t("text")}
+        confirmLabel={t("confirm")}
         destructive={status === "Cancelled"}
         action={() => updateOrdersStatus(selectedIds.map(Number), status)}
         trigger={
           <Button size="sm" className="h-8 bg-primary text-white hover:bg-primary-strong" disabled={!status}>
-            Apply
+            {t("apply")}
           </Button>
         }
       />

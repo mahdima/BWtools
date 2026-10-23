@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { Trash2, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface ProductImageUploadProps {
   defaultValue?: string | null;
@@ -14,9 +15,10 @@ interface ProductImageUploadProps {
 export const ProductImageUpload = ({
   defaultValue,
   name = "productImage",
-  label = "Select Product Image",
+  label,
   previewClassName = "h-[300px]",
 }: ProductImageUploadProps) => {
+  const t = useTranslations("image");
   const [preview, setPreview] = useState<string | null>(defaultValue || null);
   const [existingUrl, setExistingUrl] = useState<string | null>(
     defaultValue || null
@@ -61,7 +63,7 @@ export const ProductImageUpload = ({
         {preview ? (
           <img
             src={preview}
-            alt="Preview"
+            alt={t("preview")}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -70,7 +72,7 @@ export const ProductImageUpload = ({
             onClick={handleTriggerClick}
           >
             <Plus className="h-10 w-10 mb-2" />
-            <span className="text-sm font-medium">{label}</span>
+            <span className="text-sm font-medium">{label ?? t("selectProductImage")}</span>
           </div>
         )}
 
@@ -98,7 +100,7 @@ export const ProductImageUpload = ({
               onClick={handleTriggerClick}
               className="flex items-center gap-2 px-4 py-2 bg-background/80 backdrop-blur-sm border border-border rounded-md text-sm font-medium text-foreground hover:bg-accent transition-colors shadow-sm"
             >
-              Change Image
+              {t("change")}
             </button>
             <button
               type="button"
@@ -106,7 +108,7 @@ export const ProductImageUpload = ({
               className="flex items-center gap-2 px-4 py-2 bg-destructive/10 border border-destructive/20 rounded-md text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors shadow-sm"
             >
               <Trash2 className="h-4 w-4" />
-              Remove
+              {t("remove")}
             </button>
           </>
         )}

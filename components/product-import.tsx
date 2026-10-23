@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { downloadCsv } from "@/components/csv-exporter";
 import { toCsv } from "@/lib/csv";
-import { countLabel } from "@/lib/bulk";
+import { useTranslations } from "next-intl";
 import { runWithToast } from "@/lib/toast-action";
 import { IMPORT_TEMPLATE_HEADERS, MAX_IMPORT_CHARS } from "@/lib/product-import";
 import {
@@ -21,6 +21,7 @@ import {
 // rows that are ready. The server checks the file again on import. The template's
 // example rows use one of the store's own categories and brands.
 export function ProductImport({ exampleCategory, exampleBrand }: { exampleCategory: string; exampleBrand: string }) {
+  const t = useTranslations("products.import");
   const router = useRouter();
   const [csv, setCsv] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
@@ -30,7 +31,7 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
   const chooseFile = (file: File | undefined) => {
     if (!file) return;
     if (file.size > MAX_IMPORT_CHARS) {
-      toast.error("The file is too large (1 MB at most).");
+      toast.error(t("tooLarge"));
       return;
     }
     startTransition(async () => {
@@ -42,7 +43,7 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
         setPreview(result);
       } catch (error) {
         console.error(error);
-        setPreview({ success: false, message: "The file couldn't be checked. Please try again." });
+        setPreview({ success: false, message: t("checkFailed") });
       }
     });
   };
@@ -66,7 +67,7 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
           }`}
         >
           {isPending && !preview ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
-          {fileName ? "Choose another file" : "Choose a CSV file"}
+          {fileName ? t("chooseAnother") : t("chooseFile")}
           <input
             type="file"
             accept=".csv,text/csv"
@@ -90,7 +91,7 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
             )
           }
         >
-          <Download className="h-4 w-4" /> Download template
+          <Download className="h-4 w-4" /> {t("downloadTemplate")}
         </Button>
         {fileName && <span className="text-sm text-gray-500">{fileName}</span>}
       </div>
@@ -105,10 +106,10 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
         <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-50 p-4">
             <div>
-              <h2 className="font-bold text-gray-900">Preview</h2>
+              <h2 className="font-bold text-gray-900">{t("preview")}</h2>
               <p className="text-sm text-gray-500">
                 {preview.message}
-                {validCount < rows.length && " Rows with problems are skipped; fix them and import them later."}
+                {validCount < rows.length && ` ${t("skippedHint")}`}
               </p>
             </div>
             <Button
@@ -117,7 +118,7 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
               onClick={runImport}
             >
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Import {countLabel(validCount, "product")}
+              {t("importButton", { count: validCount })}
             </Button>
           </div>
           <ImportPreviewTable rows={rows} />
@@ -129,18 +130,19 @@ export function ProductImport({ exampleCategory, exampleBrand }: { exampleCatego
 
 // The checked rows of an import: what will be created, and why a row is skipped.
 export function ImportPreviewTable({ rows }: { rows: ImportPreviewRow[] }) {
+  const t = useTranslations("products.import");
   return (
     <div className="max-h-[60vh] overflow-auto">
       <table className="w-full min-w-[760px] text-start text-sm">
         <thead className="sticky top-0 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
           <tr>
-            <th scope="col" className="px-4 py-2 font-medium">Row</th>
-            <th scope="col" className="px-4 py-2 font-medium">Name</th>
-            <th scope="col" className="px-4 py-2 font-medium">Category</th>
-            <th scope="col" className="px-4 py-2 font-medium">Brand</th>
-            <th scope="col" className="px-4 py-2 text-end font-medium">Price</th>
-            <th scope="col" className="px-4 py-2 text-end font-medium">Stock</th>
-            <th scope="col" className="px-4 py-2 font-medium">Status</th>
+            <th scope="col" className="px-4 py-2 font-medium">{t("row")}</th>
+            <th scope="col" className="px-4 py-2 font-medium">{t("name")}</th>
+            <th scope="col" className="px-4 py-2 font-medium">{t("category")}</th>
+            <th scope="col" className="px-4 py-2 font-medium">{t("brand")}</th>
+            <th scope="col" className="px-4 py-2 text-end font-medium">{t("price")}</th>
+            <th scope="col" className="px-4 py-2 text-end font-medium">{t("stock")}</th>
+            <th scope="col" className="px-4 py-2 font-medium">{t("status")}</th>
           </tr>
         </thead>
         <tbody>
@@ -155,7 +157,7 @@ export function ImportPreviewTable({ rows }: { rows: ImportPreviewRow[] }) {
               <td className="px-4 py-2">
                 {row.errors.length === 0 ? (
                   <span className="inline-flex items-center gap-1 text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" aria-hidden /> Ready
+                    <CheckCircle2 className="h-4 w-4" aria-hidden /> {t("ready")}
                   </span>
                 ) : (
                   <ul className="space-y-0.5 text-red-700">

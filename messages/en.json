@@ -5,7 +5,9 @@
     "confirm": "Confirm",
     "goToDashboard": "Go to dashboard",
     "emailAddress": "Email address",
-    "emailPlaceholder": "Enter your email"
+    "emailPlaceholder": "Enter your email",
+    "loading": "Loading...",
+    "close": "Close"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -286,5 +288,256 @@
     "unread": "Notifications ({count} unread)",
     "markAllRead": "Mark all as read",
     "none": "No notifications yet"
+  },
+  "archive": {
+    "archived": "Archived",
+    "backToActive": "Back to active",
+    "restore": "Restore",
+    "restoreName": "Restore {name}",
+    "restoring": "Restoring..."
+  },
+  "image": {
+    "selectProductImage": "Select Product Image",
+    "selectCategoryImage": "Select Category Image",
+    "change": "Change Image",
+    "remove": "Remove",
+    "preview": "Preview"
+  },
+  "editor": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "bulletList": "Bullet list",
+    "numberedList": "Numbered list"
+  },
+  "products": {
+    "title": "Products",
+    "archivedTitle": "Archived products",
+    "subtitle": "Manage your product catalog",
+    "archivedSubtitle": "Hidden from the catalogue, kept for past orders",
+    "lowStockOnly": "Low stock only",
+    "showAll": "Show all products",
+    "addProduct": "Add Product",
+    "importLabel": "Import",
+    "import": {
+      "title": "Import products",
+      "back": "Products",
+      "intro1": "Upload a CSV file (comma or semicolon separated, as Excel saves it) whose first row names the columns: name, price, category and brand are required; quantity and description are optional. French headers (nom, prix, stock, catégorie, marque) work too.",
+      "intro2": "Give a category or brand by its name or its id; it must already exist. Products whose name is already in the catalogue are skipped. At most {max} rows per file. Add images afterwards by editing each product.",
+      "chooseFile": "Choose a CSV file",
+      "chooseAnother": "Choose another file",
+      "downloadTemplate": "Download template",
+      "tooLarge": "The file is too large (1 MB at most).",
+      "checkFailed": "The file couldn't be checked. Please try again.",
+      "preview": "Preview",
+      "skippedHint": "Rows with problems are skipped; fix them and import them later.",
+      "importButton": "Import {count, plural, one {# product} other {# products}}",
+      "row": "Row",
+      "name": "Name",
+      "category": "Category",
+      "brand": "Brand",
+      "price": "Price",
+      "stock": "Stock",
+      "status": "Status",
+      "ready": "Ready",
+      "exampleCategory": "Category name",
+      "exampleBrand": "Brand name"
+    },
+    "editTitle": "Edit Product",
+    "addTitle": "Add New Product",
+    "columns": {
+      "number": "N°",
+      "id": "Product ID",
+      "product": "Product",
+      "category": "Category",
+      "brand": "Brand",
+      "price": "Price",
+      "stock": "Stock",
+      "action": "Action"
+    },
+    "outOfStock": "Out of Stock",
+    "inStock": "{count} in Stock",
+    "edit": "Edit {name}",
+    "delete": "Delete {name}",
+    "deleteTitle": "Delete \"{name}\"?",
+    "deleteText": "This permanently removes the product from the catalogue. A product used by orders or favorites is archived instead, and can be restored from Archived.",
+    "deleteConfirm": "Delete",
+    "bulkDeleteTitle": "Delete {count, plural, one {# product} other {# products}}?",
+    "bulkDeleteText": "Products that no order or favorite uses are removed permanently. The others are archived instead, and can be restored from Archived.",
+    "bulkRestoreTitle": "Restore {count, plural, one {# product} other {# products}}?",
+    "bulkRestoreText": "They return to the catalogue and the product pickers.",
+    "form": {
+      "name": "Product Name",
+      "namePlaceholder": "Enter product name",
+      "category": "Category",
+      "selectCategory": "Select a Category",
+      "price": "Price",
+      "quantity": "Quantity",
+      "brand": "Brand",
+      "selectBrand": "Select Brand",
+      "description": "Description",
+      "image": "Product Image",
+      "update": "Update Product",
+      "save": "Save Product"
+    }
+  },
+  "brands": {
+    "title": "Brands",
+    "archivedTitle": "Archived brands",
+    "subtitle": "Manage product brands",
+    "archivedSubtitle": "Used only by archived products",
+    "addBrand": "Add Brand",
+    "editTitle": "Edit Brand",
+    "addTitle": "Add New Brand",
+    "columns": {
+      "number": "N°",
+      "id": "Brand ID",
+      "name": "Brand Name",
+      "action": "Action"
+    },
+    "edit": "Edit {name}",
+    "delete": "Delete {name}",
+    "deleteTitle": "Delete brand \"{name}\"?",
+    "deleteText": "This permanently removes the brand. A brand that still has products can't be deleted; one used only by archived products is archived instead.",
+    "deleteConfirm": "Delete",
+    "form": {
+      "name": "Brand Name",
+      "namePlaceholder": "Enter brand name",
+      "update": "Update Brand",
+      "save": "Save Brand"
+    }
+  },
+  "categories": {
+    "title": "Categories",
+    "archivedTitle": "Archived categories",
+    "subtitle": "Manage your product categories",
+    "archivedSubtitle": "Used only by archived products",
+    "addCategory": "Add Category",
+    "editTitle": "Edit Category",
+    "addTitle": "Add New Category",
+    "columns": {
+      "id": "ID",
+      "image": "Image",
+      "category": "Category",
+      "action": "Action"
+    },
+    "edit": "Edit {name}",
+    "delete": "Delete {name}",
+    "deleteTitle": "Delete category \"{name}\"?",
+    "deleteText": "This permanently removes the category. A category that still has products can't be deleted; one used only by archived products is archived instead.",
+    "deleteConfirm": "Delete",
+    "form": {
+      "name": "Category Name",
+      "namePlaceholder": "e.g., Tools",
+      "image": "Image",
+      "update": "Update Category",
+      "add": "Add Category"
+    }
+  },
+  "orders": {
+    "title": "Orders",
+    "subtitle": "Manage and track customer orders",
+    "searchPlaceholder": "Order #, customer, email or phone",
+    "all": "All",
+    "columns": {
+      "id": "ID",
+      "total": "Total",
+      "status": "Status",
+      "createdAt": "Created At"
+    },
+    "openMenu": "Open menu",
+    "actions": "Actions",
+    "copyId": "Copy Order ID",
+    "printInvoice": "Print Invoice",
+    "fromDate": "From date",
+    "toDate": "To date",
+    "clearDates": "Clear dates",
+    "exportCsv": "Export CSV",
+    "exportFailed": "Export failed. Please try again.",
+    "bulk": {
+      "setStatus": "Set status",
+      "choose": "Choose…",
+      "apply": "Apply",
+      "title": "Mark {count, plural, one {# order} other {# orders}} as {status}?",
+      "text": "Each order's status history records the change and who made it.",
+      "confirm": "Change status"
+    },
+    "detail": {
+      "back": "Back to Orders",
+      "title": "Order #{id}",
+      "items": "Order Items",
+      "itemsCount": "{count, plural, one {# item} other {# items}}",
+      "qty": "Qty: {quantity} × {price}",
+      "itemsAndCharges": "Items {items} + other charges {charges}",
+      "totalAmount": "Total Amount",
+      "customerDetails": "Customer Details",
+      "guest": "Guest User",
+      "customer": "Customer",
+      "phoneNumber": "Phone Number",
+      "email": "Email",
+      "noEmail": "No email provided",
+      "shippingAddress": "Shipping Address",
+      "deliveryPhone": "Delivery phone: {phone}",
+      "noAddress": "No address on this order",
+      "callCustomer": "Call Customer",
+      "updateStatus": "Update Status"
+    },
+    "notes": {
+      "title": "Internal Notes",
+      "placeholder": "Add a note...",
+      "send": "Add note",
+      "none": "No notes yet",
+      "admin": "Admin"
+    },
+    "timeline": {
+      "title": "Status History",
+      "none": "No status changes recorded yet",
+      "system": "System"
+    },
+    "statusActions": {
+      "mark": "Mark as {status}",
+      "cancelTitle": "Cancel order #{id}?",
+      "cancelText": "The order will be marked as Cancelled and excluded from revenue. You can change the status again later.",
+      "cancelConfirm": "Cancel order"
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "subtitle": "View and manage customer details",
+    "searchPlaceholder": "Username, email or phone",
+    "columns": {
+      "username": "Username",
+      "email": "Email",
+      "phone": "Phone",
+      "action": "Action"
+    },
+    "viewCustomer": "View customer",
+    "edit": "Edit {name}",
+    "editFallback": "customer",
+    "form": {
+      "title": "Edit Customer",
+      "emailReadOnly": "Email (Read-only)",
+      "username": "Username",
+      "usernamePlaceholder": "Username",
+      "phone": "Phone",
+      "update": "Update Customer"
+    },
+    "detail": {
+      "back": "Back to Customers",
+      "fallbackTitle": "Customer",
+      "orders": "Orders",
+      "totalSpent": "Total spent",
+      "lastOrder": "Last order",
+      "noOrders": "No orders yet.",
+      "order": "Order",
+      "date": "Date",
+      "status": "Status",
+      "total": "Total",
+      "contact": "Contact",
+      "noEmail": "No email",
+      "addresses": "Addresses",
+      "noAddresses": "No saved addresses.",
+      "default": "Default"
+    }
   }
 }

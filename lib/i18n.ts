@@ -1,4 +1,5 @@
 // Interface languages (P7-04). Pure, so it can be used anywhere and unit-tested.
+import { STORE_TIME_ZONE } from "@/lib/dates";
 
 export const LOCALES = ["en", "fr", "ar"] as const;
 export type AppLocale = (typeof LOCALES)[number];
@@ -45,4 +46,14 @@ export function matchAcceptLanguage(header: string | null | undefined): AppLocal
     .sort((a, b) => b.quality - a.quality || a.index - b.index);
 
   return ranked.map((entry) => entry.language).find(isLocale) ?? null;
+}
+
+// A date (or date and time) in the store's time zone, in the admin's language:
+// formatDate("2026-10-22T10:00:00Z", "fr") -> "22 oct. 2026".
+export function formatDate(value: string | Date, locale: string, withTime = false): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    dateStyle: "medium",
+    ...(withTime ? { timeStyle: "short" } : {}),
+    timeZone: STORE_TIME_ZONE,
+  }).format(new Date(value));
 }

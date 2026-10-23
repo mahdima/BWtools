@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useFormAction } from "@/lib/use-form-action";
+import { useTranslations } from "next-intl";
 
 interface CustomerFormProps {
   customer: {
@@ -27,13 +28,14 @@ const inputClass =
   "w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-sm";
 
 export function CustomerForm({ customer, trigger }: CustomerFormProps) {
+  const t = useTranslations("customers.form");
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <button className="text-gray-500 hover:text-blue-600" aria-label="Edit customer">
+          <button className="text-gray-500 hover:text-blue-600" aria-label={t("title")}>
             <Pencil className="h-4 w-4" />
           </button>
         )}
@@ -53,6 +55,8 @@ function CustomerFormBody({
   customer: CustomerFormProps["customer"];
   onDone: () => void;
 }) {
+  const t = useTranslations("customers.form");
+  const tc = useTranslations("common");
   const { state, isPending, onSubmit } = useFormAction(async (_prev, formData) => {
     const result = await updateCustomer(formData);
     if (result.success) {
@@ -65,7 +69,7 @@ function CustomerFormBody({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Edit Customer</DialogTitle>
+        <DialogTitle>{t("title")}</DialogTitle>
       </DialogHeader>
 
       <form onSubmit={onSubmit} className="space-y-4">
@@ -79,7 +83,7 @@ function CustomerFormBody({
 
         <div className="space-y-2">
           <label htmlFor="customer-email" className="text-sm font-medium text-gray-700">
-            Email (Read-only)
+            {t("emailReadOnly")}
           </label>
           <input
             id="customer-email"
@@ -91,20 +95,20 @@ function CustomerFormBody({
 
         <div className="space-y-2">
           <label htmlFor="customer-username" className="text-sm font-medium text-gray-700">
-            Username
+            {t("username")}
           </label>
           <input
             id="customer-username"
             name="username"
             defaultValue={customer.username || ""}
             className={inputClass}
-            placeholder="Username"
+            placeholder={t("usernamePlaceholder")}
           />
         </div>
 
         <div className="space-y-2">
           <label htmlFor="customer-phone" className="text-sm font-medium text-gray-700">
-            Phone
+            {t("phone")}
           </label>
           <input
             id="customer-phone"
@@ -121,7 +125,7 @@ function CustomerFormBody({
             onClick={onDone}
             className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            Cancel
+            {tc("cancel")}
           </button>
           <button
             disabled={isPending}
@@ -129,7 +133,7 @@ function CustomerFormBody({
             className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Update Customer
+            {t("update")}
           </button>
         </div>
       </form>

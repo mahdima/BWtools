@@ -1,4 +1,7 @@
 import { Clock, ArrowRight } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { formatDate } from "@/lib/i18n";
+import { isOrderStatus } from "@/lib/orders";
 
 interface TimelineEvent {
   id: number;
@@ -13,6 +16,10 @@ interface OrderTimelineProps {
 }
 
 export function OrderTimeline({ events }: OrderTimelineProps) {
+  const t = useTranslations("orders.timeline");
+  const statuses = useTranslations("orderStatus");
+  const locale = useLocale();
+  const statusLabel = (status: string) => (isOrderStatus(status) ? statuses(status) : status);
   const statusColors: Record<string, string> = {
     New: "text-green-600 bg-green-50",
     processing: "text-blue-600 bg-blue-50",
@@ -26,13 +33,13 @@ export function OrderTimeline({ events }: OrderTimelineProps) {
       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
         <h2 className="font-semibold text-gray-900 flex items-center">
           <Clock className="h-5 w-5 me-2 text-primary" />
-          Status History
+          {t("title")}
         </h2>
       </div>
       <div className="p-6">
         {events.length === 0 ? (
           <p className="text-sm text-gray-500 italic">
-            No status changes recorded yet
+            {t("none")}
           </p>
         ) : (
           <div className="space-y-4">
@@ -59,7 +66,7 @@ export function OrderTimeline({ events }: OrderTimelineProps) {
                             "bg-gray-50 text-gray-600"
                           }`}
                         >
-                          {event.old_status}
+                          {statusLabel(event.old_status)}
                         </span>
                         <ArrowRight className="h-3 w-3 text-gray-400 rtl:rotate-180" />
                       </>
@@ -70,13 +77,13 @@ export function OrderTimeline({ events }: OrderTimelineProps) {
                         "bg-gray-50 text-gray-600"
                       }`}
                     >
-                      {event.new_status}
+                      {statusLabel(event.new_status)}
                     </span>
                   </div>
                   <div className="flex gap-2 mt-1 text-xs text-gray-500">
-                    <span>{event.admins?.full_name || "System"}</span>
+                    <span>{event.admins?.full_name || t("system")}</span>
                     <span>•</span>
-                    <span>{event.created_at && new Date(event.created_at).toLocaleString()}</span>
+                    <span>{event.created_at && formatDate(event.created_at, locale, true)}</span>
                   </div>
                 </div>
               </div>

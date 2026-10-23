@@ -12,6 +12,7 @@ import { getCurrentAdmin } from "@/lib/auth";
 import { hasRole } from "@/lib/roles";
 import { BrandForm } from "@/components/BrandForm";
 import { addBrand, updateBrand } from "./actions";
+import { getTranslations } from "next-intl/server";
 
 interface BrandPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -19,6 +20,7 @@ interface BrandPageProps {
 
 const BrandPage = async ({ searchParams }: BrandPageProps) => {
   const params = await searchParams;
+  const t = await getTranslations("brands");
   const page = typeof params.page === "string" ? parseInt(params.page) : 1;
   const search = typeof params.search === "string" ? params.search : "";
   // ?view=archived lists archived brands (P6-08)
@@ -36,15 +38,15 @@ const BrandPage = async ({ searchParams }: BrandPageProps) => {
 
   return (
     <div className="flex flex-col h-full p-4 ps-16 lg:ps-4 w-full overflow-auto">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={null}>
         <DataTable
           columns={columns}
           data={data}
           searchKey="brand"
           pageCount={Math.ceil(count / limit)}
           isServerSide={true}
-          title={archived ? "Archived brands" : "Brands"}
-          description={archived ? "Used only by archived products" : "Manage product brands"}
+          title={archived ? t("archivedTitle") : t("title")}
+          description={archived ? t("archivedSubtitle") : t("subtitle")}
           headerActions={
             <>
               {archiving && <ArchiveViewLink href="/brand" archived={archived} />}
@@ -52,7 +54,7 @@ const BrandPage = async ({ searchParams }: BrandPageProps) => {
                 <Can minRole="admin">
                   <Link href="/brand?add=true">
                     <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
-                      <Plus className="me-2 h-4 w-4" /> Add Brand
+                      <Plus className="me-2 h-4 w-4" /> {t("addBrand")}
                     </Button>
                   </Link>
                 </Can>
@@ -63,12 +65,12 @@ const BrandPage = async ({ searchParams }: BrandPageProps) => {
       </Suspense>
 
       {(showAddModal || (editId && brandToEdit)) && (
-        <Modal returnUrl="/brand" title={editId ? "Edit Brand" : "Add New Brand"}>
+        <Modal returnUrl="/brand" title={editId ? t("editTitle") : t("addTitle")}>
           <BrandForm
             key={editId || "add-brand"}
             brand={brandToEdit}
             action={editId ? updateBrand.bind(null, editId) : addBrand}
-            title={editId ? "Edit Brand" : "Add New Brand"}
+            title={editId ? t("editTitle") : t("addTitle")}
           />
         </Modal>
       )}

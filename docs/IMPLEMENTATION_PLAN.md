@@ -1119,7 +1119,7 @@ Created 2026-10-22 from [GAP_ANALYSIS.md](GAP_ANALYSIS.md). Follow the workflow 
   - **RTL:** physical Tailwind classes (`pl-`, `ml-`, `left-`, `text-left`, `border-r` …) become logical ones (`ps-`, `ms-`, `start-`, `text-start`, `border-e` …) across the app, and direction arrows flip.
   - **Translated:** sidebar and mobile menu, `DataTable` chrome (filter, pagination, selection bar), confirm dialog, login, forgot and reset password, and the error and not-found pages.
 - [x] **P7-04b · Dashboard and admin screens:** dashboard widgets, reports, settings (password and store forms), profile dialog, team, audit log, notifications panel.
-- [ ] **P7-04c · Catalogue and orders:** products (columns, form, import, bulk), brands, categories, orders (list, detail, notes, timeline, status, bulk) and customers.
+- [x] **P7-04c · Catalogue and orders:** products (columns, form, import, bulk), brands, categories, orders (list, detail, notes, timeline, status, bulk) and customers.
 - [ ] **P7-04d · Messages from the server:** server-action results (toasts) and validation messages through `getTranslations`.
 
 The printed invoice stays as it is: its language is a store decision, not an admin preference.
@@ -1157,6 +1157,27 @@ The printed invoice stays as it is: its language is a store decision, not an adm
   - A temporary preview page (deleted) rendered every translated component in Arabic and French, and the screenshots were reviewed. A scan of each found none of the old English strings left, with 0 page errors.
   - The preview caught the Arabic arrow pointing the wrong way, which is fixed.
   - `typecheck`, lint (0 errors, 26 warnings), 189 tests and `build` pass.
+
+
+**P7-04c notes (2026-10-23):**
+- **Translated:**
+  - **Products:** list, columns, form, image upload, bulk bar, and the import page and its preview.
+  - **Brands and categories.**
+  - **Orders:** list, status tabs, date filter, CSV button, bulk bar, row menu, detail page, notes, timeline and status buttons.
+  - **Customers:** list, columns, detail page and edit form.
+  - **Shared pieces:** the archive link and restore button, the editor toolbar (new aria-labels), and the dialog's hidden "Close" label.
+
+  New namespaces: `archive`, `image`, `editor`, `products`, `brands`, `categories`, `orders`, `customers`.
+- **Column headers** are small components (`ColumnLabel`), because the column arrays are module constants. TanStack renders header and cell functions as components, so they can call `useTranslations`. The action cells moved into components too (`ProductActions`, `BrandActions` and so on).
+- **Money and dates:**
+  - `formatPrice` (with centimes, isolated left to right) replaces the four inline `Intl.NumberFormat` / `toLocaleString() DZD` formats. This fixes the "DA 12500,00" reordering in Arabic noted in P7-04a.
+  - `formatDate(value, locale, withTime)` in `lib/i18n.ts` (tested) shows dates in Algiers time, in the admin's language.
+  - Phone numbers are `dir="ltr"`.
+- **Not translated yet (P7-04d):** text that comes from the server: action toasts, validation errors, and the import preview's row errors and summary.
+- **Verified:**
+  - A temporary preview page (deleted) rendered all the translated tables, forms, notes, timeline and status buttons in Arabic and French, with 0 page errors. Screenshots were reviewed.
+  - A scan of the page text and labels found no English left. The French "Description" and "Action" hits are the same words in French.
+  - `typecheck`, lint (0 errors, 25 warnings), 190 tests and `build` pass.
 
 ### P7-05 · Full dark mode
 - [ ] Done

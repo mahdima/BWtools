@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import type { ActionResult } from "@/lib/action-result";
 import { useFormAction } from "@/lib/use-form-action";
+import { useTranslations } from "next-intl";
 
 interface BrandFormProps {
   brand?: any;
@@ -14,6 +15,8 @@ interface BrandFormProps {
 }
 
 export function BrandForm({ brand, action, title }: BrandFormProps) {
+  const t = useTranslations("brands.form");
+  const tc = useTranslations("common");
   const { state, isPending, onSubmit } = useFormAction(action);
 
   return (
@@ -28,7 +31,7 @@ export function BrandForm({ brand, action, title }: BrandFormProps) {
               htmlFor="brand"
               className="block text-sm font-semibold text-gray-700 mb-2"
             >
-              Brand Name
+              {t("name")}
             </label>
             <input
               type="text"
@@ -36,7 +39,7 @@ export function BrandForm({ brand, action, title }: BrandFormProps) {
               name="brand"
               defaultValue={brand?.brand_name || ""}
               className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
-              placeholder="Enter brand name"
+              placeholder={t("namePlaceholder")}
               required
             />
           </div>
@@ -56,7 +59,7 @@ export function BrandForm({ brand, action, title }: BrandFormProps) {
               variant="ghost"
               className="px-8 h-11 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             >
-              Cancel
+              {tc("cancel")}
             </Button>
           </Link>
           <Button
@@ -65,7 +68,7 @@ export function BrandForm({ brand, action, title }: BrandFormProps) {
             className="px-8 h-11 bg-primary text-white hover:bg-primary-strong shadow-lg shadow-blue-500/20"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {brand ? "Update Brand" : "Save Brand"}
+            {brand ? t("update") : t("save")}
           </Button>
         </div>
       </form>

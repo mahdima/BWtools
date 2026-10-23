@@ -8,6 +8,8 @@ import { exportOrders } from "./actions";
 import { OrderBulkActions } from "./bulk-actions";
 import { getCurrentAdmin } from "@/lib/auth";
 import { hasRole } from "@/lib/roles";
+import { ORDER_STATUSES } from "@/lib/orders";
+import { getTranslations } from "next-intl/server";
 
 interface OrderPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -23,31 +25,32 @@ const OrderPage = async ({ searchParams }: OrderPageProps) => {
   const filters = { search, status, from, to };
   const limit = 20;
 
-  const [{ data, count }, admin] = await Promise.all([getOrders({ page, limit, ...filters }), getCurrentAdmin()]);
+  const [{ data, count }, admin, t, statuses] = await Promise.all([
+    getOrders({ page, limit, ...filters }),
+    getCurrentAdmin(),
+    getTranslations("orders"),
+    getTranslations("orderStatus"),
+  ]);
   // Viewers are read-only: no row selection for them
   const canEdit = hasRole(admin?.role, "admin");
   const pageCount = Math.ceil(count / limit);
 
   return (
     <div className="flex flex-col h-full p-4 ps-16 lg:ps-4 w-full overflow-auto">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={null}>
         <DataTable
           columns={columns}
           data={data}
           searchKey="status"
-          searchPlaceholder="Order #, customer, email or phone"
-          title="Orders"
-          description="Manage and track customer orders"
+          searchPlaceholder={t("searchPlaceholder")}
+          title={t("title")}
+          description={t("subtitle")}
           filterTabs={[
             {
               column: "status",
               tabs: [
-                { label: "All", value: "All" },
-                { label: "New", value: "New" },
-                { label: "Processing", value: "processing" },
-                { label: "Delivering", value: "Delivering" },
-                { label: "Delivered", value: "Delivered" },
-                { label: "Cancelled", value: "Cancelled" },
+                { label: t("all"), value: "All" },
+                ...ORDER_STATUSES.map((value) => ({ label: statuses(value), value })),
               ],
             },
           ]}

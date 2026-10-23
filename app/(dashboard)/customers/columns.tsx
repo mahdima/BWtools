@@ -6,6 +6,7 @@ import { Can } from "@/components/admin-provider";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CustomerForm } from "@/components/CustomerForm";
+import { useTranslations } from "next-intl";
 
 export type Customer = {
   id: string;
@@ -14,25 +15,61 @@ export type Customer = {
   phone: string | null;
 };
 
+// Column titles are components so they can use translations (TanStack renders them)
+function ColumnLabel({ k }: { k: "username" | "email" | "phone" | "action" }) {
+  return useTranslations("customers.columns")(k);
+}
+
+function CustomerLink({ customer }: { customer: Customer }) {
+  const t = useTranslations("customers");
+  const name = customer.username && customer.username !== "Null" ? customer.username : null;
+  return (
+    <Link href={`/customers/${customer.id}`} className="font-medium text-gray-900 hover:text-primary hover:underline">
+      {name || customer.email || t("viewCustomer")}
+    </Link>
+  );
+}
+
+function CustomerActions({ customer }: { customer: Customer }) {
+  const t = useTranslations("customers");
+  // Viewers are read-only; the server actions check the role too
+  return (
+    <Can minRole="admin">
+      <div className="flex justify-center gap-2">
+        <CustomerForm
+          customer={{
+            id: customer.id,
+            username: customer.username || "",
+            email: customer.email || "",
+            phone: customer.phone ? customer.phone.toString() : "",
+          }}
+          trigger={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("edit", { name: customer.username || customer.email || t("editFallback") })}
+              className="h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          }
+        />
+      </div>
+    </Can>
+  );
+}
+
 export const columns: ColumnDef<Customer>[] = [
   {
     accessorKey: "username",
-    header: "Username",
+    header: () => <ColumnLabel k="username" />,
     // Links to the customer page (a link here rather than a clickable row, so the
     // edit button in the same row doesn't also navigate)
-    cell: ({ row }) => {
-      const val = row.getValue("username") as string | null;
-      const label = val && val !== "Null" ? val : row.original.email || "View customer";
-      return (
-        <Link href={`/customers/${row.original.id}`} className="font-medium text-gray-900 hover:text-primary hover:underline">
-          {label}
-        </Link>
-      );
-    },
+    cell: ({ row }) => <CustomerLink customer={row.original} />,
   },
   {
     accessorKey: "email",
-    header: "Email",
+    header: () => <ColumnLabel k="email" />,
     cell: ({ row }) => {
       const val = row.getValue("email") as string;
       return val && val !== "Null" ? (
@@ -44,12 +81,12 @@ export const columns: ColumnDef<Customer>[] = [
   },
   {
     accessorKey: "phone",
-    header: "Phone",
+    header: () => <ColumnLabel k="phone" />,
     cell: ({ row }) => {
       const val = row.getValue("phone") as string;
       // Ensure it's not the string "Null" if that's what comes from DB view still
       return val && val !== "Null" ? (
-        val
+        <span dir="ltr">{val}</span>
       ) : (
         <span className="text-gray-400">-</span>
       );
@@ -58,35 +95,11 @@ export const columns: ColumnDef<Customer>[] = [
 
   {
     id: "actions",
-    header: () => <div className="text-center">Action</div>,
-    cell: ({ row }) => {
-      const customer = row.original;
-
-      // Viewers are read-only; the server actions check the role too
-      return (
-        <Can minRole="admin">
-        <div className="flex justify-center gap-2">
-          <CustomerForm
-            customer={{
-              id: customer.id,
-              username: customer.username || "",
-              email: customer.email || "",
-              phone: customer.phone ? customer.phone.toString() : "",
-            }}
-            trigger={
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Edit ${customer.username || customer.email || "customer"}`}
-                className="h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            }
-          />
-        </div>
-        </Can>
-      );
-    },
+    header: () => (
+      <div className="text-center">
+        <ColumnLabel k="action" />
+      </div>
+    ),
+    cell: ({ row }) => <CustomerActions customer={row.original} />,
   },
 ];

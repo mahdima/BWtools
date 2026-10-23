@@ -1,7 +1,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Eye } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -12,6 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatDate } from "@/lib/i18n";
+import { formatPrice } from "@/lib/money";
+import { isOrderStatus } from "@/lib/orders";
 
 export type Order = {
   id: number;
@@ -20,86 +24,80 @@ export type Order = {
   status: string | null;
 };
 
+const STATUS_COLORS: Record<string, string> = {
+  New: "text-green-600",
+  processing: "text-blue-600",
+  Delivering: "text-yellow-600",
+  Delivered: "text-orange-600",
+  Cancelled: "text-red-800",
+};
+
+// Column titles are components so they can use translations (TanStack renders them)
+function ColumnLabel({ k }: { k: "id" | "total" | "status" | "createdAt" }) {
+  return useTranslations("orders.columns")(k);
+}
+
+function StatusCell({ status }: { status: string | null }) {
+  const t = useTranslations("orderStatus");
+  return (
+    <div className={`font-medium ${STATUS_COLORS[status ?? ""] ?? "text-gray-600"}`}>
+      {isOrderStatus(status) ? t(status) : status}
+    </div>
+  );
+}
+
+function DateCell({ value }: { value: string }) {
+  return <div>{formatDate(value, useLocale())}</div>;
+}
+
+function OrderMenu({ order }: { order: Order }) {
+  const t = useTranslations("orders");
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">{t("openMenu")}</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(String(order.id))}>
+          {t("copyId")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href={`/invoice/${order.id}`} target="_blank">
+            {t("printInvoice")}
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export const columns: ColumnDef<Order>[] = [
   {
     accessorKey: "id",
-    header: "ID",
+    header: () => <ColumnLabel k="id" />,
   },
   {
     accessorKey: "total",
-    header: "Total",
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("total"));
-      const formatted = new Intl.NumberFormat("fr-DZ", {
-        style: "currency",
-        currency: "DZD",
-      }).format(amount);
-      return <div className="font-medium">{formatted}</div>;
-    },
+    header: () => <ColumnLabel k="total" />,
+    cell: ({ row }) => <div className="font-medium">{formatPrice(parseFloat(row.getValue("total")))}</div>,
   },
   {
     accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as string;
-      return (
-        <div
-          className={`font-medium ${
-            status === "New"
-              ? "text-green-600"
-              : status === "processing"
-              ? "text-blue-600"
-              : status === "Delivering"
-              ? "text-yellow-600"
-              : status === "Delivered"
-              ? "text-orange-600"
-              : status === "Cancelled"
-              ? "text-red-800"
-              : "text-gray-600"
-          }`}
-        >
-          {status}
-        </div>
-      );
-    },
+    header: () => <ColumnLabel k="status" />,
+    cell: ({ row }) => <StatusCell status={row.getValue("status") as string | null} />,
   },
   {
     accessorKey: "created_at",
-    header: "Created At",
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("created_at"));
-      return <div>{date.toLocaleDateString()}</div>;
-    },
+    header: () => <ColumnLabel k="createdAt" />,
+    cell: ({ row }) => <DateCell value={row.getValue("created_at")} />,
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const order = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(String(order.id))}
-            >
-              Copy Order ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href={`/invoice/${order.id}`} target="_blank">
-                Print Invoice
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <OrderMenu order={row.original} />,
   },
 ];

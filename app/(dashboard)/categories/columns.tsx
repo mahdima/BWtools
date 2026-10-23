@@ -9,6 +9,7 @@ import { CategoryForm } from "@/components/CategoryForm";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { RestoreButton } from "@/components/restore-button";
 import { deleteCategory, restoreCategory } from "./actions";
+import { useTranslations } from "next-intl";
 
 export type Category = {
   id: number;
@@ -18,14 +19,70 @@ export type Category = {
   archived: boolean;
 };
 
+// Column titles are components so they can use translations (TanStack renders them)
+function ColumnLabel({ k }: { k: "id" | "image" | "category" | "action" }) {
+  return useTranslations("categories.columns")(k);
+}
+
+function CategoryActions({ category }: { category: Category }) {
+  const t = useTranslations("categories");
+
+  // Viewers are read-only; the server actions check the role too
+  if (category.archived) {
+    return (
+      <Can minRole="admin">
+        <RestoreButton name={category.category} action={() => restoreCategory(String(category.id))} />
+      </Can>
+    );
+  }
+
+  return (
+    <Can minRole="admin">
+      <div className="flex items-center gap-1">
+        <CategoryForm
+          category={{ id: String(category.id), name: category.category, imageUrl: category.image }}
+          trigger={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("edit", { name: category.category })}
+              className="h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          }
+        />
+
+        <ConfirmDialog
+          title={t("deleteTitle", { name: category.category })}
+          description={t("deleteText")}
+          confirmLabel={t("deleteConfirm")}
+          destructive
+          action={() => deleteCategory(String(category.id))}
+          trigger={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("delete", { name: category.category })}
+              className="h-7 w-7 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          }
+        />
+      </div>
+    </Can>
+  );
+}
+
 export const columns: ColumnDef<Category>[] = [
   {
     accessorKey: "id",
-    header: "ID",
+    header: () => <ColumnLabel k="id" />,
   },
   {
     id: "image",
-    header: "Image",
+    header: () => <ColumnLabel k="image" />,
     cell: ({ row }) =>
       row.original.image ? (
         <Image
@@ -42,7 +99,7 @@ export const columns: ColumnDef<Category>[] = [
   },
   {
     accessorKey: "category",
-    header: "Category",
+    header: () => <ColumnLabel k="category" />,
     cell: ({ row }) => (
       <div className="font-medium text-gray-900">
         {row.getValue("category")}
@@ -51,56 +108,7 @@ export const columns: ColumnDef<Category>[] = [
   },
   {
     id: "actions",
-    header: "Action",
-    cell: ({ row }) => {
-      const category = row.original;
-
-      // Viewers are read-only; the server actions check the role too
-      if (category.archived) {
-        return (
-          <Can minRole="admin">
-            <RestoreButton name={category.category} action={() => restoreCategory(String(category.id))} />
-          </Can>
-        );
-      }
-
-      return (
-        <Can minRole="admin">
-        <div className="flex items-center gap-1">
-          <CategoryForm
-            category={{ id: String(category.id), name: category.category, imageUrl: category.image }}
-            trigger={
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Edit ${category.category}`}
-                className="h-7 w-7 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            }
-          />
-
-          <ConfirmDialog
-            title={`Delete category "${category.category}"?`}
-            description="This permanently removes the category. A category that still has products can't be deleted; one used only by archived products is archived instead."
-            confirmLabel="Delete"
-            destructive
-            action={() => deleteCategory(String(category.id))}
-            trigger={
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Delete ${category.category}`}
-                className="h-7 w-7 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            }
-          />
-        </div>
-        </Can>
-      );
-    },
+    header: () => <ColumnLabel k="action" />,
+    cell: ({ row }) => <CategoryActions category={row.original} />,
   },
 ];

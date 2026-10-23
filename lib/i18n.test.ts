@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLocale, localeDirection, matchAcceptLanguage } from "@/lib/i18n";
+import { formatDate, isLocale, localeDirection, matchAcceptLanguage } from "@/lib/i18n";
 
 describe("matchAcceptLanguage", () => {
   it("picks the most preferred supported language", () => {
@@ -22,5 +22,14 @@ describe("isLocale / localeDirection", () => {
     expect(isLocale("de")).toBe(false);
     expect(localeDirection("ar")).toBe("rtl");
     expect(localeDirection("fr")).toBe("ltr");
+  });
+});
+
+describe("formatDate", () => {
+  it("uses the store's time zone and the language", () => {
+    // 23:30 UTC is already the next day in Algiers
+    expect(formatDate("2026-10-21T23:30:00Z", "en")).toBe("Oct 22, 2026");
+    expect(formatDate("2026-10-21T23:30:00Z", "fr")).toBe("22 oct. 2026");
+    expect(formatDate("2026-10-22T10:00:00Z", "en", true)).toBe("Oct 22, 2026, 11:00 AM");
   });
 });

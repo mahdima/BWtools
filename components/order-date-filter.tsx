@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 const inputClass =
   "h-8 rounded-md border border-gray-200 bg-background px-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none";
@@ -9,6 +10,7 @@ const inputClass =
 // From/to date pickers for the order list, kept in the URL (?from=YYYY-MM-DD&to=...)
 // like the other filters, so reload, Back and the CSV export all see them.
 export function OrderDateFilter() {
+  const t = useTranslations("orders");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -28,7 +30,7 @@ export function OrderDateFilter() {
   return (
     <div className="flex items-center gap-1.5">
       <label htmlFor="order-from" className="sr-only">
-        From date
+        {t("fromDate")}
       </label>
       <input
         id="order-from"
@@ -42,7 +44,7 @@ export function OrderDateFilter() {
         –
       </span>
       <label htmlFor="order-to" className="sr-only">
-        To date
+        {t("toDate")}
       </label>
       <input
         id="order-to"
@@ -54,7 +56,7 @@ export function OrderDateFilter() {
       />
       {(from || to) && (
         <Button variant="ghost" size="sm" className="h-8" onClick={() => setDates({ from: "", to: "" })}>
-          Clear dates
+          {t("clearDates")}
         </Button>
       )}
     </div>

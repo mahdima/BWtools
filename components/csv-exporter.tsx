@@ -5,6 +5,7 @@ import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { CsvExportResult } from "@/lib/csv";
+import { useTranslations } from "next-intl";
 
 interface CsvExporterProps {
   // A server action (bound to the current filters) that builds the whole file
@@ -24,6 +25,7 @@ export function downloadCsv(csv: string, filename: string) {
 }
 
 export function CsvExporter({ action }: CsvExporterProps) {
+  const t = useTranslations("orders");
   const [isPending, startTransition] = useTransition();
 
   const handleExport = () => {
@@ -38,7 +40,7 @@ export function CsvExporter({ action }: CsvExporterProps) {
         toast.success(result.message);
       } catch (error) {
         console.error(error);
-        toast.error("Export failed. Please try again.");
+        toast.error(t("exportFailed"));
       }
     });
   };
@@ -56,7 +58,7 @@ export function CsvExporter({ action }: CsvExporterProps) {
       ) : (
         <Download className="h-3.5 w-3.5" />
       )}
-      Export CSV
+      {t("exportCsv")}
     </Button>
   );
 }

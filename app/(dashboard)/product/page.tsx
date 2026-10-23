@@ -14,6 +14,7 @@ import { ProductForm } from "@/components/ProductForm";
 import { addProduct, updateProduct } from "./actions";
 import { ProductBulkActions } from "./bulk-actions";
 import { getProductById, getProductFormOptions, getProducts } from "@/lib/data/products";
+import { getTranslations } from "next-intl/server";
 
 export const revalidate = 0;
 
@@ -23,6 +24,7 @@ interface ProductPageProps {
 
 const ProductPage = async ({ searchParams }: ProductPageProps) => {
   const params = await searchParams;
+  const t = await getTranslations("products");
   const page = typeof params.page === "string" ? parseInt(params.page) : 1;
   const search = typeof params.search === "string" ? params.search : "";
   // ?stock=low lists only products at or below the store's low-stock threshold
@@ -52,17 +54,13 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
 
   return (
     <div className="flex flex-col h-full p-4 ps-16 lg:ps-4 w-full overflow-auto">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={null}>
         <DataTable
           columns={columns}
           data={data}
           searchKey="product"
-          title={archived ? "Archived products" : "Products"}
-          description={
-            archived
-              ? "Hidden from the catalogue, kept for past orders"
-              : "Manage your product catalog"
-          }
+          title={archived ? t("archivedTitle") : t("title")}
+          description={archived ? t("archivedSubtitle") : t("subtitle")}
           pageCount={pageCount}
           isServerSide={true}
           bulkActions={canEdit ? <ProductBulkActions archived={archived} /> : undefined}
@@ -75,14 +73,14 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
               href={lowStockOnly ? "/product" : "/product?stock=low"}
               className="text-sm font-medium text-primary hover:text-primary-strong whitespace-nowrap"
             >
-              {lowStockOnly ? "Show all products" : "Low stock only"}
+              {lowStockOnly ? t("showAll") : t("lowStockOnly")}
             </Link>
             <Can minRole="admin">
               <Link
                 href="/product/import"
                 className="inline-flex h-[40px] items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <Upload className="h-4 w-4" /> Import
+                <Upload className="h-4 w-4" /> {t("importLabel")}
               </Link>
               <Link
                 href={`/product?add=true${
@@ -90,7 +88,7 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
                 }`}
               >
                 <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
-                  <Plus className="me-2 h-4 w-4" /> Add Product
+                  <Plus className="me-2 h-4 w-4" /> {t("addProduct")}
                 </Button>
               </Link>
             </Can>
@@ -104,7 +102,7 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
       {(showAddModal || (editId && productToEdit)) && (
         <Modal
           returnUrl={`/product${params.page ? `?page=${params.page}` : ""}`}
-          title={editId ? "Edit Product" : "Add New Product"}
+          title={editId ? t("editTitle") : t("addTitle")}
         >
           <ProductForm
             key={editId || "add-product"}
@@ -112,7 +110,7 @@ const ProductPage = async ({ searchParams }: ProductPageProps) => {
             brands={brands}
             product={productToEdit}
             action={editId ? updateProduct.bind(null, editId) : addProduct}
-            title={editId ? "Edit Product" : "Add New Product"}
+            title={editId ? t("editTitle") : t("addTitle")}
             page={params.page}
           />
         </Modal>

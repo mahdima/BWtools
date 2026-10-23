@@ -7,6 +7,7 @@ import { ArchiveViewLink } from "@/components/archive-view-link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { getCategories } from "@/lib/data/categories";
+import { getTranslations } from "next-intl/server";
 
 interface CategoriesPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -15,17 +16,17 @@ interface CategoriesPageProps {
 const CategoriesPage = async ({ searchParams }: CategoriesPageProps) => {
   // ?view=archived lists archived categories (P6-08)
   const archived = (await searchParams).view === "archived";
-  const { data, archiving } = await getCategories({ archived });
+  const [{ data, archiving }, t] = await Promise.all([getCategories({ archived }), getTranslations("categories")]);
 
   return (
     <div className="flex flex-col h-full p-4 ps-16 lg:ps-4 w-full overflow-auto">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={null}>
         <DataTable
           columns={columns}
           data={data}
           searchKey="category"
-          title={archived ? "Archived categories" : "Categories"}
-          description={archived ? "Used only by archived products" : "Manage your product categories"}
+          title={archived ? t("archivedTitle") : t("title")}
+          description={archived ? t("archivedSubtitle") : t("subtitle")}
           headerActions={
             <>
               {archiving && <ArchiveViewLink href="/categories" archived={archived} />}
@@ -34,7 +35,7 @@ const CategoriesPage = async ({ searchParams }: CategoriesPageProps) => {
                   <CategoryForm
                     trigger={
                       <Button className="bg-primary text-white hover:bg-primary-strong w-[180px] h-[40px]">
-                        <Plus className="me-2 h-4 w-4" /> Add Category
+                        <Plus className="me-2 h-4 w-4" /> {t("addCategory")}
                       </Button>
                     }
                   />

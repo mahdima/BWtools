@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { ActionResult } from "@/lib/action-result";
 import { useFormAction } from "@/lib/use-form-action";
+import { useTranslations } from "next-intl";
 
 interface ProductFormProps {
   categories: any[];
@@ -28,6 +29,8 @@ export function ProductForm({
   page,
 }: ProductFormProps) {
   const [description, setDescription] = useState(product?.description || "");
+  const t = useTranslations("products.form");
+  const tc = useTranslations("common");
   const { state, isPending, onSubmit } = useFormAction(action);
 
   return (
@@ -49,7 +52,7 @@ export function ProductForm({
                 htmlFor="product"
                 className="block text-sm font-semibold text-gray-700 mb-2"
               >
-                Product Name
+                {t("name")}
               </label>
               <input
                 type="text"
@@ -57,7 +60,7 @@ export function ProductForm({
                 name="product"
                 defaultValue={product?.product_name || ""}
                 className="px-4 py-2 block w-full rounded-md border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary h-11 text-sm text-gray-700 outline-none transition-all bg-gray-50/50 focus:bg-white"
-                placeholder="Enter product name"
+                placeholder={t("namePlaceholder")}
                 required
               />
             </div>
@@ -68,7 +71,7 @@ export function ProductForm({
                 htmlFor="category"
                 className="block text-sm font-semibold text-gray-700 mb-2"
               >
-                Category
+                {t("category")}
               </label>
               <select
                 id="category"
@@ -78,7 +81,7 @@ export function ProductForm({
                 required
               >
                 <option value="" disabled>
-                  Select a Category
+                  {t("selectCategory")}
                 </option>
                 {categories.map((cat: any) => (
                   <option key={cat.categorie_id} value={cat.categorie_id}>
@@ -95,7 +98,7 @@ export function ProductForm({
                   htmlFor="price"
                   className="block text-sm font-semibold text-gray-700 mb-2"
                 >
-                  Price
+                  {t("price")}
                 </label>
                 <input
                   type="number"
@@ -114,7 +117,7 @@ export function ProductForm({
                   htmlFor="quantity"
                   className="block text-sm font-semibold text-gray-700 mb-2"
                 >
-                  Quantity
+                  {t("quantity")}
                 </label>
                 <input
                   type="number"
@@ -132,7 +135,7 @@ export function ProductForm({
                   htmlFor="brand"
                   className="block text-sm font-semibold text-gray-700 mb-2"
                 >
-                  Brand
+                  {t("brand")}
                 </label>
                 <select
                   id="brand"
@@ -142,7 +145,7 @@ export function ProductForm({
                   required
                 >
                   <option value="" disabled>
-                    Select Brand
+                    {t("selectBrand")}
                   </option>
                   {brands.map((brand: any) => (
                     <option key={brand.brand_id} value={brand.brand_id}>
@@ -159,7 +162,7 @@ export function ProductForm({
                 htmlFor="description"
                 className="block text-sm font-semibold text-gray-700 mb-2"
               >
-                Description
+                {t("description")}
               </label>
               <Editor value={description} onChange={setDescription} />
               <input type="hidden" name="description" value={description} />
@@ -169,7 +172,7 @@ export function ProductForm({
           {/* Right Side: Image Upload */}
           <div className="w-full lg:w-1/3 flex flex-col">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Product Image
+              {t("image")}
             </label>
             <div className="bg-gray-50/50 rounded-lg border border-dashed border-gray-200 p-4 h-full min-h-[300px] flex items-center justify-center">
               <ProductImageUpload
@@ -195,7 +198,7 @@ export function ProductForm({
               variant="ghost"
               className="px-8 h-11 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             >
-              Cancel
+              {tc("cancel")}
             </Button>
           </Link>
           <Button
@@ -204,7 +207,7 @@ export function ProductForm({
             className="px-8 h-11 bg-primary text-white hover:bg-primary-strong shadow-lg shadow-blue-500/20"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {product ? "Update Product" : "Save Product"}
+            {product ? t("update") : t("save")}
           </Button>
         </div>
       </form>

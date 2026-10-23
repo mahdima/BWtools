@@ -7,13 +7,14 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { updateOrderStatus } from "@/app/(dashboard)/order/actions";
 import type { OrderStatus } from "@/lib/orders";
 import { runWithToast } from "@/lib/toast-action";
+import { useTranslations } from "next-intl";
 
-const STATUS_BUTTONS: { status: OrderStatus; label: string; icon: LucideIcon; className: string }[] = [
-  { status: "New", label: "Mark as New", icon: Box, className: "hover:bg-green-50 hover:text-green-700 hover:border-green-200" },
-  { status: "processing", label: "Mark as Processing", icon: Box, className: "hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200" },
-  { status: "Delivering", label: "Mark as Delivering", icon: Truck, className: "hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-200" },
-  { status: "Delivered", label: "Mark as Delivered", icon: Truck, className: "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200" },
-  { status: "Cancelled", label: "Mark as Cancelled", icon: Box, className: "hover:bg-red-50 hover:text-red-700 hover:border-red-200" },
+const STATUS_BUTTONS: { status: OrderStatus; icon: LucideIcon; className: string }[] = [
+  { status: "New", icon: Box, className: "hover:bg-green-50 hover:text-green-700 hover:border-green-200" },
+  { status: "processing", icon: Box, className: "hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200" },
+  { status: "Delivering", icon: Truck, className: "hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-200" },
+  { status: "Delivered", icon: Truck, className: "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200" },
+  { status: "Cancelled", icon: Box, className: "hover:bg-red-50 hover:text-red-700 hover:border-red-200" },
 ];
 
 interface OrderStatusActionsProps {
@@ -22,11 +23,13 @@ interface OrderStatusActionsProps {
 }
 
 export function OrderStatusActions({ orderId, currentStatus }: OrderStatusActionsProps) {
+  const t = useTranslations("orders.statusActions");
+  const statuses = useTranslations("orderStatus");
   const [isPending, startTransition] = useTransition();
 
   return (
     <div className="space-y-3">
-      {STATUS_BUTTONS.map(({ status, label, icon: Icon, className }) => {
+      {STATUS_BUTTONS.map(({ status, icon: Icon, className }) => {
         const button = (
           <Button
             variant="outline"
@@ -38,7 +41,7 @@ export function OrderStatusActions({ orderId, currentStatus }: OrderStatusAction
                 : () => startTransition(async () => void (await runWithToast(() => updateOrderStatus(orderId, status))))
             }
           >
-            <Icon className="h-4 w-4 me-2" /> {label}
+            <Icon className="h-4 w-4 me-2" /> {t("mark", { status: statuses(status) })}
           </Button>
         );
 
@@ -46,9 +49,9 @@ export function OrderStatusActions({ orderId, currentStatus }: OrderStatusAction
         return status === "Cancelled" ? (
           <ConfirmDialog
             key={status}
-            title={`Cancel order #${orderId}?`}
-            description="The order will be marked as Cancelled and excluded from revenue. You can change the status again later."
-            confirmLabel="Cancel order"
+            title={t("cancelTitle", { id: orderId })}
+            description={t("cancelText")}
+            confirmLabel={t("cancelConfirm")}
             destructive
             action={() => updateOrderStatus(orderId, status)}
             trigger={button}

@@ -13,3 +13,10 @@ const POP_ISOLATE = String.fromCharCode(0x2069);
 export function formatDA(amount: number): string {
   return `${LTR_ISOLATE}${wholeDinars.format(amount).replace("DZD", "DA")}${POP_ISOLATE}`;
 }
+
+const withCentimes = new Intl.NumberFormat("fr-DZ", { style: "currency", currency: "DZD" });
+
+// A price with centimes ("12 500,00 DA"), isolated like formatDA.
+export function formatPrice(amount: number): string {
+  return `${LTR_ISOLATE}${withCentimes.format(amount).replace("DZD", "DA")}${POP_ISOLATE}`;
+}
